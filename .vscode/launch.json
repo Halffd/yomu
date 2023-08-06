@@ -1,0 +1,29 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "chrome",
+            "request": "launch",
+            "name": "Launch Chrome",
+            "url": "http://youtube.com",
+            // Here it is!
+            "runtimeArgs": ["--load-extension=${workspaceFolder}/ext", "--remote-debugging-port=9222"]
+        },
+        {
+            "type": "chrome",
+            "request": "attach",
+            "name": "Chrome Extension debugging",
+            //"port": 9222,
+            "url": "http://localhost:8080",
+            "webRoot": "${workspaceFolder}/ext"
+        },
+        {
+            // Firefox equivalent
+            "type": "firefox",
+            "request": "launch",
+            "name": "Launch Firefox",
+            "url": "http://localhost:8080",
+            "addonPath": "${workspaceFolder}/ext"
+        }
+    ]
+}
