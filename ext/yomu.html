@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<!-- saved from url=(0070)chrome-extension://ihneooeljjglhlfbnkflakdikdlncfao/search.html?query= -->
+<html lang="en" data-page-type="search" data-theme="dark" data-outer-theme="site" data-site-theme="light"
+    data-browser-theme="dark" data-theme-raw="dark" data-outer-theme-raw="site" data-browser="chrome"
+    data-anki-enabled="true" data-result-output-mode="group" data-glossary-layout-mode="compact"
+    data-compact-tags="true" data-frequency-display-mode="split-tags-grouped" data-term-display-mode="ruby"
+    data-enable-search-tags="false" data-show-pronunciation-text="true" data-show-pronunciation-downstep-position="true"
+    data-show-pronunciation-graph="true" data-debug="false" data-popup-display-mode="default"
+    data-popup-current-indicator-mode="triangle" data-popup-action-bar-visibility="auto"
+    data-popup-action-bar-location="top" data-audio-enabled="true" data-loaded="true"
+    data-has-navigation-previous="false" data-has-navigation-next="false">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Yomichan Search</title>
+    <link rel="icon" type="image/png" href="chrome-extension://ihneooeljjglhlfbnkflakdikdlncfao/images/icon16.png"
+        sizes="16x16">
+    <link rel="icon" type="image/png" href="chrome-extension://ihneooeljjglhlfbnkflakdikdlncfao/images/icon19.png"
+        sizes="19x19">
+    <link rel="icon" type="image/png" href="chrome-extension://ihneooeljjglhlfbnkflakdikdlncfao/images/icon32.png"
+        sizes="32x32">
+    <link rel="icon" type="image/png" href="chrome-extension://ihneooeljjglhlfbnkflakdikdlncfao/images/icon38.png"
+        sizes="38x38">
+    <link rel="icon" type="image/png" href="chrome-extension://ihneooeljjglhlfbnkflakdikdlncfao/images/icon48.png"
+        sizes="48x48">
+    <link rel="icon" type="image/png" href="chrome-extension://ihneooeljjglhlfbnkflakdikdlncfao/images/icon64.png"
+        sizes="64x64">
+    <link rel="icon" type="image/png" href="chrome-extension://ihneooeljjglhlfbnkflakdikdlncfao/images/icon128.png"
+        sizes="128x128">
+    <link rel="stylesheet" type="text/css" href="chrome-extension://ihneooeljjglhlfbnkflakdikdlncfao/css/material.css">
+    <link rel="stylesheet" type="text/css" href="chrome-extension://ihneooeljjglhlfbnkflakdikdlncfao/css/display.css">
+    <link rel="stylesheet" type="text/css"
+        href="chrome-extension://ihneooeljjglhlfbnkflakdikdlncfao/css/display-pronunciation.css">
+    <link rel="stylesheet" type="text/css"
+        href="chrome-extension://ihneooeljjglhlfbnkflakdikdlncfao/css/structured-content.css">
+    <link rel="stylesheet" type="text/css" href="chrome-extension://ihneooeljjglhlfbnkflakdikdlncfao/css/search.css">
+    <style>
+        [data-dictionary='NEW斎藤和英大辞典'] ul.gloss-sc-ul>li:nth-child(n + 5) {
+            display: none;
+        }
+
+        /* remove misc dict classifications/codepoints/stats */
+        .kanji-glyph-data>tbody>tr:nth-child(n + 3) {
+            display: none;
+        }
+
+        /* remove stroke diagram, freq, header for next entries */
+        div.entry[data-type='kanji']:nth-child(n + 2) .kanji-glyph-container,
+        div.entry[data-type='kanji']:nth-child(n + 2) [data-section-type='frequencies'],
+        div.entry[data-type='kanji']:nth-child(n + 2) table.kanji-glyph-data>tbody>tr:first-child {
+            display: none;
+        }
+
+        /* remove 'No data found' */
+        .kanji-info-table-item-value-empty {
+            display: none;
+        }
+
+        /* reduce extra padding */
+        .kanji-glyph-data,
+        div.entry[data-type='kanji'],
+        div.entry[data-type='kanji']:nth-child(n + 2) .kanji-glyph-data>tbody>tr>*,
+        .kanji-glyph-data dl.kanji-readings-japanese,
+        div.entry[data-type='kanji']:nth-child(n + 2) .kanji-glyph-data dl.kanji-readings-chinese[data-count='0'] {
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+            margin-bottom: 0em;
+            margin-top: 0 !important;
+        }
+
+        /* remove horizontal lines */
+        .entry+.entry[data-type='kanji'],
+        div#dictionary-entries>div.entry:nth-child(n + 2) .kanji-glyph-data>tbody>tr>* {
+            border-top: none !important;
+        }
+
+        /* change decimal list */
+        .kanji-gloss-list {
+            list-style-type: circle;
+        }
+
+        .kanji-glyph {
+            font-family: sans-serif;
+            /* or a whatever font you prefer for Chinese */
+        }
+
+        body {
+            background: '#FFFFF';
+        }
+
+        .tag {
+            display: none;
+
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="content-outer">
+        <div class="content">
+            <div class="content-scroll scrollbar" id="content-scroll">
+                <div class="content-body" id="content-body">
+                    <div class="top-progress-bar-container">
+                        <div class="progress-bar-indeterminant" id="progress-indicator" hidden=""></div>
+                    </div>
+                    <div class="content-body-inner">
+
+                        <span tabindex="-1" id="content-scroll-focus"></span>
+
+                        <div class="search-header">
+                            <div id="intro">
+                                <h1>Yomichan Search</h1>
+                            </div>
+
+                            <div class="scan-disable">
+                                <div class="search-options">
+                                    <label class="search-option">
+                                        <label class="toggle"><input type="checkbox" id="wanakana-enable"><span
+                                                class="toggle-body"><span class="toggle-track"></span><span
+                                                    class="toggle-knob"></span></span></label>
+                                        <span class="search-option-label">Automatic kana conversion</span>
+                                    </label>
+                                    <label class="search-option" id="search-option-clipboard-monitor-container">
+                                        <label class="toggle"><input type="checkbox" id="clipboard-monitor-enable"><span
+                                                class="toggle-body"><span class="toggle-track"></span><span
+                                                    class="toggle-knob"></span></span></label>
+                                        <span class="search-option-label">Clipboard monitor</span>
+                                    </label>
+                                    <div class="search-option" id="query-parser-mode-container" hidden="">
+                                        <span class="search-option-pre-label">Parser:</span>
+                                        <select id="query-parser-mode-select"></select>
+                                    </div>
+                                </div>
+                                <div class="search-textbox-container">
+                                    <textarea id="search-textbox" class="scrollbar"
+                                        placeholder="Input a term, expression, sentence, or block of text"
+                                        autocomplete="off" lang="ja" autofocus="" data-wanakana-id="16935317925871"
+                                        autocapitalize="none" autocorrect="off" spellcheck="false"></textarea>
+                                    <button id="search-back-button" class="search-button" hidden=""><span class="icon"
+                                            data-icon="left-chevron"></span></button>
+                                    <button id="search-button" class="search-button"><span class="icon"
+                                            data-icon="magnifying-glass"></span></button>
+                                </div>
+                            </div>
+
+                            <div class="scan-disable scrollbar" id="query-parser-container" hidden="">
+                                <div id="query-parser-content" lang="ja" data-term-spacing="true"></div>
+                            </div>
+                        </div>
+
+                        <div id="dictionary-entries"></div>
+
+                        <div id="no-results">
+                            <div class="entry">
+                                <p>No results found.</p>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+            <div class="content-footer-container1">
+                <div class="content-footer-container2">
+                    <div class="content-footer" id="content-footer"></div>
+                    <div class="scrollbar-spacer scrollbar"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="popup-menus"></div>
+
+    <!-- Scripts -->
+    <script src="/lib/wanakana.min.js"></script>
+    <script src="/js/language/sandbox/japanese-util.js"></script>
+    <script src="/js/display/aDict.js"></script>
+    <script src="/js/display/yomu.js"></script>
+</body>
+
+</html>
