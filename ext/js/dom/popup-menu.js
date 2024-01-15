@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2020-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,8 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {EventDispatcher} from '../core/event-dispatcher.js';
-import {EventListenerCollection} from '../core/event-listener-collection.js';
+import {EventDispatcher, EventListenerCollection} from '../core.js';
 import {querySelectorNotNull} from './query-selector.js';
 
 /**
@@ -219,8 +218,8 @@ export class PopupMenu extends EventDispatcher {
             (bottom - top) * ((-vertical + 1) * -0.5)
         );
 
-        x = Math.max(0, Math.min(containerNodeRect.width - menuRect.width, x));
-        y = Math.max(0, Math.min(containerNodeRect.height - menuRect.height, y));
+        x = Math.max(0.0, Math.min(containerNodeRect.width - menuRect.width, x));
+        y = Math.max(0.0, Math.min(containerNodeRect.height - menuRect.height, y));
 
         menu.style.left = `${x}px`;
         menu.style.top = `${y}px`;

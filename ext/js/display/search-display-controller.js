@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2016-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,17 +18,25 @@
 
 import * as wanakana from '../../lib/wanakana.js';
 import {ClipboardMonitor} from '../comm/clipboard-monitor.js';
+import {EventListenerCollection} from '../core.js';
 import {createApiMap, invokeApiMapHandler} from '../core/api-map.js';
-import {EventListenerCollection} from '../core/event-listener-collection.js';
 import {querySelectorNotNull} from '../dom/query-selector.js';
+import {yomitan} from '../yomitan.js';
 
 export class SearchDisplayController {
     /**
+     * @param {number|undefined} tabId
+     * @param {number|undefined} frameId
      * @param {import('./display.js').Display} display
      * @param {import('./display-audio.js').DisplayAudio} displayAudio
+     * @param {import('../language/sandbox/japanese-util.js').JapaneseUtil} japaneseUtil
      * @param {import('./search-persistent-state-controller.js').SearchPersistentStateController} searchPersistentStateController
      */
-    constructor(display, displayAudio, searchPersistentStateController) {
+    constructor(tabId, frameId, display, displayAudio, japaneseUtil, searchPersistentStateController) {
+        /** @type {number|undefined} */
+        this._tabId = tabId;
+        /** @type {number|undefined} */
+        this._frameId = frameId;
         /** @type {import('./display.js').Display} */
         this._display = display;
         /** @type {import('./display-audio.js').DisplayAudio} */
@@ -47,10 +55,6 @@ export class SearchDisplayController {
         this._clipboardMonitorEnableCheckbox = querySelectorNotNull(document, '#clipboard-monitor-enable');
         /** @type {HTMLInputElement} */
         this._wanakanaEnableCheckbox = querySelectorNotNull(document, '#wanakana-enable');
-        /** @type {HTMLSelectElement} */
-        this._profileSelect = querySelectorNotNull(document, '#profile-select');
-        /** @type {HTMLElement} */
-        this._wanakanaSearchOption = querySelectorNotNull(document, '#search-option-wanakana');
         /** @type {EventListenerCollection} */
         this._queryInputEvents = new EventListenerCollection();
         /** @type {boolean} */
@@ -65,12 +69,13 @@ export class SearchDisplayController {
         this._introAnimationTimer = null;
         /** @type {boolean} */
         this._clipboardMonitorEnabled = false;
-        /** @type {import('clipboard-monitor').ClipboardReaderLike} */
-        const clipboardReader = {
-            getText: this._display.application.api.clipboardGet.bind(this._display.application.api)
-        };
         /** @type {ClipboardMonitor} */
-        this._clipboardMonitor = new ClipboardMonitor(clipboardReader);
+        this._clipboardMonitor = new ClipboardMonitor({
+            japaneseUtil,
+            clipboardReader: {
+                getText: yomitan.api.clipboardGet.bind(yomitan.api)
+            }
+        });
         /** @type {import('application').ApiMap} */
         this._apiMap = createApiMap([
             ['searchDisplayControllerGetMode', this._onMessageGetMode.bind(this)],
@@ -86,7 +91,7 @@ export class SearchDisplayController {
         this._searchPersistentStateController.on('modeChange', this._onModeChange.bind(this));
 
         chrome.runtime.onMessage.addListener(this._onMessage.bind(this));
-        this._display.application.on('optionsUpdated', this._onOptionsUpdated.bind(this));
+        yomitan.on('optionsUpdated', this._onOptionsUpdated.bind(this));
 
         this._display.on('optionsUpdated', this._onDisplayOptionsUpdated.bind(this));
         this._display.on('contentUpdateStart', this._onContentUpdateStart.bind(this));
@@ -105,13 +110,13 @@ export class SearchDisplayController {
         this._searchBackButton.addEventListener('click', this._onSearchBackButtonClick.bind(this), false);
         this._wanakanaEnableCheckbox.addEventListener('change', this._onWanakanaEnableChange.bind(this));
         window.addEventListener('copy', this._onCopy.bind(this));
-        this._clipboardMonitor.on('change', this._onClipboardMonitorChange.bind(this));
+        this._clipboardMonitor.on('change', this._onExternalSearchUpdate.bind(this));
         this._clipboardMonitorEnableCheckbox.addEventListener('change', this._onClipboardMonitorEnableChange.bind(this));
         this._display.hotkeyHandler.on('keydownNonHotkey', this._onKeyDown.bind(this));
 
         const displayOptions = this._display.getOptions();
         if (displayOptions !== null) {
-            await this._onDisplayOptionsUpdated({options: displayOptions});
+            this._onDisplayOptionsUpdated({options: displayOptions});
         }
     }
 
@@ -161,7 +166,7 @@ export class SearchDisplayController {
             !e.ctrlKey &&
             !e.metaKey &&
             !e.altKey &&
-            (e.key.length === 1 || e.key === 'Backspace') &&
+            e.key.length === 1 &&
             e.key !== ' '
         ) {
             this._queryInput.focus({preventScroll: true});
@@ -180,22 +185,13 @@ export class SearchDisplayController {
     /**
      * @param {import('display').EventArgument<'optionsUpdated'>} details
      */
-    async _onDisplayOptionsUpdated({options}) {
+    _onDisplayOptionsUpdated({options}) {
         this._clipboardMonitorEnabled = options.clipboard.enableSearchPageMonitor;
         this._updateClipboardMonitorEnabled();
-        this._updateWanakanaCheckbox(options);
-        await this._updateProfileSelect();
-    }
 
-    /**
-     * @param {import('settings').ProfileOptions} options
-     */
-    _updateWanakanaCheckbox(options) {
-        const {language, enableWanakana} = options.general;
-        const wanakanaEnabled = language === 'ja' && enableWanakana;
-        this._wanakanaEnableCheckbox.checked = wanakanaEnabled;
-        this._wanakanaSearchOption.style.display = language === 'ja' ? '' : 'none';
-        this._setWanakanaEnabled(wanakanaEnabled);
+        const enableWanakana = !!options.general.enableWanakana;
+        this._wanakanaEnableCheckbox.checked = enableWanakana;
+        this._setWanakanaEnabled(enableWanakana);
     }
 
     /**
@@ -276,26 +272,9 @@ export class SearchDisplayController {
     }
 
     /** @type {import('application').ApiHandler<'searchDisplayControllerUpdateSearchQuery'>} */
-    _onExternalSearchUpdate({text, animate}) {
-        void this._updateSearchFromClipboard(text, animate, false);
-    }
-
-    /**
-     * @param {import('clipboard-monitor').Events['change']} event
-     */
-    _onClipboardMonitorChange({text}) {
-        void this._updateSearchFromClipboard(text, true, true);
-    }
-
-    /**
-     * @param {string} text
-     * @param {boolean} animate
-     * @param {boolean} checkText
-     */
-    async _updateSearchFromClipboard(text, animate, checkText) {
+    _onExternalSearchUpdate({text, animate = true}) {
         const options = this._display.getOptions();
         if (options === null) { return; }
-        if (checkText && !await this._display.application.api.isTextLookupWorthy(text, options.general.language)) { return; }
         const {clipboard: {autoSearchContent, maximumSearchLength}} = options;
         if (text.length > maximumSearchLength) {
             text = text.substring(0, maximumSearchLength);
@@ -320,7 +299,7 @@ export class SearchDisplayController {
             scope: 'profile',
             optionsContext: this._display.getOptionsContext()
         };
-        void this._display.application.api.modifySettings([modification], 'search');
+        yomitan.api.modifySettings([modification], 'search');
     }
 
     /**
@@ -329,39 +308,12 @@ export class SearchDisplayController {
     _onClipboardMonitorEnableChange(e) {
         const element = /** @type {HTMLInputElement} */ (e.target);
         const enabled = element.checked;
-        void this._setClipboardMonitorEnabled(enabled);
+        this._setClipboardMonitorEnabled(enabled);
     }
 
     /** */
     _onModeChange() {
         this._updateClipboardMonitorEnabled();
-    }
-
-    /**
-     * @param {Event} event
-     */
-    async _onProfileSelectChange(event) {
-        const node = /** @type {HTMLInputElement} */ (event.currentTarget);
-        const value = Number.parseInt(node.value, 10);
-        const optionsFull = await this._display.application.api.optionsGetFull();
-        if (typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= optionsFull.profiles.length) {
-            await this._setPrimaryProfileIndex(value);
-        }
-    }
-
-    /**
-     * @param {number} value
-     */
-    async _setPrimaryProfileIndex(value) {
-        /** @type {import('settings-modifications').ScopedModificationSet} */
-        const modification = {
-            action: 'set',
-            path: 'profileCurrent',
-            value,
-            scope: 'global',
-            optionsContext: null
-        };
-        await this._display.application.api.modifySettings([modification], 'search');
     }
 
     /**
@@ -480,7 +432,7 @@ export class SearchDisplayController {
             scope: 'profile',
             optionsContext: this._display.getOptionsContext()
         };
-        await this._display.application.api.modifySettings([modification], 'search');
+        await yomitan.api.modifySettings([modification], 'search');
     }
 
     /** */
@@ -539,7 +491,6 @@ export class SearchDisplayController {
         if (flags !== null) {
             optionsContext.flags = flags;
         }
-        const {tabId, frameId} = this._display.application;
         /** @type {import('display').ContentDetails} */
         const details = {
             focus: false,
@@ -557,7 +508,10 @@ export class SearchDisplayController {
             content: {
                 dictionaryEntries: void 0,
                 animate,
-                contentOrigin: {tabId, frameId}
+                contentOrigin: {
+                    tabId: this._tabId,
+                    frameId: this._frameId
+                }
             }
         };
         if (!lookup) { details.params.lookup = 'false'; }
@@ -592,31 +546,7 @@ export class SearchDisplayController {
             case 'select':
                 return true;
         }
-        return element instanceof HTMLElement && !!element.isContentEditable;
-    }
-
-    /** */
-    async _updateProfileSelect() {
-        const {profiles, profileCurrent} = await this._display.application.api.optionsGetFull();
-
-        /** @type {HTMLElement} */
-        const optionGroup = querySelectorNotNull(document, '#profile-select-option-group');
-        while (optionGroup.firstChild) {
-            optionGroup.removeChild(optionGroup.firstChild);
-        }
-
-        const fragment = document.createDocumentFragment();
-        for (let i = 0, ii = profiles.length; i < ii; ++i) {
-            const {name} = profiles[i];
-            const option = document.createElement('option');
-            option.textContent = name;
-            option.value = `${i}`;
-            fragment.appendChild(option);
-        }
-        optionGroup.textContent = '';
-        optionGroup.appendChild(fragment);
-        this._profileSelect.value = `${profileCurrent}`;
-
-        this._profileSelect.addEventListener('change', this._onProfileSelectChange.bind(this), false);
+        if (element instanceof HTMLElement && element.isContentEditable) { return true; }
+        return false;
     }
 }

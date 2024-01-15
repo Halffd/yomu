@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2016-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -17,13 +17,11 @@
  */
 
 import {FrameClient} from '../comm/frame-client.js';
-import {DynamicProperty} from '../core/dynamic-property.js';
-import {EventDispatcher} from '../core/event-dispatcher.js';
-import {EventListenerCollection} from '../core/event-listener-collection.js';
+import {DynamicProperty, EventDispatcher, EventListenerCollection, deepEqual} from '../core.js';
 import {ExtensionError} from '../core/extension-error.js';
-import {deepEqual} from '../core/utilities.js';
-import {addFullscreenChangeEventListener, computeZoomScale, convertRectZoomCoordinates, getFullscreenElement} from '../dom/document-util.js';
+import {DocumentUtil} from '../dom/document-util.js';
 import {loadStyle} from '../dom/style-util.js';
+import {yomitan} from '../yomitan.js';
 import {ThemeController} from './theme-controller.js';
 
 /**
@@ -32,16 +30,16 @@ import {ThemeController} from './theme-controller.js';
  */
 export class Popup extends EventDispatcher {
     /**
-     * @param {import('../application.js').Application} application The main application instance.
-     * @param {string} id The identifier of the popup.
-     * @param {number} depth The depth of the popup.
-     * @param {number} frameId The frameId of the host frame.
-     * @param {boolean} childrenSupported Whether or not the popup is able to show child popups.
+     * Creates a new instance.
+     * @param {import('popup').PopupConstructorDetails} details The details used to construct the new instance.
      */
-    constructor(application, id, depth, frameId, childrenSupported) {
+    constructor({
+        id,
+        depth,
+        frameId,
+        childrenSupported
+    }) {
         super();
-        /** @type {import('../application.js').Application} */
-        this._application = application;
         /** @type {string} */
         this._id = id;
         /** @type {number} */
@@ -65,7 +63,7 @@ export class Popup extends EventDispatcher {
         /** @type {?import('settings').OptionsContext} */
         this._optionsContext = null;
         /** @type {number} */
-        this._contentScale = 1;
+        this._contentScale = 1.0;
         /** @type {string} */
         this._targetOrigin = chrome.runtime.getURL('/').replace(/\/$/, '');
 
@@ -205,7 +203,7 @@ export class Popup extends EventDispatcher {
         this._frame.addEventListener('scroll', (e) => e.stopPropagation());
         this._frame.addEventListener('load', this._onFrameLoad.bind(this));
         this._visible.on('change', this._onVisibleChange.bind(this));
-        this._application.on('extensionUnloaded', this._onExtensionUnloaded.bind(this));
+        yomitan.on('extensionUnloaded', this._onExtensionUnloaded.bind(this));
         this._onVisibleChange({value: this.isVisibleSync()});
         this._themeController.prepare();
     }
@@ -301,7 +299,7 @@ export class Popup extends EventDispatcher {
         await this._show(sourceRects, writingMode);
 
         if (displayDetails !== null) {
-            void this._invokeSafe('displaySetContent', {details: displayDetails});
+            this._invokeSafe('displaySetContent', {details: displayDetails});
         }
     }
 
@@ -361,7 +359,7 @@ export class Popup extends EventDispatcher {
             useWebExtensionApi = false;
             parentNode = this._shadow;
         }
-        const node = await loadStyle(this._application, 'yomitan-popup-outer-user-stylesheet', 'code', css, useWebExtensionApi, parentNode);
+        const node = await loadStyle('yomitan-popup-outer-user-stylesheet', 'code', css, useWebExtensionApi, parentNode);
         this.trigger('customOuterCssChanged', {node, useWebExtensionApi, inShadow});
     }
 
@@ -574,7 +572,7 @@ export class Popup extends EventDispatcher {
             useWebExtensionApi = false;
             parentNode = this._shadow;
         }
-        await loadStyle(this._application, 'yomitan-popup-outer-stylesheet', fileType, '/css/popup-outer.css', useWebExtensionApi, parentNode);
+        await loadStyle('yomitan-popup-outer-stylesheet', fileType, '/css/popup-outer.css', useWebExtensionApi, parentNode);
     }
 
     /**
@@ -591,7 +589,7 @@ export class Popup extends EventDispatcher {
             return;
         }
 
-        addFullscreenChangeEventListener(this._onFullscreenChanged.bind(this), this._fullscreenEventListeners);
+        DocumentUtil.addFullscreenChangeEventListener(this._onFullscreenChanged.bind(this), this._fullscreenEventListeners);
     }
 
     /**
@@ -659,7 +657,7 @@ export class Popup extends EventDispatcher {
         if (this._visibleValue === value) { return; }
         this._visibleValue = value;
         this._frame.style.setProperty('visibility', value ? 'visible' : 'hidden', 'important');
-        void this._invokeSafe('displayVisibilityChanged', {value});
+        this._invokeSafe('displayVisibilityChanged', {value});
     }
 
     /**
@@ -696,7 +694,7 @@ export class Popup extends EventDispatcher {
         /** @type {import('display').DirectApiMessage<TName>} */
         const message = {action, params};
         const wrappedMessage = this._frameClient.createMessage(message);
-        return /** @type {import('display').DirectApiReturn<TName>} */ (await this._application.crossFrame.invoke(
+        return /** @type {import('display').DirectApiReturn<TName>} */ (await yomitan.crossFrame.invoke(
             this._frameClient.frameId,
             'displayPopupMessage1',
             /** @type {import('display').DirectApiFrameClientMessageAny} */ (wrappedMessage)
@@ -713,31 +711,28 @@ export class Popup extends EventDispatcher {
         try {
             return await this._invoke(action, params);
         } catch (e) {
-            if (!this._application.webExtension.unloaded) { throw e; }
+            if (!yomitan.isExtensionUnloaded) { throw e; }
             return void 0;
         }
     }
 
     /**
-     * @template {import('display').WindowApiNames} TName
-     * @param {TName} action
-     * @param {import('display').WindowApiParams<TName>} params
+     * @param {string} action
+     * @param {import('core').SerializableObject} params
      */
-    _invokeWindow(action, params) {
+    _invokeWindow(action, params = {}) {
         const contentWindow = this._frame.contentWindow;
         if (this._frameClient === null || !this._frameClient.isConnected() || contentWindow === null) { return; }
 
-        /** @type {import('display').WindowApiMessage<TName>} */
-        const message = {action, params};
-        const messageWrapper = this._frameClient.createMessage(message);
-        contentWindow.postMessage(messageWrapper, this._targetOrigin);
+        const message = this._frameClient.createMessage({action, params});
+        contentWindow.postMessage(message, this._targetOrigin);
     }
 
     /**
      * @returns {void}
      */
     _onExtensionUnloaded() {
-        this._invokeWindow('displayExtensionUnloaded', void 0);
+        this._invokeWindow('displayExtensionUnloaded');
     }
 
     /**
@@ -748,7 +743,7 @@ export class Popup extends EventDispatcher {
         if (defaultParent !== null && defaultParent.tagName.toLowerCase() === 'frameset') {
             defaultParent = document.documentElement;
         }
-        const fullscreenElement = getFullscreenElement();
+        const fullscreenElement = DocumentUtil.getFullscreenElement();
         if (
             fullscreenElement === null ||
             fullscreenElement.shadowRoot ||
@@ -777,7 +772,7 @@ export class Popup extends EventDispatcher {
     _getPosition(sourceRects, writingMode, viewport) {
         sourceRects = this._convertSourceRectsCoordinateSpace(sourceRects);
         const contentScale = this._contentScale;
-        const scaleRatio = this._frameSizeContentScale === null ? 1 : contentScale / this._frameSizeContentScale;
+        const scaleRatio = this._frameSizeContentScale === null ? 1.0 : contentScale / this._frameSizeContentScale;
         this._frameSizeContentScale = contentScale;
         const frameRect = this._frame.getBoundingClientRect();
         const frameWidth = Math.max(frameRect.width * scaleRatio, this._initialWidth * contentScale);
@@ -1010,7 +1005,7 @@ export class Popup extends EventDispatcher {
      */
     async _setOptionsContext(optionsContext) {
         this._optionsContext = optionsContext;
-        const options = await this._application.api.optionsGet(optionsContext);
+        const options = await yomitan.api.optionsGet(optionsContext);
         const {general} = options;
         this._themeController.theme = general.popupTheme;
         this._themeController.outerTheme = general.popupOuterTheme;
@@ -1028,7 +1023,7 @@ export class Popup extends EventDispatcher {
         this._useSecureFrameUrl = general.useSecurePopupFrameUrl;
         this._useShadowDom = general.usePopupShadowDom;
         this._customOuterCss = general.customPopupOuterCss;
-        void this.updateTheme();
+        this.updateTheme();
     }
 
     /**
@@ -1091,7 +1086,7 @@ export class Popup extends EventDispatcher {
      * @returns {DOMRect} The rectangle of the frame.
      */
     _getFrameBoundingClientRect() {
-        return convertRectZoomCoordinates(this._frame.getBoundingClientRect(), this._container);
+        return DocumentUtil.convertRectZoomCoordinates(this._frame.getBoundingClientRect(), this._container);
     }
 
     /**
@@ -1100,7 +1095,7 @@ export class Popup extends EventDispatcher {
      * @returns {import('popup').Rect[]} Either an updated list of rectangles, or `sourceRects` if no change is required.
      */
     _convertSourceRectsCoordinateSpace(sourceRects) {
-        let scale = computeZoomScale(this._container);
+        let scale = DocumentUtil.computeZoomScale(this._container);
         if (scale === 1) { return sourceRects; }
         scale = 1 / scale;
         const sourceRects2 = [];
@@ -1133,8 +1128,6 @@ class PopupError extends ExtensionError {
      */
     constructor(message, source) {
         super(message);
-        /** @type {string} */
-        this.name = 'PopupError';
         /** @type {Popup} */
         this._source = source;
     }

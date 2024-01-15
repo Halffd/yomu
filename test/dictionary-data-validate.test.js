@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2020-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -19,19 +19,19 @@
 import {fileURLToPath} from 'node:url';
 import path from 'path';
 import {describe, it} from 'vitest';
-import {createDictionaryArchiveData} from '../dev/dictionary-archive-util.js';
 import * as dictionaryValidate from '../dev/dictionary-validate.js';
+import {createDictionaryArchive} from '../dev/util.js';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
 /**
  * @param {string} dictionary
  * @param {string} [dictionaryName]
- * @returns {Promise<ArrayBuffer>}
+ * @returns {import('jszip')}
  */
-async function createTestDictionaryArchiveData(dictionary, dictionaryName) {
+function createTestDictionaryArchive(dictionary, dictionaryName) {
     const dictionaryDirectory = path.join(dirname, 'data', 'dictionaries', dictionary);
-    return await createDictionaryArchiveData(dictionaryDirectory, dictionaryName);
+    return createDictionaryArchive(dictionaryDirectory, dictionaryName);
 }
 
 describe('Dictionary validation', () => {
@@ -47,13 +47,12 @@ describe('Dictionary validation', () => {
     const schemas = dictionaryValidate.getSchemas();
     describe.each(testCases)('Test dictionary $name', ({name, valid}) => {
         it(`should be ${valid ? 'valid' : 'invalid'}`, async ({expect}) => {
-            const archive = await createTestDictionaryArchiveData(name);
-            const promise = dictionaryValidate.validateDictionary(null, archive, schemas);
-            await (
-                valid ?
-                expect(promise).resolves.not.toThrow() :
-                expect(promise).rejects.toThrow()
-            );
+            const archive = createTestDictionaryArchive(name);
+            if (valid) {
+                await expect(dictionaryValidate.validateDictionary(null, archive, schemas)).resolves.not.toThrow();
+            } else {
+                await expect(dictionaryValidate.validateDictionary(null, archive, schemas)).rejects.toThrow();
+            }
         });
     });
 });

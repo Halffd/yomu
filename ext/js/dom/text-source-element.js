@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2016-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,8 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {readCodePointsBackward, readCodePointsForward} from '../data/string-util.js';
-import {convertMultipleRectZoomCoordinates} from './document-util.js';
+import {StringUtil} from '../data/sandbox/string-util.js';
+import {DocumentUtil} from './document-util.js';
 
 /**
  * This class represents a text source that is attached to a HTML element, such as an <img>
@@ -118,7 +118,7 @@ export class TextSourceElement {
         const offset = fromEnd ? this._endOffset : this._startOffset;
         length = Math.min(this._fullContent.length - offset, length);
         if (length > 0) {
-            length = readCodePointsForward(this._fullContent, offset, length).length;
+            length = StringUtil.readCodePointsForward(this._fullContent, offset, length).length;
         }
         this._endOffset = offset + length;
         this._content = this._fullContent.substring(this._startOffset, this._endOffset);
@@ -133,7 +133,7 @@ export class TextSourceElement {
     setStartOffset(length) {
         length = Math.min(this._startOffset, length);
         if (length > 0) {
-            length = readCodePointsBackward(this._fullContent, this._startOffset - 1, length).length;
+            length = StringUtil.readCodePointsBackward(this._fullContent, this._startOffset - 1, length).length;
         }
         this._startOffset -= length;
         this._content = this._fullContent.substring(this._startOffset, this._endOffset);
@@ -145,7 +145,7 @@ export class TextSourceElement {
      * @returns {DOMRect[]} The rects.
      */
     getRects() {
-        return convertMultipleRectZoomCoordinates(this._element.getClientRects(), this._element);
+        return DocumentUtil.convertMultipleRectZoomCoordinates(this._element.getClientRects(), this._element);
     }
 
     /**
@@ -246,8 +246,8 @@ export class TextSourceElement {
                 break;
         }
 
-        // Remove zero-width space, zero-width non-joiner, soft hyphen
-        content = content.replace(/[\u200b\u200c\u00ad]/g, '');
+        // Remove zero-width space and zero-width non-joiner
+        content = content.replace(/[\u200b\u200c]/g, '');
 
         return content;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2020-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -19,12 +19,12 @@
 import {fileURLToPath} from 'node:url';
 import path from 'path';
 import {afterAll, describe, expect, test} from 'vitest';
-import {parseJson} from '../dev/json.js';
+import {DocumentUtil} from '../ext/js/dom/document-util.js';
 import {DOMTextScanner} from '../ext/js/dom/dom-text-scanner.js';
 import {TextSourceElement} from '../ext/js/dom/text-source-element.js';
-import {TextSourceGenerator} from '../ext/js/dom/text-source-generator.js';
 import {TextSourceRange} from '../ext/js/dom/text-source-range.js';
 import {setupDomTest} from './fixtures/dom-test.js';
+import {parseJson} from '../dev/json.js';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -159,13 +159,12 @@ describe('Document utility tests', () => {
                         expect(!!imposter).toStrictEqual(!!hasImposter);
 
                         const range = document.createRange();
-                        range.setStart(/** @type {Node} */ (imposter ?? startNode), startOffset);
-                        range.setEnd(/** @type {Node} */ (imposter ?? startNode), endOffset);
+                        range.setStart(/** @type {Node} */ (imposter ? imposter : startNode), startOffset);
+                        range.setEnd(/** @type {Node} */ (imposter ? imposter : startNode), endOffset);
 
                         // Override getClientRects to return a rect guaranteed to contain (x, y)
                         range.getClientRects = () => {
                             /** @type {import('test/document-types').PseudoDOMRectList} */
-                            // eslint-disable-next-line sonarjs/prefer-immediate-return
                             const domRectList = Object.assign(
                                 [new DOMRect(x - 1, y - 1, 2, 2)],
                                 {
@@ -183,8 +182,7 @@ describe('Document utility tests', () => {
                     };
 
                     // Test docRangeFromPoint
-                    const textSourceGenerator = new TextSourceGenerator();
-                    const source = textSourceGenerator.getRangeFromPoint(0, 0, {
+                    const source = DocumentUtil.getRangeFromPoint(0, 0, {
                         deepContentScan: false,
                         normalizeCssZoom: true
                     });
@@ -206,15 +204,12 @@ describe('Document utility tests', () => {
 
                     // Sentence info
                     const terminatorString = '…。．.？?！!';
-                    /** @type {import('text-scanner').SentenceTerminatorMap} */
                     const terminatorMap = new Map();
                     for (const char of terminatorString) {
                         terminatorMap.set(char, [false, true]);
                     }
                     const quoteArray = [['「', '」'], ['『', '』'], ['\'', '\''], ['"', '"']];
-                    /** @type {import('text-scanner').SentenceForwardQuoteMap} */
                     const forwardQuoteMap = new Map();
-                    /** @type {import('text-scanner').SentenceBackwardQuoteMap} */
                     const backwardQuoteMap = new Map();
                     for (const [char1, char2] of quoteArray) {
                         forwardQuoteMap.set(char1, [char2, false]);
@@ -222,7 +217,7 @@ describe('Document utility tests', () => {
                     }
 
                     // Test docSentenceExtract
-                    const sentenceActual = textSourceGenerator.extractSentence(
+                    const sentenceActual = DocumentUtil.extractSentence(
                         source,
                         false,
                         sentenceScanExtent,

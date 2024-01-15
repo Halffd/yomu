@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -190,9 +190,9 @@ export class ThemeController {
         if (color === null) { return; }
 
         const a = color[3];
-        if (a <= 0) { return; }
+        if (a <= 0.0) { return; }
 
-        const aInv = 1 - a;
+        const aInv = 1.0 - a;
         for (let i = 0; i < 3; ++i) {
             target[i] = target[i] * aInv + color[i] * a;
         }
@@ -212,7 +212,7 @@ export class ThemeController {
             Number.parseInt(m[1], 10),
             Number.parseInt(m[2], 10),
             Number.parseInt(m[3], 10),
-            m4 ? Math.max(0, Math.min(1, Number.parseFloat(m4))) : 1
+            m4 ? Math.max(0.0, Math.min(1.0, Number.parseFloat(m4))) : 1.0
         ];
     }
 }

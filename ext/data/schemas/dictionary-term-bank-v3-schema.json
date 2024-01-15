@@ -104,7 +104,7 @@
                             "properties": {
                                 "tag": {
                                     "type": "string",
-                                    "enum": ["span", "div", "ol", "ul", "li", "details", "summary"]
+                                    "enum": ["span", "div", "ol", "ul", "li"]
                                 },
                                 "content": {
                                     "$ref": "#/definitions/structuredContent"
@@ -152,7 +152,7 @@
                                 },
                                 "height": {
                                     "type": "number",
-                                    "description": "Preferred height of the image.",
+                                    "description": "Preferred width of the image.",
                                     "minimum": 0
                                 },
                                 "title": {
@@ -203,14 +203,6 @@
                                     "type": "string",
                                     "description": "The vertical alignment of the image.",
                                     "enum": ["baseline", "sub", "super", "text-top", "text-bottom", "middle", "top", "bottom"]
-                                },
-                                "border": {
-                                    "type": "string",
-                                    "description": "Shorthand for border width, style, and color."
-                                },
-                                "borderRadius": {
-                                    "type": "string",
-                                    "description": "Roundness of the corners of the image's outer border edge."
                                 },
                                 "sizeUnits": {
                                     "type": "string",
@@ -278,9 +270,6 @@
                 "color": {
                     "type": "string"
                 },
-                "background": {
-                    "type": "string"
-                },
                 "backgroundColor": {
                     "type": "string"
                 },
@@ -321,9 +310,6 @@
                 "borderWidth": {
                     "type": "string"
                 },
-                "clipPath": {
-                    "type": "string"
-                },
                 "verticalAlign": {
                     "type": "string",
                     "enum": ["baseline", "sub", "super", "text-top", "text-bottom", "middle", "top", "bottom"],
@@ -333,12 +319,6 @@
                     "type": "string",
                     "enum": ["start", "end", "left", "right", "center", "justify", "justify-all", "match-parent"],
                     "default": "start"
-                },
-                "textEmphasis": {
-                    "type": "string"
-                },
-                "textShadow": {
-                    "type": "string"
                 },
                 "margin": {
                     "type": "string"
@@ -417,7 +397,7 @@
             },
             {
                 "type": "string",
-                "description": "String of space-separated rule identifiers for the definition which is used to validate deinflection. An empty string should be used for words which aren't inflected."
+                "description": "String of space-separated rule identifiers for the definition which is used to validate delinflection. Valid rule identifiers are: v1: ichidan verb; v5: godan verb; vs: suru verb; vk: kuru verb; adj-i: i-adjective. An empty string corresponds to words which aren't inflected, such as nouns."
             },
             {
                 "type": "number",
@@ -502,7 +482,7 @@
                                         },
                                         "height": {
                                             "type": "integer",
-                                            "description": "Preferred height of the image.",
+                                            "description": "Preferred width of the image.",
                                             "minimum": 1
                                         },
                                         "title": {
@@ -549,26 +529,6 @@
                                             "description": "Whether or not the image can be collapsed.",
                                             "default": true
                                         }
-                                    }
-                                }
-                            ]
-                        },
-                        {
-                            "type": "array",
-                            "description": "Deinflection of the term to an uninflected term.",
-                            "minItems": 2,
-                            "maxItems": 2,
-                            "items": [
-                                {
-                                    "type": "string",
-                                    "description": "The uninflected term."
-                                },
-                                {
-                                    "type": "array",
-                                    "description": "A chain of inflection rules that produced the inflected term",
-                                    "items": {
-                                        "type": "string",
-                                        "description": "A single inflection rule."
                                     }
                                 }
                             ]

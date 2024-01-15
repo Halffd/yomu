@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -57,7 +57,7 @@ export type HelperOptionsFunction<TResult = unknown> = (context: unknown) => TRe
 export type HelperOptions = {
     fn?: HelperOptionsFunction;
     inverse?: HelperOptionsFunction;
-    hash: Core.SerializableObject;
+    hash: Core.SafeAny;
     data?: Core.SafeAny;
 };
 

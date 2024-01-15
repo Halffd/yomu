@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2019-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,8 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {EventDispatcher} from '../../core/event-dispatcher.js';
-import {EventListenerCollection} from '../../core/event-listener-collection.js';
+import {EventDispatcher, EventListenerCollection} from '../../core.js';
 import {querySelectorNotNull} from '../../dom/query-selector.js';
 import {AudioSystem} from '../../media/audio-system.js';
 
@@ -134,7 +133,7 @@ export class AudioController extends EventDispatcher {
 
     /** */
     _onAddAudioSource() {
-        void this._addAudioSource();
+        this._addAudioSource();
     }
 
     /** */
@@ -144,8 +143,8 @@ export class AudioController extends EventDispatcher {
             const text = input.value || '';
             const voiceUri = input.dataset.voice;
             const audio = this._audioSystem.createTextToSpeechAudio(text, typeof voiceUri === 'string' ? voiceUri : '');
-            audio.volume = 1;
-            void audio.play();
+            audio.volume = 1.0;
+            audio.play();
         } catch (e) {
             // NOP
         }
@@ -352,7 +351,7 @@ class AudioSourceEntry {
         const element = /** @type {HTMLSelectElement} */ (e.currentTarget);
         const value = this._normalizeAudioSourceType(element.value);
         if (value === null) { return; }
-        void this._setType(value);
+        this._setType(value);
     }
 
     /**
@@ -360,7 +359,7 @@ class AudioSourceEntry {
      */
     _onUrlInputChange(e) {
         const element = /** @type {HTMLInputElement} */ (e.currentTarget);
-        void this._setUrl(element.value);
+        this._setUrl(element.value);
     }
 
     /**
@@ -368,7 +367,7 @@ class AudioSourceEntry {
      */
     _onVoiceSelectChange(e) {
         const element = /** @type {HTMLSelectElement} */ (e.currentTarget);
-        void this._setVoice(element.value);
+        this._setVoice(element.value);
     }
 
     /**
@@ -403,7 +402,7 @@ class AudioSourceEntry {
                 this._showHelp(this._type);
                 break;
             case 'remove':
-                void this._parent.removeSource(this);
+                this._parent.removeSource(this);
                 break;
         }
     }

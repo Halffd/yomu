@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2021-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,12 +18,17 @@
 
 import fs from 'fs';
 import {describe, expect, test} from 'vitest';
-import {formatRulesJson, generateRules, getTargets} from '../dev/generate-css-json.js';
+import {formatRulesJson, generateRules, getTargets} from '../dev/generate-css-json';
 
-describe('css-json', () => {
-    test.each(getTargets())('css-json-test-%#', ({cssFilePath, overridesCssFilePath, outputPath}) => {
-        const actual = fs.readFileSync(outputPath, {encoding: 'utf8'});
-        const expected = formatRulesJson(generateRules(cssFilePath, overridesCssFilePath));
-        expect(actual).toStrictEqual(expected);
+/** */
+function main() {
+    describe('css-json', () => {
+        test.each(getTargets())('css-json-test-%#', ({cssFilePath, overridesCssFilePath, outputPath}) => {
+            const actual = fs.readFileSync(outputPath, {encoding: 'utf8'});
+            const expected = formatRulesJson(generateRules(cssFilePath, overridesCssFilePath));
+            expect(actual).toStrictEqual(expected);
+        });
     });
-});
+}
+
+main();

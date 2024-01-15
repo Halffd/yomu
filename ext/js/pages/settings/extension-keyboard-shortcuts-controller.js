@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2021-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,10 +16,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {EventListenerCollection} from '../../core/event-listener-collection.js';
-import {isObjectNotArray} from '../../core/object-utilities.js';
+import {EventListenerCollection, isObject} from '../../core.js';
 import {querySelectorNotNull} from '../../dom/query-selector.js';
 import {HotkeyUtil} from '../../input/hotkey-util.js';
+import {yomitan} from '../../yomitan.js';
 import {KeyboardMouseInputField} from './keyboard-mouse-input-field.js';
 
 export class ExtensionKeyboardShortcutController {
@@ -62,7 +62,7 @@ export class ExtensionKeyboardShortcutController {
             this._clearButton.addEventListener('click', this._onClearClick.bind(this));
         }
 
-        const {platform: {os}} = await this._settingsController.application.api.getEnvironmentInfo();
+        const {platform: {os}} = await yomitan.api.getEnvironmentInfo();
         this._os = os;
         this._hotkeyUtil.os = os;
 
@@ -133,7 +133,7 @@ export class ExtensionKeyboardShortcutController {
      */
     _onResetClick(e) {
         e.preventDefault();
-        void this._resetAllCommands();
+        this._resetAllCommands();
     }
 
     /**
@@ -141,7 +141,7 @@ export class ExtensionKeyboardShortcutController {
      */
     _onClearClick(e) {
         e.preventDefault();
-        void this._clearAllCommands();
+        this._clearAllCommands();
     }
 
     /**
@@ -149,7 +149,7 @@ export class ExtensionKeyboardShortcutController {
      */
     _getCommands() {
         return new Promise((resolve, reject) => {
-            if (!(isObjectNotArray(chrome.commands) && typeof chrome.commands.getAll === 'function')) {
+            if (!(isObject(chrome.commands) && typeof chrome.commands.getAll === 'function')) {
                 resolve([]);
                 return;
             }
@@ -317,7 +317,7 @@ class ExtensionKeyboardShortcutHotkeyEntry {
      */
     _onInputFieldChange(e) {
         const {key, modifiers} = e;
-        void this._tryUpdateInput(key, modifiers, false);
+        this._tryUpdateInput(key, modifiers, false);
     }
 
     /** */
@@ -331,10 +331,10 @@ class ExtensionKeyboardShortcutHotkeyEntry {
     _onMenuClose(e) {
         switch (e.detail.action) {
             case 'clearInput':
-                void this._tryUpdateInput(null, [], true);
+                this._tryUpdateInput(null, [], true);
                 break;
             case 'resetInput':
-                void this._resetInput();
+                this._resetInput();
                 break;
         }
     }
@@ -353,7 +353,7 @@ class ExtensionKeyboardShortcutHotkeyEntry {
      * @param {boolean} updateInput
      */
     async _tryUpdateInput(key, modifiers, updateInput) {
-        let okay = (key === null ? (modifiers.length === 0) : (modifiers.length > 0));
+        let okay = (key === null ? (modifiers.length === 0) : (modifiers.length !== 0));
         if (okay) {
             try {
                 await this._parent.updateCommand(this._name, key, modifiers);

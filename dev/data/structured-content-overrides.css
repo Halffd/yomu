@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2021-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -73,14 +73,5 @@
     /* remove-rule */
 }
 :root[data-glossary-layout-mode=compact] .gloss-sc-ul[data-sc-content=glossary] .gloss-sc-li:not(:first-child)::before {
-    /* remove-rule */
-}
-.gloss-sc-details {
-    /* remove-rule */
-}
-.gloss-sc-summary {
-    /* remove-rule */
-}
-.gloss-sc-details[open] .gloss-sc-summary {
     /* remove-rule */
 }

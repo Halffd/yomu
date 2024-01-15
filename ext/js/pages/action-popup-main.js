@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2017-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,20 +16,17 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {Application} from '../application.js';
-import {getAllPermissions, hasRequiredPermissionsForOptions} from '../data/permissions-util.js';
+import {PermissionsUtil} from '../data/permissions-util.js';
 import {querySelectorNotNull} from '../dom/query-selector.js';
 import {HotkeyHelpController} from '../input/hotkey-help-controller.js';
+import {yomitan} from '../yomitan.js';
 
 class DisplayController {
-    /**
-     * @param {import('../comm/api.js').API} api
-     */
-    constructor(api) {
-        /** @type {import('../comm/api.js').API} */
-        this._api = api;
+    constructor() {
         /** @type {?import('settings').Options} */
         this._optionsFull = null;
+        /** @type {PermissionsUtil} */
+        this._permissionsUtil = new PermissionsUtil();
     }
 
     /** */
@@ -37,21 +34,20 @@ class DisplayController {
         const manifest = chrome.runtime.getManifest();
 
         this._showExtensionInfo(manifest);
-        void this._setupEnvironment();
+        this._setupEnvironment();
         this._setupButtonEvents('.action-open-search', 'openSearchPage', chrome.runtime.getURL('/search.html'), this._onSearchClick.bind(this));
         this._setupButtonEvents('.action-open-info', 'openInfoPage', chrome.runtime.getURL('/info.html'));
 
-        const optionsFull = await this._api.optionsGetFull();
+        const optionsFull = await yomitan.api.optionsGetFull();
         this._optionsFull = optionsFull;
 
-        void this._setupHotkeys();
+        this._setupHotkeys();
 
         const optionsPageUrl = (
             typeof manifest.options_ui === 'object' &&
             manifest.options_ui !== null &&
             typeof manifest.options_ui.page === 'string' ?
-            manifest.options_ui.page :
-            ''
+            manifest.options_ui.page : ''
         );
         this._setupButtonEvents('.action-open-settings', 'openSettingsPage', chrome.runtime.getURL(optionsPageUrl));
         this._setupButtonEvents('.action-open-permissions', null, chrome.runtime.getURL('/permissions.html'));
@@ -114,7 +110,7 @@ class DisplayController {
                         const result = customHandler(e);
                         if (typeof result !== 'undefined') { return; }
                     }
-                    void this._api.commandExec(command, {mode: e.ctrlKey ? 'newTab' : 'existingOrNewTab'});
+                    yomitan.api.commandExec(command, {mode: e.ctrlKey ? 'newTab' : 'existingOrNewTab'});
                     e.preventDefault();
                 };
                 /**
@@ -122,7 +118,7 @@ class DisplayController {
                  */
                 const onAuxClick = (e) => {
                     if (e.button !== 1) { return; }
-                    void this._api.commandExec(command, {mode: 'newTab'});
+                    yomitan.api.commandExec(command, {mode: 'newTab'});
                     e.preventDefault();
                 };
                 node.addEventListener('click', onClick, false);
@@ -186,19 +182,19 @@ class DisplayController {
      */
     _setupOptions({options}) {
         const extensionEnabled = options.general.enable;
-        const onToggleChanged = () => this._api.commandExec('toggleTextScanning');
-        for (const toggle of /** @type {NodeListOf<HTMLInputElement>} */ (document.querySelectorAll('.enable-search,.enable-search2'))) {
+        const onToggleChanged = () => yomitan.api.commandExec('toggleTextScanning');
+        for (const toggle of /** @type {NodeListOf<HTMLInputElement>} */ (document.querySelectorAll('#enable-search,#enable-search2'))) {
             toggle.checked = extensionEnabled;
             toggle.addEventListener('change', onToggleChanged, false);
         }
-        void this._updateDictionariesEnabledWarnings(options);
-        void this._updatePermissionsWarnings(options);
+        this._updateDictionariesEnabledWarnings(options);
+        this._updatePermissionsWarnings(options);
     }
 
     /** */
     async _setupHotkeys() {
         const hotkeyHelpController = new HotkeyHelpController();
-        await hotkeyHelpController.prepare(this._api);
+        await hotkeyHelpController.prepare();
 
         const {profiles, profileCurrent} = /** @type {import('settings').Options} */ (this._optionsFull);
         const primaryProfile = (profileCurrent >= 0 && profileCurrent < profiles.length) ? profiles[profileCurrent] : null;
@@ -238,9 +234,9 @@ class DisplayController {
      */
     _onProfileSelectChange(event) {
         const node = /** @type {HTMLInputElement} */ (event.currentTarget);
-        const value = Number.parseInt(node.value, 10);
+        const value = parseInt(node.value, 10);
         if (typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= /** @type {import('settings').Options} */ (this._optionsFull).profiles.length) {
-            void this._setPrimaryProfileIndex(value);
+            this._setPrimaryProfileIndex(value);
         }
     }
 
@@ -256,7 +252,7 @@ class DisplayController {
             scope: 'global',
             optionsContext: null
         };
-        await this._api.modifySettings([modification], 'action-popup');
+        await yomitan.api.modifySettings([modification], 'action-popup');
     }
 
     /**
@@ -264,7 +260,7 @@ class DisplayController {
      */
     async _updateDictionariesEnabledWarnings(options) {
         const noDictionariesEnabledWarnings = /** @type {NodeListOf<HTMLElement>} */ (document.querySelectorAll('.no-dictionaries-enabled-warning'));
-        const dictionaries = await this._api.getDictionaryInfo();
+        const dictionaries = await yomitan.api.getDictionaryInfo();
 
         const enabledDictionaries = new Set();
         for (const {name, enabled} of options.dictionaries) {
@@ -290,8 +286,8 @@ class DisplayController {
      * @param {import('settings').ProfileOptions} options
      */
     async _updatePermissionsWarnings(options) {
-        const permissions = await getAllPermissions();
-        if (hasRequiredPermissionsForOptions(permissions, options)) { return; }
+        const permissions = await this._permissionsUtil.getAllPermissions();
+        if (this._permissionsUtil.hasRequiredPermissionsForOptions(permissions, options)) { return; }
 
         const warnings = /** @type {NodeListOf<HTMLElement>} */ (document.querySelectorAll('.action-open-permissions,.permissions-required-warning'));
         for (const node of warnings) {
@@ -301,14 +297,21 @@ class DisplayController {
 
     /** @returns {Promise<boolean>} */
     async _isSafari() {
-        const {browser} = await this._api.getEnvironmentInfo();
+        const {browser} = await yomitan.api.getEnvironmentInfo();
         return browser === 'safari';
     }
 }
 
-await Application.main(true, async (application) => {
-    void application.api.logIndicatorClear();
+/** Entry point. */
+async function main() {
+    await yomitan.prepare();
 
-    const displayController = new DisplayController(application.api);
-    await displayController.prepare();
-});
+    yomitan.api.logIndicatorClear();
+
+    const displayController = new DisplayController();
+    displayController.prepare();
+
+    yomitan.ready();
+}
+
+await main();

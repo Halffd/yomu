@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,18 +14,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-
-import codspeedPlugin from '@codspeed/vitest-plugin';
 import {configDefaults, defineConfig} from 'vitest/config';
 
 export default defineConfig({
-    plugins: [codspeedPlugin()],
     test: {
         exclude: [
             ...configDefaults.exclude,
             'dev/lib/**',
-            'test/playwright/**',
-            'test/json.test.js'
+            'test/playwright/**'
         ],
         poolOptions: {
             threads: {

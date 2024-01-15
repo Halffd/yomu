@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,6 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import type * as Deinflector from './deinflector';
 import type * as Dictionary from './dictionary';
 import type * as DictionaryDatabase from './dictionary-database';
 import type * as DictionaryImporter from './dictionary-importer';
@@ -50,7 +51,9 @@ type ApiSurface = {
         return: DictionaryDatabase.Media<string>[];
     };
     translatorPrepareOffscreen: {
-        params: void;
+        params: {
+            deinflectionReasons: Deinflector.ReasonsRaw;
+        };
         return: void;
     };
     findKanjiOffscreen: {

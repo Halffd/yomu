@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,8 +15,17 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import type {DictionaryDatabase} from '../../ext/js/dictionary/dictionary-database';
+import type {JapaneseUtil} from '../../ext/js/language/sandbox/japanese-util';
 import type * as Dictionary from './dictionary';
 import type * as DictionaryDatabaseTypes from './dictionary-database';
+
+export type ConstructorDetails = {
+    /** An instance of JapaneseUtil. */
+    japaneseUtil: JapaneseUtil;
+    /** An instance of DictionaryDatabase. */
+    database: DictionaryDatabase;
+};
 
 /**
  * Information about how popup content should be shown, specifically related to the outer popup frame.

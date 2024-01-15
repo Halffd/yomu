@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2020-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,17 +16,16 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {EventDispatcher} from '../core/event-dispatcher.js';
+import {EventDispatcher} from '../core.js';
 
 /**
  * @augments EventDispatcher<import('panel-element').Events>
  */
 export class PanelElement extends EventDispatcher {
     /**
-     * @param {HTMLElement} node
-     * @param {number} closingAnimationDuration
+     * @param {import('panel-element').ConstructorDetails} details
      */
-    constructor(node, closingAnimationDuration) {
+    constructor({node, closingAnimationDuration}) {
         super();
         /** @type {HTMLElement} */
         this._node = node;
@@ -90,14 +89,16 @@ export class PanelElement extends EventDispatcher {
      * @param {(details: import('core').EventArgument<import('panel-element').Events, TName>) => void} callback
      */
     on(eventName, callback) {
-        if (eventName === 'visibilityChanged' && this._mutationObserver === null) {
-            this._visible = this.isVisible();
-            this._mutationObserver = new MutationObserver(this._onMutation.bind(this));
-            this._mutationObserver.observe(this._node, {
-                attributes: true,
-                attributeFilter: ['hidden'],
-                attributeOldValue: true
-            });
+        if (eventName === 'visibilityChanged') {
+            if (this._mutationObserver === null) {
+                this._visible = this.isVisible();
+                this._mutationObserver = new MutationObserver(this._onMutation.bind(this));
+                this._mutationObserver.observe(this._node, {
+                    attributes: true,
+                    attributeFilter: ['hidden'],
+                    attributeOldValue: true
+                });
+            }
         }
         super.on(eventName, callback);
     }
@@ -110,9 +111,11 @@ export class PanelElement extends EventDispatcher {
      */
     off(eventName, callback) {
         const result = super.off(eventName, callback);
-        if (eventName === 'visibilityChanged' && !this.hasListeners(eventName) && this._mutationObserver !== null) {
-            this._mutationObserver.disconnect();
-            this._mutationObserver = null;
+        if (eventName === 'visibilityChanged' && !this.hasListeners(eventName)) {
+            if (this._mutationObserver !== null) {
+                this._mutationObserver.disconnect();
+                this._mutationObserver = null;
+            }
         }
         return result;
     }

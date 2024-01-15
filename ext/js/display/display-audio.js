@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2021-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,10 +16,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {EventListenerCollection} from '../core/event-listener-collection.js';
+import {EventListenerCollection} from '../core.js';
 import {PopupMenu} from '../dom/popup-menu.js';
 import {querySelectorNotNull} from '../dom/query-selector.js';
 import {AudioSystem} from '../media/audio-system.js';
+import {yomitan} from '../yomitan.js';
 
 export class DisplayAudio {
     /**
@@ -33,7 +34,7 @@ export class DisplayAudio {
         /** @type {AudioSystem} */
         this._audioSystem = new AudioSystem();
         /** @type {number} */
-        this._playbackVolume = 1;
+        this._playbackVolume = 1.0;
         /** @type {boolean} */
         this._autoPlay = false;
         /** @type {?import('core').Timeout} */
@@ -82,7 +83,7 @@ export class DisplayAudio {
     /** */
     prepare() {
         this._audioSystem.prepare();
-        /* eslint-disable @stylistic/no-multi-spaces */
+        /* eslint-disable no-multi-spaces */
         this._display.hotkeyHandler.registerActions([
             ['playAudio',           this._onHotkeyActionPlayAudio.bind(this)],
             ['playAudioFromSource', this._onHotkeyActionPlayAudioFromSource.bind(this)]
@@ -90,7 +91,7 @@ export class DisplayAudio {
         this._display.registerDirectMessageHandlers([
             ['displayAudioClearAutoPlayTimer', this._onMessageClearAutoPlayTimer.bind(this)]
         ]);
-        /* eslint-enable @stylistic/no-multi-spaces */
+        /* eslint-enable no-multi-spaces */
         this._display.on('optionsUpdated', this._onOptionsUpdated.bind(this));
         this._display.on('contentClear', this._onContentClear.bind(this));
         this._display.on('contentUpdateEntry', this._onContentUpdateEntry.bind(this));
@@ -166,7 +167,7 @@ export class DisplayAudio {
     _onOptionsUpdated({options}) {
         const {enabled, autoPlay, volume, sources} = options.audio;
         this._autoPlay = enabled && autoPlay;
-        this._playbackVolume = Number.isFinite(volume) ? Math.max(0, Math.min(1, volume / 100)) : 1;
+        this._playbackVolume = Number.isFinite(volume) ? Math.max(0.0, Math.min(1.0, volume / 100.0)) : 1.0;
 
         /** @type {Set<import('settings').AudioSourceType>} */
         const requiredAudioSources = new Set([
@@ -225,7 +226,7 @@ export class DisplayAudio {
 
         const callback = () => {
             this._autoPlayAudioTimer = null;
-            void this.playAudio(0, 0);
+            this.playAudio(0, 0);
         };
 
         if (this._autoPlayAudioDelay > 0) {
@@ -248,7 +249,7 @@ export class DisplayAudio {
 
     /** */
     _onHotkeyActionPlayAudio() {
-        void this.playAudio(this._display.selectedIndex, 0);
+        this.playAudio(this._display.selectedIndex, 0);
     }
 
     /**
@@ -256,7 +257,7 @@ export class DisplayAudio {
      */
     _onHotkeyActionPlayAudioFromSource(source) {
         if (!(typeof source === 'string' || typeof source === 'undefined' || source === null)) { return; }
-        void this.playAudio(this._display.selectedIndex, 0, source);
+        this.playAudio(this._display.selectedIndex, 0, source);
     }
 
     /** @type {import('display').DirectApiHandler<'displayAudioClearAutoPlayTimer'>} */
@@ -317,7 +318,7 @@ export class DisplayAudio {
         if (e.shiftKey) {
             this._showAudioMenu(button, dictionaryEntryIndex, headwordIndex);
         } else {
-            void this.playAudio(dictionaryEntryIndex, headwordIndex);
+            this.playAudio(dictionaryEntryIndex, headwordIndex);
         }
     }
 
@@ -348,7 +349,7 @@ export class DisplayAudio {
                 if (shiftKey) {
                     e.preventDefault();
                 }
-                void this._playAudioFromSource(dictionaryEntryIndex, headwordIndex, item);
+                this._playAudioFromSource(dictionaryEntryIndex, headwordIndex, item);
                 break;
             case 'setPrimaryAudio':
                 e.preventDefault();
@@ -514,10 +515,8 @@ export class DisplayAudio {
             !canToggleOff ||
             primaryCardAudio === null ||
             primaryCardAudio.index !== index ||
-            primaryCardAudio.subIndex !== subIndex ?
-            {index: index, subIndex} :
-            null
-        );
+            primaryCardAudio.subIndex !== subIndex
+        ) ? {index: index, subIndex} : null;
         cacheEntry.primaryCardAudio = primaryCardAudio;
 
         if (menu !== null) {
@@ -534,7 +533,7 @@ export class DisplayAudio {
         if (headwordNode !== null) {
             const {index} = headwordNode.dataset;
             if (typeof index === 'string') {
-                const headwordIndex = Number.parseInt(index, 10);
+                const headwordIndex = parseInt(index, 10);
                 if (Number.isFinite(headwordIndex)) { return headwordIndex; }
             }
         }
@@ -677,7 +676,7 @@ export class DisplayAudio {
      */
     async _getTermAudioInfoList(source, term, reading) {
         const sourceData = this._getSourceData(source);
-        const infoList = await this._display.application.api.getTermAudioInfoList(sourceData, term, reading);
+        const infoList = await yomitan.api.getTermAudioInfoList(sourceData, term, reading);
         return infoList.map((info) => ({info, audioPromise: null, audioResolved: false, audio: null}));
     }
 

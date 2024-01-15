@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2021-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -17,6 +17,7 @@
  */
 
 import {querySelectorNotNull} from '../../dom/query-selector.js';
+import {yomitan} from '../../yomitan.js';
 
 export class SortFrequencyDictionaryController {
     /**
@@ -41,7 +42,7 @@ export class SortFrequencyDictionaryController {
     async prepare() {
         await this._onDatabaseUpdated();
 
-        this._settingsController.application.on('databaseUpdated', this._onDatabaseUpdated.bind(this));
+        yomitan.on('databaseUpdated', this._onDatabaseUpdated.bind(this));
         this._settingsController.on('optionsChanged', this._onOptionsChanged.bind(this));
         this._sortFrequencyDictionarySelect.addEventListener('change', this._onSortFrequencyDictionarySelectChange.bind(this));
         this._sortFrequencyDictionaryOrderSelect.addEventListener('change', this._onSortFrequencyDictionaryOrderSelectChange.bind(this));
@@ -79,7 +80,7 @@ export class SortFrequencyDictionaryController {
     /** */
     _onSortFrequencyDictionarySelectChange() {
         const {value} = /** @type {HTMLSelectElement} */ (this._sortFrequencyDictionarySelect);
-        void this._setSortFrequencyDictionaryValue(value !== '' ? value : null);
+        this._setSortFrequencyDictionaryValue(value !== '' ? value : null);
     }
 
     /** */
@@ -87,14 +88,14 @@ export class SortFrequencyDictionaryController {
         const {value} = /** @type {HTMLSelectElement} */ (this._sortFrequencyDictionaryOrderSelect);
         const value2 = this._normalizeSortFrequencyDictionaryOrder(value);
         if (value2 === null) { return; }
-        void this._setSortFrequencyDictionaryOrderValue(value2);
+        this._setSortFrequencyDictionaryOrderValue(value2);
     }
 
     /** */
     _onSortFrequencyDictionaryOrderAutoButtonClick() {
         const {value} = /** @type {HTMLSelectElement} */ (this._sortFrequencyDictionarySelect);
         if (value === '') { return; }
-        void this._autoUpdateOrder(value);
+        this._autoUpdateOrder(value);
     }
 
     /**
@@ -156,7 +157,7 @@ export class SortFrequencyDictionaryController {
         const lessCommonTerms = ['行なう', '論じる', '過す', '行方', '人口', '猫', '犬', '滝', '理', '暁'];
         const terms = [...moreCommonTerms, ...lessCommonTerms];
 
-        const frequencies = await this._settingsController.application.api.getTermFrequencies(
+        const frequencies = await yomitan.api.getTermFrequencies(
             terms.map((term) => ({term, reading: null})),
             [dictionary]
         );

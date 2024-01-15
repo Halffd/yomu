@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2017-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -19,17 +19,18 @@
 import {RequestBuilder} from '../background/request-builder.js';
 import {ExtensionError} from '../core/extension-error.js';
 import {readResponseJson} from '../core/json.js';
-import {arrayBufferToBase64} from '../data/array-buffer-util.js';
 import {JsonSchema} from '../data/json-schema.js';
+import {ArrayBufferUtil} from '../data/sandbox/array-buffer-util.js';
 import {NativeSimpleDOMParser} from '../dom/native-simple-dom-parser.js';
 import {SimpleDOMParser} from '../dom/simple-dom-parser.js';
-import {isStringEntirelyKana} from '../language/ja/japanese.js';
 
 export class AudioDownloader {
     /**
-     * @param {RequestBuilder} requestBuilder
+     * @param {{japaneseUtil: import('../language/sandbox/japanese-util.js').JapaneseUtil, requestBuilder: RequestBuilder}} details
      */
-    constructor(requestBuilder) {
+    constructor({japaneseUtil, requestBuilder}) {
+        /** @type {import('../language/sandbox/japanese-util.js').JapaneseUtil} */
+        this._japaneseUtil = japaneseUtil;
         /** @type {RequestBuilder} */
         this._requestBuilder = requestBuilder;
         /** @type {?JsonSchema} */
@@ -110,7 +111,7 @@ export class AudioDownloader {
 
     /** @type {import('audio-downloader').GetInfoHandler} */
     async _getInfoJpod101(term, reading) {
-        if (reading === term && isStringEntirelyKana(term)) {
+        if (reading === term && this._japaneseUtil.isStringEntirelyKana(term)) {
             reading = term;
             term = '';
         }
@@ -304,17 +305,7 @@ export class AudioDownloader {
             throw new Error('No custom URL defined');
         }
         const data = {term, reading};
-        /**
-         * @param {string} m0
-         * @param {string} m1
-         * @returns {string}
-         */
-        const replacer = (m0, m1) => (
-            Object.prototype.hasOwnProperty.call(data, m1) ?
-            `${data[/** @type {'term'|'reading'} */ (m1)]}` :
-            m0
-        );
-        return url.replace(/\{([^}]*)\}/g, replacer);
+        return url.replace(/\{([^}]*)\}/g, (m0, m1) => (Object.prototype.hasOwnProperty.call(data, m1) ? `${data[/** @type {'term'|'reading'} */ (m1)]}` : m0));
     }
 
     /**
@@ -368,7 +359,7 @@ export class AudioDownloader {
             throw new Error('Could not retrieve audio');
         }
 
-        const data = arrayBufferToBase64(arrayBuffer);
+        const data = ArrayBufferUtil.arrayBufferToBase64(arrayBuffer);
         const contentType = response.headers.get('Content-Type');
         return {data, contentType};
     }

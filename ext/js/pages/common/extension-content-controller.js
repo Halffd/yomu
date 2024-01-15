@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -23,7 +23,7 @@ export class ExtensionContentController {
     prepare() {
         this._prepareSpecialUrls();
         this._prepareExtensionIdExamples();
-        void this._prepareEnvironmentInfo();
+        this._prepareEnvironmentInfo();
     }
 
     // Private
@@ -93,7 +93,7 @@ export class ExtensionContentController {
                     const {specialUrl} = element.dataset;
                     if (typeof specialUrl !== 'string') { return; }
                     e.preventDefault();
-                    void this._createTab(specialUrl, true);
+                    this._createTab(specialUrl, true);
                 }
                 break;
         }

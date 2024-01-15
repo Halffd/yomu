@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2020-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,7 +18,6 @@
 
 import Ajv from 'ajv';
 import {readFileSync} from 'fs';
-import {fileURLToPath} from 'url';
 import {JsonSchema} from '../ext/js/data/json-schema.js';
 import {DataError} from './data-error.js';
 import {parseJson} from './json.js';
@@ -33,7 +32,7 @@ class JsonSchemaAjv {
             strictTuples: false,
             allowUnionTypes: true
         });
-        const metaSchemaPath = fileURLToPath(import.meta.resolve('ajv/dist/refs/json-schema-draft-07.json'));
+        const metaSchemaPath = require.resolve('ajv/dist/refs/json-schema-draft-07.json');
         /** @type {import('ajv').AnySchemaObject} */
         const metaSchema = parseJson(readFileSync(metaSchemaPath, {encoding: 'utf8'}));
         ajv.addMetaSchema(metaSchema);

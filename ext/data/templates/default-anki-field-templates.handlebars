@@ -101,26 +101,12 @@
     <div style="text-align: left;">
     {{~#scope~}}
         {{~#if (op "===" definition.type "term")~}}
-            {{~#unless (op "&&" selectedDictionary (op "!=" selectedDictionary definition.dictionary))~}}
-                {{~> glossary-single definition brief=brief noDictionaryTag=noDictionaryTag ~}}
-            {{~/unless~}}
+            {{~> glossary-single definition brief=brief noDictionaryTag=noDictionaryTag ~}}
         {{~else if (op "||" (op "===" definition.type "termGrouped") (op "===" definition.type "termMerged"))~}}
             {{~#if (op ">" definition.definitions.length 1)~}}
-                <ol>
-                    {{~#each definition.definitions~}}
-                        {{~#unless (op "&&" ../selectedDictionary (op "!=" ../selectedDictionary dictionary))~}}
-                            <li>
-                                {{~> glossary-single . brief=../brief noDictionaryTag=../noDictionaryTag ~}}
-                            </li>
-                        {{~/unless~}}
-                    {{~/each~}}
-                </ol>
+                <ol>{{~#each definition.definitions~}}<li>{{~> glossary-single . brief=../brief noDictionaryTag=../noDictionaryTag ~}}</li>{{~/each~}}</ol>
             {{~else~}}
-                {{~#each definition.definitions~}}
-                    {{~#unless (op "&&" ../selectedDictionary (op "!=" ../selectedDictionary dictionary))~}}
-                        {{~> glossary-single . brief=../brief noDictionaryTag=../noDictionaryTag ~}}
-                    {{~/unless~}}
-                {{~/each~}}
+                {{~#each definition.definitions~}}{{~> glossary-single . brief=../brief noDictionaryTag=../noDictionaryTag ~}}{{~/each~}}
             {{~/if~}}
         {{~else if (op "===" definition.type "kanji")~}}
             {{~#if (op ">" definition.glossary.length 1)~}}
@@ -163,32 +149,28 @@
 {{/inline}}
 
 {{#*inline "sentence"}}
-    {{~#if definition.cloze}}{{{definition.cloze.sentence}}}{{/if~}}
+    {{~#if definition.cloze}}{{definition.cloze.sentence}}{{/if~}}
 {{/inline}}
 
 {{#*inline "cloze-prefix"}}
-    {{~#if definition.cloze}}{{{definition.cloze.prefix}}}{{/if~}}
+    {{~#if definition.cloze}}{{definition.cloze.prefix}}{{/if~}}
 {{/inline}}
 
 {{#*inline "cloze-body"}}
-    {{~#if definition.cloze}}{{{definition.cloze.body}}}{{/if~}}
-{{/inline}}
-
-{{#*inline "cloze-body-kana"}}
-    {{~#if definition.cloze}}{{{definition.cloze.bodyKana}}}{{/if~}}
+    {{~#if definition.cloze}}{{definition.cloze.body}}{{/if~}}
 {{/inline}}
 
 {{#*inline "cloze-suffix"}}
-    {{~#if definition.cloze}}{{{definition.cloze.suffix}}}{{/if~}}
+    {{~#if definition.cloze}}{{definition.cloze.suffix}}{{/if~}}
 {{/inline}}
 
 {{#*inline "tags"}}
     {{~#mergeTags definition group merge}}{{this}}{{/mergeTags~}}
 {{/inline}}
 
-{{~#*inline "url"~}}
+{{#*inline "url"}}
     <a href="{{definition.url}}">{{definition.url}}</a>
-{{~/inline~}}
+{{/inline}}
 
 {{#*inline "screenshot"}}
     {{~#if (hasMedia "screenshot")~}}
@@ -242,17 +224,9 @@
     {{~> pitch-accent-list format='graph'~}}
 {{/inline}}
 
-{{#*inline "pitch-accent-graphs-jj"}}
-    {{~> pitch-accent-list format='graph-jj'~}}
-{{/inline}}
-
 {{#*inline "pitch-accent-positions"}}
     {{~> pitch-accent-list format='position'~}}
 {{/inline}}
-
-{{~#*inline "pitch-accent-categories"~}}
-    {{~#each (pitchCategories @root)~}}{{~.~}}{{~#unless @last~}},{{~/unless~}}{{~/each~}}
-{{~/inline~}}
 {{! End Pitch Accents }}
 
 {{#*inline "phonetic-transcriptions"}}
@@ -283,27 +257,15 @@
 {{/inline}}
 
 {{#*inline "clipboard-text"}}
-    {{~#if (hasMedia "clipboardText")}}{{{getMedia "clipboardText"}}}{{/if~}}
+    {{~#if (hasMedia "clipboardText")}}{{getMedia "clipboardText"}}{{/if~}}
 {{/inline}}
 
 {{#*inline "conjugation"}}
-    {{~#if (op ">" definition.inflectionRuleChainCandidates.length 0)~}}
-        {{~set "multiple" false~}}
-        {{~#if (op ">" definition.inflectionRuleChainCandidates.length 1)~}}
-            {{~set "multiple" true~}}
-        {{~/if~}}
-        {{~#if (get "multiple")~}}<ul>{{/if~}}
-            {{~#each definition.inflectionRuleChainCandidates~}}
-                {{~#if (op ">" inflectionRules.length 0)~}}
-                    {{~#if (get "multiple")~}}<li>{{/if~}}
-                    {{~#each inflectionRules~}}
-                        {{~#if (op ">" @index 0)}} « {{/if~}}
-                        {{.}}
-                    {{~/each~}}
-                    {{~#if (get "multiple")~}}</li>{{/if~}}
-                {{~/if~}}
-            {{~/each~}}
-        {{~#if (get "multiple")~}}</ul>{{/if~}}
+    {{~#if definition.reasons~}}
+        {{~#each definition.reasons~}}
+            {{~#if (op ">" @index 0)}} « {{/if~}}
+            {{.}}
+        {{~/each~}}
     {{~/if~}}
 {{/inline}}
 
@@ -321,38 +283,6 @@
             </li>
         {{~/each~}}
         </ul>
-    {{~/if~}}
-{{/inline}}
-
-{{#*inline "frequency-harmonic-rank"}}
-    {{~#if (op "===" definition.frequencyHarmonic -1) ~}}
-        9999999
-    {{~else ~}}
-        {{definition.frequencyHarmonic}}
-    {{~/if~}}
-{{/inline}}
-
-{{#*inline "frequency-harmonic-occurrence"}}
-    {{~#if (op "===" definition.frequencyHarmonic -1) ~}}
-        0
-    {{~else ~}}
-        {{definition.frequencyHarmonic}}
-    {{~/if~}}
-{{/inline}}
-
-{{#*inline "frequency-average-rank"}}
-    {{~#if (op "===" definition.frequencyAverage -1) ~}}
-        9999999
-    {{~else ~}}
-        {{definition.frequencyAverage}}
-    {{~/if~}}
-{{/inline}}
-
-{{#*inline "frequency-average-occurrence"}}
-    {{~#if (op "===" definition.frequencyAverage -1) ~}}
-        0
-    {{~else ~}}
-        {{definition.frequencyAverage}}
     {{~/if~}}
 {{/inline}}
 
@@ -407,15 +337,15 @@
 {{/inline}}
 
 {{#*inline "selection-text"}}
-    {{~#if (hasMedia "selectionText")}}{{{getMedia "selectionText"}}}{{/if~}}
+    {{~#if (hasMedia "selectionText")}}{{getMedia "selectionText"}}{{/if~}}
 {{/inline}}
 
 {{#*inline "sentence-furigana"}}
     {{~#if definition.cloze~}}
         {{~#if (hasMedia "textFurigana" definition.cloze.sentence)~}}
-            {{{getMedia "textFurigana" definition.cloze.sentence escape=false}}}
+            {{getMedia "textFurigana" definition.cloze.sentence escape=false}}
         {{~else~}}
-            {{{definition.cloze.sentence}}}
+            {{definition.cloze.sentence}}
         {{~/if~}}
     {{~/if~}}
 {{/inline}}

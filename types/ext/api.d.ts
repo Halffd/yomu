@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,7 +26,6 @@ import type * as DictionaryDatabase from './dictionary-database';
 import type * as DictionaryImporter from './dictionary-importer';
 import type * as Environment from './environment';
 import type * as Extension from './extension';
-import type * as Language from './language';
 import type * as Log from './log';
 import type * as Settings from './settings';
 import type * as SettingsModifications from './settings-modifications';
@@ -113,10 +112,6 @@ export type GetTermFrequenciesDetailsTermReadingListItem = {
 };
 
 type ApiSurface = {
-    applicationReady: {
-        params: void;
-        return: void;
-    };
     optionsGet: {
         params: {
             optionsContext: Settings.OptionsContext;
@@ -194,9 +189,9 @@ type ApiSurface = {
             errors: Core.SerializedError[];
         };
     };
-    viewNotes: {
+    noteView: {
         params: {
-            noteIds: Anki.NoteId[];
+            noteId: Anki.NoteId;
             mode: Settings.AnkiNoteGuiMode;
             allowFallback: boolean;
         };
@@ -261,6 +256,10 @@ type ApiSurface = {
         params: void;
         return: string;
     };
+    getDisplayTemplatesHtml: {
+        params: void;
+        return: string;
+    };
     getZoom: {
         params: void;
         return: {
@@ -285,7 +284,7 @@ type ApiSurface = {
         };
         return: DictionaryDatabase.MediaDataStringContent[];
     };
-    logGenericErrorBackend: {
+    log: {
         params: {
             error: Core.SerializedError;
             level: Log.LogLevel;
@@ -344,10 +343,9 @@ type ApiSurface = {
         params: void;
         return: true;
     };
-    isTextLookupWorthy: {
+    textHasJapaneseCharacters: {
         params: {
             text: string;
-            language: string;
         };
         return: boolean;
     };
@@ -377,10 +375,6 @@ type ApiSurface = {
     requestBackendReadySignal: {
         params: void;
         return: boolean;
-    };
-    getLanguageSummaries: {
-        params: void;
-        return: Language.LanguageSummary[];
     };
 };
 

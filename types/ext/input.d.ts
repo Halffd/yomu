@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,9 +16,6 @@
  */
 
 export type ModifierKey = 'alt' | 'ctrl' | 'meta' | 'shift';
-
 export type ModifierMouseButton = 'mouse0' | 'mouse1' | 'mouse2' | 'mouse3' | 'mouse4' | 'mouse5';
-
 export type Modifier = ModifierKey | ModifierMouseButton;
-
 export type ModifierType = 'key' | 'mouse';

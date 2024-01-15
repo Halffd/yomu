@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2020-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,10 +16,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {describe, expect, test} from 'vitest';
-import {createSchema, normalizeContext} from '../ext/js/background/profile-conditions-util.js';
+/* eslint-disable no-multi-spaces */
 
-describe('Profile conditions utilities', () => {
+import {describe, expect, test} from 'vitest';
+import {ProfileConditionsUtil} from '../ext/js/background/profile-conditions-util.js';
+
+/** */
+function testNormalizeContext() {
     describe('NormalizeContext', () => {
         /** @type {{context: import('settings').OptionsContext, expected: import('profile-conditions-util').NormalizedOptionsContext}[]} */
         const data = [
@@ -49,13 +52,16 @@ describe('Profile conditions utilities', () => {
         ];
 
         test.each(data)('normalize-context-test-%#', ({context, expected}) => {
-            const actual = normalizeContext(context);
+            const profileConditionsUtil = new ProfileConditionsUtil();
+            const actual = profileConditionsUtil.normalizeContext(context);
             expect(actual).toStrictEqual(expected);
         });
     });
+}
 
+/** */
+function testSchemas() {
     describe('Schemas', () => {
-        /* eslint-disable @stylistic/no-multi-spaces */
         /** @type {{conditionGroups: import('settings').ProfileConditionGroup[], expectedSchema?: import('ext/json-schema').Schema, inputs?: {expected: boolean, context: import('settings').OptionsContext}[]}[]} */
         const data = [
             // Empty
@@ -250,7 +256,7 @@ describe('Profile conditions utilities', () => {
                 ]
             },
 
-            // Url tests
+            // url tests
             {
                 conditionGroups: [
                     {
@@ -606,7 +612,7 @@ describe('Profile conditions utilities', () => {
                 ]
             },
 
-            // Flags tests
+            // flags tests
             {
                 conditionGroups: [
                     {
@@ -1093,20 +1099,29 @@ describe('Profile conditions utilities', () => {
                 ]
             }
         ];
-        /* eslint-enable @stylistic/no-multi-spaces */
 
         test.each(data)('schemas-test-%#', ({conditionGroups, expectedSchema, inputs}) => {
-            const schema = createSchema(conditionGroups);
+            const profileConditionsUtil = new ProfileConditionsUtil();
+            const schema = profileConditionsUtil.createSchema(conditionGroups);
             if (typeof expectedSchema !== 'undefined') {
                 expect(schema.schema).toStrictEqual(expectedSchema);
             }
             if (Array.isArray(inputs)) {
                 for (const {expected, context} of inputs) {
-                    const normalizedContext = normalizeContext(context);
+                    const normalizedContext = profileConditionsUtil.normalizeContext(context);
                     const actual = schema.isValid(normalizedContext);
                     expect(actual).toStrictEqual(expected);
                 }
             }
         });
     });
-});
+}
+
+
+/** */
+function main() {
+    testNormalizeContext();
+    testSchemas();
+}
+
+main();

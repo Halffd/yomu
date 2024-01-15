@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2021-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,16 +16,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {toError} from '../../core/to-error.js';
 import {querySelectorNotNull} from '../../dom/query-selector.js';
+import {yomitan} from '../../yomitan.js';
 
 export class MecabController {
-    /**
-     * @param {import('../../comm/api.js').API} api
-     */
-    constructor(api) {
-        /** @type {import('../../comm/api.js').API} */
-        this._api = api;
+    constructor() {
         /** @type {HTMLButtonElement} */
         this._testButton = querySelectorNotNull(document, '#test-mecab-button');
         /** @type {HTMLElement} */
@@ -46,7 +41,7 @@ export class MecabController {
      */
     _onTestButtonClick(e) {
         e.preventDefault();
-        void this._testMecab();
+        this._testMecab();
     }
 
     /** */
@@ -59,10 +54,10 @@ export class MecabController {
             /** @type {HTMLButtonElement} */ (this._testButton).disabled = true;
             resultsContainer.textContent = '';
             resultsContainer.hidden = true;
-            await this._api.testMecab();
+            await yomitan.api.testMecab();
             this._setStatus('Connection was successful', false);
         } catch (e) {
-            this._setStatus(toError(e).message, true);
+            this._setStatus(e instanceof Error ? e.message : `${e}`, true);
         } finally {
             this._testActive = false;
             /** @type {HTMLButtonElement} */ (this._testButton).disabled = false;

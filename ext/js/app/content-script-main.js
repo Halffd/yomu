@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2019-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,30 +16,48 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {Application} from '../application.js';
+import {log} from '../core.js';
 import {HotkeyHandler} from '../input/hotkey-handler.js';
+import {yomitan} from '../yomitan.js';
 import {Frontend} from './frontend.js';
 import {PopupFactory} from './popup-factory.js';
 
-await Application.main(false, async (application) => {
-    const hotkeyHandler = new HotkeyHandler();
-    hotkeyHandler.prepare(application.crossFrame);
+/** Entry point. */
+async function main() {
+    try {
+        await yomitan.prepare();
 
-    const popupFactory = new PopupFactory(application);
-    popupFactory.prepare();
+        const {tabId, frameId} = await yomitan.api.frameInformationGet();
+        if (typeof frameId !== 'number') {
+            throw new Error('Failed to get frameId');
+        }
 
-    const frontend = new Frontend({
-        application,
-        popupFactory,
-        depth: 0,
-        parentPopupId: null,
-        parentFrameId: null,
-        useProxyPopup: false,
-        pageType: 'web',
-        canUseWindowPopup: true,
-        allowRootFramePopupProxy: true,
-        childrenSupported: true,
-        hotkeyHandler
-    });
-    await frontend.prepare();
-});
+        const hotkeyHandler = new HotkeyHandler();
+        hotkeyHandler.prepare();
+
+        const popupFactory = new PopupFactory(frameId);
+        popupFactory.prepare();
+
+        const frontend = new Frontend({
+            tabId,
+            frameId,
+            popupFactory,
+            depth: 0,
+            parentPopupId: null,
+            parentFrameId: null,
+            useProxyPopup: false,
+            pageType: 'web',
+            canUseWindowPopup: true,
+            allowRootFramePopupProxy: true,
+            childrenSupported: true,
+            hotkeyHandler
+        });
+        await frontend.prepare();
+
+        yomitan.ready();
+    } catch (e) {
+        log.error(e);
+    }
+}
+
+await main();

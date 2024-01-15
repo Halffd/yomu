@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2020-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,10 +16,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+/* eslint-disable no-multi-spaces */
+
 import {describe, expect, test} from 'vitest';
 import {CacheMap} from '../ext/js/general/cache-map.js';
 
-describe('CacheMap', () => {
+/** */
+function testConstructor() {
     describe('constructor', () => {
         const shouldThrow = [-1, 1.5, Number.NaN, Number.POSITIVE_INFINITY];
         const shouldNotThrow = [0, 1, Number.MAX_VALUE];
@@ -31,9 +34,11 @@ describe('CacheMap', () => {
             expect(() => new CacheMap(param)).toThrowError();
         });
     });
+}
 
+/** */
+function testApi() {
     describe('api', () => {
-        /* eslint-disable @stylistic/no-multi-spaces */
         const data = [
             {
                 maxSize: 1,
@@ -85,7 +90,6 @@ describe('CacheMap', () => {
                 ]
             }
         ];
-        /* eslint-enable @stylistic/no-multi-spaces */
 
         test.each(data)('api-test-%#', ({maxSize, expectedSize, calls}) => {
             const cache = new CacheMap(maxSize);
@@ -107,4 +111,14 @@ describe('CacheMap', () => {
             expect(cache.size).toStrictEqual(expectedSize);
         });
     });
-});
+}
+
+
+/** */
+function main() {
+    testConstructor();
+    testApi();
+}
+
+
+main();

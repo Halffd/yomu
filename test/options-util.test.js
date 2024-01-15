@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2020-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,10 +16,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+/* eslint-disable no-multi-spaces */
+
 import fs from 'fs';
 import {fileURLToPath} from 'node:url';
 import path from 'path';
-import {describe, expect, test, vi} from 'vitest';
+import {expect, test, describe, vi} from 'vitest';
 import {OptionsUtil} from '../ext/js/data/options-util.js';
 import {TemplatePatcher} from '../ext/js/templates/template-patcher.js';
 import {chrome, fetch} from './mocks/common.js';
@@ -241,7 +243,6 @@ function createProfileOptionsUpdatedTestData1() {
     return {
         general: {
             enable: true,
-            language: 'ja',
             resultOutputMode: 'group',
             debugInfo: false,
             maxResults: 32,
@@ -343,9 +344,8 @@ function createProfileOptionsUpdatedTestData1() {
                         showAdvanced: false,
                         searchTerms: true,
                         searchKanji: true,
-                        scanOnTouchTap: true,
-                        scanOnTouchMove: false,
-                        scanOnTouchPress: false,
+                        scanOnTouchMove: true,
+                        scanOnTouchPress: true,
                         scanOnTouchRelease: false,
                         scanOnPenMove: true,
                         scanOnPenHover: true,
@@ -368,9 +368,8 @@ function createProfileOptionsUpdatedTestData1() {
                         showAdvanced: false,
                         searchTerms: true,
                         searchKanji: true,
-                        scanOnTouchTap: true,
-                        scanOnTouchMove: false,
-                        scanOnTouchPress: false,
+                        scanOnTouchMove: true,
+                        scanOnTouchPress: true,
                         scanOnTouchRelease: false,
                         scanOnPenMove: true,
                         scanOnPenHover: true,
@@ -393,9 +392,8 @@ function createProfileOptionsUpdatedTestData1() {
                         showAdvanced: false,
                         searchTerms: true,
                         searchKanji: true,
-                        scanOnTouchTap: true,
-                        scanOnTouchMove: false,
-                        scanOnTouchPress: false,
+                        scanOnTouchMove: true,
+                        scanOnTouchPress: true,
                         scanOnTouchRelease: false,
                         scanOnPenMove: true,
                         scanOnPenHover: true,
@@ -409,6 +407,12 @@ function createProfileOptionsUpdatedTestData1() {
             ]
         },
         translation: {
+            convertHalfWidthCharacters: 'false',
+            convertNumericCharacters: 'false',
+            convertAlphabeticCharacters: 'false',
+            convertHiraganaToKatakana: 'false',
+            convertKatakanaToHiragana: 'variant',
+            collapseEmphaticSequences: 'false',
             searchResolution: 'letter',
             textReplacements: {
                 searchOriginal: true,
@@ -422,8 +426,7 @@ function createProfileOptionsUpdatedTestData1() {
                 enabled: true,
                 allowSecondarySearches: false,
                 definitionsCollapsible: 'not-collapsible',
-                partsOfSpeechFilter: true,
-                useDeinflections: true
+                partsOfSpeechFilter: true
             }
         ],
         parsing: {
@@ -440,7 +443,6 @@ function createProfileOptionsUpdatedTestData1() {
             screenshot: {format: 'png', quality: 92},
             terms: {deck: '', model: '', fields: {}},
             kanji: {deck: '', model: '', fields: {}},
-            duplicateBehavior: 'new',
             duplicateScope: 'collection',
             duplicateScopeCheckAllModels: false,
             displayTags: 'never',
@@ -474,7 +476,6 @@ function createProfileOptionsUpdatedTestData1() {
             ]
         },
         inputs: {
-            /* eslint-disable @stylistic/no-multi-spaces */
             hotkeys: [
                 {action: 'close',             argument: '',  key: 'Escape',    modifiers: [],       scopes: ['popup'], enabled: true},
                 {action: 'focusSearchBox',    argument: '',  key: 'Escape',    modifiers: [],       scopes: ['search'], enabled: true},
@@ -490,12 +491,9 @@ function createProfileOptionsUpdatedTestData1() {
                 {action: 'addNoteTermKanji',  argument: '',  key: 'KeyE',      modifiers: ['alt'],  scopes: ['popup', 'search'], enabled: true},
                 {action: 'addNoteTermKana',   argument: '',  key: 'KeyR',      modifiers: ['alt'],  scopes: ['popup', 'search'], enabled: true},
                 {action: 'playAudio',         argument: '',  key: 'KeyP',      modifiers: ['alt'],  scopes: ['popup', 'search'], enabled: true},
-                {action: 'viewNotes',         argument: '',  key: 'KeyV',      modifiers: ['alt'],  scopes: ['popup', 'search'], enabled: true},
-                {action: 'copyHostSelection', argument: '',  key: 'KeyC',      modifiers: ['ctrl'], scopes: ['popup'], enabled: true},
-                {action: 'profilePrevious',   argument: '',  key: 'Minus',     modifiers: ['alt'],  scopes: ['popup', 'search'], enabled: true},
-                {action: 'profileNext',       argument: '',  key: 'Equal',     modifiers: ['alt'],  scopes: ['popup', 'search'], enabled: true}
+                {action: 'viewNote',          argument: '',  key: 'KeyV',      modifiers: ['alt'],  scopes: ['popup', 'search'], enabled: true},
+                {action: 'copyHostSelection', argument: '',  key: 'KeyC',      modifiers: ['ctrl'], scopes: ['popup'], enabled: true}
             ]
-            /* eslint-enable @stylistic/no-multi-spaces */
         },
         popupWindow: {
             width: 400,
@@ -605,7 +603,7 @@ function createOptionsUpdatedTestData1() {
             }
         ],
         profileCurrent: 0,
-        version: 34,
+        version: 23,
         global: {
             database: {
                 prefixWildcardsSupported: false
@@ -614,22 +612,9 @@ function createOptionsUpdatedTestData1() {
     };
 }
 
-/**
- * @param {string} templates
- * @returns {Map<string, string>}
- */
-function getHandlebarsPartials(templates) {
-    const inlinePartialRegex = /{{~?#\*inline .*?"([^"]*)"~?}}.*?{{~?\/inline~?}}/gs;
-    const matches = templates.matchAll(inlinePartialRegex);
-    const partials = new Map();
-    for (const match of matches) {
-        const [template, name] = match;
-        partials.set(name, template);
-    }
-    return partials;
-}
 
-describe('OptionsUtil', () => {
+/** */
+async function testUpdate() {
     test('Update', async () => {
         const optionsUtil = new OptionsUtil();
         await optionsUtil.prepare();
@@ -639,26 +624,10 @@ describe('OptionsUtil', () => {
         const optionsExpected = createOptionsUpdatedTestData1();
         expect(optionsUpdated).toStrictEqual(optionsExpected);
     });
+}
 
-    test('CumulativeFieldTemplatesUpdates', async () => {
-        const optionsUtil = new OptionsUtil();
-        await optionsUtil.prepare();
-
-        const options = /** @type {import('core').SafeAny} */ (createOptionsTestData1());
-
-        const oldAnkiFieldTemplates = fs.readFileSync(path.join(dirname, 'data', 'templates', 'old-default-anki-field-templates.handlebars'), {encoding: 'utf8'});
-        const defaultAnkiFieldTemplates = fs.readFileSync(path.join(dirname, '..', 'ext', 'data', 'templates', 'default-anki-field-templates.handlebars'), {encoding: 'utf8'});
-
-        options.profiles[0].options.anki.fieldTemplates = oldAnkiFieldTemplates;
-        const optionsUpdated = structuredClone(await optionsUtil.update(options));
-        const fieldTemplatesUpdated = optionsUpdated.profiles[0].options.anki.fieldTemplates || '';
-
-        const partialsUpdated = getHandlebarsPartials(fieldTemplatesUpdated);
-        const partialsExpected = getHandlebarsPartials(defaultAnkiFieldTemplates);
-
-        expect(partialsUpdated).toStrictEqual(partialsExpected);
-    });
-
+/** */
+async function testDefault() {
     describe('Default', () => {
         /** @type {((options: import('options-util').IntermediateOptions) => void)[]} */
         const data = [
@@ -682,7 +651,10 @@ describe('OptionsUtil', () => {
             expect(structuredClone(optionsUpdated)).toStrictEqual(structuredClone(options));
         });
     });
+}
 
+/** */
+async function testFieldTemplatesUpdate() {
     describe('FieldTemplatesUpdate', () => {
         const templatePatcher = new TemplatePatcher();
         /**
@@ -690,25 +662,19 @@ describe('OptionsUtil', () => {
          * @returns {string}
          */
         const loadDataFile = (fileName) => {
-            const content = fs.readFileSync(fileName, {encoding: 'utf8'});
+            const content = fs.readFileSync(path.join(dirname, '..', 'ext', fileName), {encoding: 'utf8'});
             return templatePatcher.parsePatch(content).addition;
         };
-
-        /** @type {import('options-util').TemplateFieldUpdate[]} */
-        const updates = [];
-        const fileNameRegex = /^anki-field-templates-upgrade-v(\d+)\.handlebars$/;
-        const templatesDirPath = path.join(dirname, '..', 'ext', 'data', 'templates');
-        const templatesDir = fs.readdirSync(templatesDirPath, {encoding: 'utf8'});
-        for (const fileName of templatesDir) {
-            const match = fileNameRegex.exec(fileName);
-            if (match !== null) {
-                updates.push({
-                    version: Number.parseInt(match[1], 10),
-                    changes: loadDataFile(path.join(templatesDirPath, match[0]))
-                });
-            }
-        }
-        updates.sort((a, b) => a.version - b.version);
+        const updates = [
+            {version: 2,  changes: loadDataFile('data/templates/anki-field-templates-upgrade-v2.handlebars')},
+            {version: 4,  changes: loadDataFile('data/templates/anki-field-templates-upgrade-v4.handlebars')},
+            {version: 6,  changes: loadDataFile('data/templates/anki-field-templates-upgrade-v6.handlebars')},
+            {version: 8,  changes: loadDataFile('data/templates/anki-field-templates-upgrade-v8.handlebars')},
+            {version: 10, changes: loadDataFile('data/templates/anki-field-templates-upgrade-v10.handlebars')},
+            {version: 12, changes: loadDataFile('data/templates/anki-field-templates-upgrade-v12.handlebars')},
+            {version: 13, changes: loadDataFile('data/templates/anki-field-templates-upgrade-v13.handlebars')},
+            {version: 21, changes: loadDataFile('data/templates/anki-field-templates-upgrade-v21.handlebars')}
+        ];
         /**
          * @param {number} startVersion
          * @param {number} targetVersion
@@ -847,7 +813,7 @@ describe('OptionsUtil', () => {
 {{~> (lookup . "marker") ~}}
 `.trimStart()
             },
-            // Glossary and glossary-brief update
+            // glossary and glossary-brief update
             {
                 oldVersion: 7,
                 newVersion: 12,
@@ -1239,7 +1205,7 @@ describe('OptionsUtil', () => {
 <<<UPDATE-ADDITIONS>>>
 {{~> (lookup . "marker") ~}}`.trimStart()
             },
-            // Block helper update: furigana and furiganaPlain
+            // block helper update: furigana and furiganaPlain
             {
                 oldVersion: 20,
                 newVersion: 21,
@@ -1327,7 +1293,7 @@ describe('OptionsUtil', () => {
 
 {{~> (lookup . "marker") ~}}`.trimStart()
             },
-            // Block helper update: formatGlossary
+            // block helper update: formatGlossary
             {
                 oldVersion: 20,
                 newVersion: 21,
@@ -1401,7 +1367,7 @@ describe('OptionsUtil', () => {
 
 {{~> (lookup . "marker") ~}}`.trimStart()
             },
-            // Block helper update: set and get
+            // block helper update: set and get
             {
                 oldVersion: 20,
                 newVersion: 21,
@@ -1503,7 +1469,7 @@ describe('OptionsUtil', () => {
 
 {{~> (lookup . "marker") ~}}`.trimStart()
             },
-            // Block helper update: hasMedia and getMedia
+            // block helper update: hasMedia and getMedia
             {
                 oldVersion: 20,
                 newVersion: 21,
@@ -1585,7 +1551,7 @@ describe('OptionsUtil', () => {
 
 {{~> (lookup . "marker") ~}}`.trimStart()
             },
-            // Block helper update: pronunciation
+            // block helper update: pronunciation
             {
                 oldVersion: 20,
                 newVersion: 21,
@@ -1602,190 +1568,6 @@ describe('OptionsUtil', () => {
 {{/inline}}
 
 {{~> (lookup . "marker") ~}}`.trimStart()
-            },
-            {
-                oldVersion: 21,
-                newVersion: 24,
-                old: `
-{{#*inline "conjugation"}}
-    {{~#if definition.reasons~}}
-        {{~#each definition.reasons~}}
-            {{~#if (op ">" @index 0)}} « {{/if~}}
-            {{.}}
-        {{~/each~}}
-    {{~/if~}}
-{{/inline}}`.trimStart(),
-
-                expected: `
-{{#*inline "conjugation"}}
-    {{~#if (op ">" definition.inflectionRuleChainCandidates.length 0)~}}
-        {{~set "multiple" false~}}
-        {{~#if (op ">" definition.inflectionRuleChainCandidates.length 1)~}}
-            {{~set "multiple" true~}}
-        {{~/if~}}
-        {{~#if (get "multiple")~}}<ul>{{/if~}}
-            {{~#each definition.inflectionRuleChainCandidates~}}
-                {{~#if (op ">" inflectionRules.length 0)~}}
-                    {{~#if (get "multiple")~}}<li>{{/if~}}
-                    {{~#each inflectionRules~}}
-                        {{~#if (op ">" @index 0)}} « {{/if~}}
-                        {{.}}
-                    {{~/each~}}
-                    {{~#if (get "multiple")~}}</li>{{/if~}}
-                {{~/if~}}
-            {{~/each~}}
-        {{~#if (get "multiple")~}}</ul>{{/if~}}
-    {{~/if~}}
-{{/inline}}
-{{#*inline "cloze-body-kana"}}
-    {{~#if definition.cloze}}{{definition.cloze.bodyKana}}{{/if~}}
-{{/inline}}
-
-{{#*inline "phonetic-transcriptions"}}
-    {{~#if (op ">" definition.phoneticTranscriptions.length 0)~}}
-        <ul>
-            {{~#each definition.phoneticTranscriptions~}}
-                {{~#each phoneticTranscriptions~}}
-                    <li>
-                        {{~set "any" false~}}
-                        {{~#each tags~}}
-                            {{~#if (get "any")}}, {{else}}<i>({{/if~}}
-                            {{name}}
-                            {{~set "any" true~}}
-                        {{~/each~}}
-                        {{~#if (get "any")}})</i> {{/if~}}
-                        {{ipa~}}
-                    </li>
-                {{~/each~}}
-            {{~/each~}}
-        </ul>
-    {{~/if~}}
-{{/inline}}
-{{#*inline "frequency-harmonic-rank"}}
-    {{~#if (op "===" definition.frequencyHarmonic -1) ~}}
-        9999999
-    {{~else ~}}
-        {{definition.frequencyHarmonic}}
-    {{~/if~}}
-{{/inline}}
-
-{{#*inline "frequency-harmonic-occurrence"}}
-    {{~#if (op "===" definition.frequencyHarmonic -1) ~}}
-        0
-    {{~else ~}}
-        {{definition.frequencyHarmonic}}
-    {{~/if~}}
-{{/inline}}
-
-{{#*inline "frequency-average-rank"}}
-    {{~#if (op "===" definition.frequencyAverage -1) ~}}
-        9999999
-    {{~else ~}}
-        {{definition.frequencyAverage}}
-    {{~/if~}}
-{{/inline}}
-
-{{#*inline "frequency-average-occurrence"}}
-    {{~#if (op "===" definition.frequencyAverage -1) ~}}
-        0
-    {{~else ~}}
-        {{definition.frequencyAverage}}
-    {{~/if~}}
-{{/inline}}
-
-{{~#*inline "pitch-accent-categories"~}}
-    {{~#each (pitchCategories @root)~}}{{~.~}}{{~#unless @last~}},{{~/unless~}}{{~/each~}}
-{{~/inline~}}`.trimStart()
-            },
-            {
-                oldVersion: 24,
-                newVersion: 27,
-                old: `
-{{#*inline "sentence-furigana"}}
-    {{~#if definition.cloze~}}
-        {{~#if (hasMedia "textFurigana" definition.cloze.sentence)~}}
-            {{getMedia "textFurigana" definition.cloze.sentence escape=false}}
-        {{~else~}}
-            {{definition.cloze.sentence}}
-        {{~/if~}}
-    {{~/if~}}
-{{/inline}}
-`.trimStart(),
-
-                expected: `
-{{#*inline "sentence-furigana"}}
-    {{~#if definition.cloze~}}
-        {{~#if (hasMedia "textFurigana" definition.cloze.sentence)~}}
-            {{{getMedia "textFurigana" definition.cloze.sentence escape=false}}}
-        {{~else~}}
-            {{{definition.cloze.sentence}}}
-        {{~/if~}}
-    {{~/if~}}
-{{/inline}}
-`.trimStart()
-            },
-            {
-                oldVersion: 32,
-                newVersion: 33,
-                old: `
-{{#*inline "sentence"}}
-    {{~#if definition.cloze}}{{definition.cloze.sentence}}{{/if~}}
-{{/inline}}
-
-{{#*inline "cloze-prefix"}}
-    {{~#if definition.cloze}}{{definition.cloze.prefix}}{{/if~}}
-{{/inline}}
-
-{{#*inline "cloze-body"}}
-    {{~#if definition.cloze}}{{definition.cloze.body}}{{/if~}}
-{{/inline}}
-
-{{#*inline "cloze-body-kana"}}
-    {{~#if definition.cloze}}{{definition.cloze.bodyKana}}{{/if~}}
-{{/inline}}
-
-{{#*inline "cloze-suffix"}}
-    {{~#if definition.cloze}}{{definition.cloze.suffix}}{{/if~}}
-{{/inline}}
-
-{{#*inline "clipboard-text"}}
-    {{~#if (hasMedia "clipboardText")}}{{getMedia "clipboardText"}}{{/if~}}
-{{/inline}}
-
-{{#*inline "selection-text"}}
-    {{~#if (hasMedia "selectionText")}}{{getMedia "selectionText"}}{{/if~}}
-{{/inline}}
-`.trimStart(),
-
-                expected: `
-{{#*inline "sentence"}}
-    {{~#if definition.cloze}}{{{definition.cloze.sentence}}}{{/if~}}
-{{/inline}}
-
-{{#*inline "cloze-prefix"}}
-    {{~#if definition.cloze}}{{{definition.cloze.prefix}}}{{/if~}}
-{{/inline}}
-
-{{#*inline "cloze-body"}}
-    {{~#if definition.cloze}}{{{definition.cloze.body}}}{{/if~}}
-{{/inline}}
-
-{{#*inline "cloze-body-kana"}}
-    {{~#if definition.cloze}}{{{definition.cloze.bodyKana}}}{{/if~}}
-{{/inline}}
-
-{{#*inline "cloze-suffix"}}
-    {{~#if definition.cloze}}{{{definition.cloze.suffix}}}{{/if~}}
-{{/inline}}
-
-{{#*inline "clipboard-text"}}
-    {{~#if (hasMedia "clipboardText")}}{{{getMedia "clipboardText"}}}{{/if~}}
-{{/inline}}
-
-{{#*inline "selection-text"}}
-    {{~#if (hasMedia "selectionText")}}{{{getMedia "selectionText"}}}{{/if~}}
-{{/inline}}
-`.trimStart()
             }
         ];
 
@@ -1806,4 +1588,14 @@ describe('OptionsUtil', () => {
             expect(fieldTemplatesActual).toStrictEqual(expected2);
         });
     });
-});
+}
+
+
+/** */
+async function main() {
+    await testUpdate();
+    await testDefault();
+    await testFieldTemplatesUpdate();
+}
+
+await main();

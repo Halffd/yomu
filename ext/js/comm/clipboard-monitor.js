@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2020-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {EventDispatcher} from '../core/event-dispatcher.js';
+import {EventDispatcher} from '../core.js';
 
 /**
  * @augments EventDispatcher<import('clipboard-monitor').Events>
@@ -71,6 +71,7 @@ export class ClipboardMonitor extends EventDispatcher {
             ) {
                 this._previousText = text;
                 if (canChange) {
+                // if (canChange && this._japaneseUtil.isStringPartiallyJapanese(text)) {
                     this.trigger('change', {text});
                 }
             }
@@ -81,7 +82,7 @@ export class ClipboardMonitor extends EventDispatcher {
 
         this._timerToken = token;
 
-        void intervalCallback();
+        intervalCallback();
     }
 
     /**

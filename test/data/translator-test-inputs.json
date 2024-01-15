@@ -1,7 +1,6 @@
 {
     "optionsPresets": {
         "kanji": {
-            "type": "kanji",
             "enabledDictionaryMap": [
                 [
                     "${title}",
@@ -14,14 +13,18 @@
             "removeNonJapaneseCharacters": false
         },
         "default": {
-            "type": "terms",
             "matchType": "exact",
             "deinflect": true,
             "mainDictionary": "${title}",
             "sortFrequencyDictionary": null,
             "sortFrequencyDictionaryOrder": "descending",
             "removeNonJapaneseCharacters": true,
-            "language": "ja",
+            "convertHalfWidthCharacters": "false",
+            "convertNumericCharacters": "false",
+            "convertAlphabeticCharacters": "false",
+            "convertHiraganaToKatakana": "false",
+            "convertKatakanaToHiragana": "false",
+            "collapseEmphaticSequences": "false",
             "textReplacements": [
                 null
             ],
@@ -32,8 +35,7 @@
                         "index": 0,
                         "priority": 0,
                         "allowSecondarySearches": false,
-                        "partsOfSpeechFilter": true,
-                        "useDeinflections": true
+                        "partsOfSpeechFilter": true
                     }
                 ]
             ]
@@ -185,13 +187,12 @@
             "options": [
                 "default",
                 {
-                    "type": "terms",
                     "removeNonJapaneseCharacters": false,
                     "textReplacements": [
                         null,
                         [
                             {
-                                "pattern": "\\(([^)]*)(?:\\))",
+                                "pattern": "\\(([^)]*)(?:\\)|$)",
                                 "flags": "g",
                                 "replacement": ""
                             }
@@ -208,13 +209,12 @@
             "options": [
                 "default",
                 {
-                    "type": "terms",
                     "removeNonJapaneseCharacters": false,
                     "textReplacements": [
                         null,
                         [
                             {
-                                "pattern": "\\(([^)]*)(?:\\))",
+                                "pattern": "\\(([^)]*)(?:\\)|$)",
                                 "flags": "g",
                                 "replacement": "$1"
                             }
@@ -231,7 +231,6 @@
             "options": [
                 "default",
                 {
-                    "type": "terms",
                     "removeNonJapaneseCharacters": false,
                     "textReplacements": [
                         null,
@@ -254,7 +253,6 @@
             "options": [
                 "default",
                 {
-                    "type": "terms",
                     "removeNonJapaneseCharacters": false,
                     "textReplacements": [
                         null,
@@ -277,7 +275,6 @@
             "options": [
                 "default",
                 {
-                    "type": "terms",
                     "removeNonJapaneseCharacters": false,
                     "textReplacements": [
                         null,
@@ -347,115 +344,6 @@
             "mode": "split",
             "text": "構造",
             "options": "default"
-        },
-        {
-            "name": "Test dictionary deinflection",
-            "func": "findTerms",
-            "mode": "split",
-            "text": "のたもうた",
-            "options": "default"
-        },
-        {
-            "name": "Test text preprocessors - convertNumericCharacters",
-            "func": "findTerms",
-            "mode": "split",
-            "text": "39",
-            "options": [
-                "default",
-                {
-                    "type": "terms",
-                    "removeNonJapaneseCharacters": false
-                }
-            ]
-        },
-        {
-            "name": "Test text preprocessors - convertAlphabeticCharacters",
-            "func": "findTerms",
-            "mode": "split",
-            "text": "utsu",
-            "options": [
-                "default",
-                {
-                    "type": "terms",
-                    "removeNonJapaneseCharacters": false
-                }
-            ]
-        },
-        {
-            "name": "Test text preprocessors - convertKatakanaToHiragana",
-            "func": "findTerms",
-            "mode": "split",
-            "text": "ウツ",
-            "options": [
-                "default",
-                {
-                    "type": "terms"
-                }
-            ]
-        },
-        {
-            "name": "Test text preprocessors - convertHiraganaToKatakana",
-            "func": "findTerms",
-            "mode": "split",
-            "text": "てきすと",
-            "options": [
-                "default",
-                {
-                    "type": "terms"
-                }
-            ]
-        },
-        {
-            "name": "Test text preprocessors - convertHalfWidthCharacters, convertKatakanaToHiragana",
-            "func": "findTerms",
-            "mode": "split",
-            "text": "ｳﾂ",
-            "options": [
-                "default",
-                {
-                    "type": "terms"
-                }
-            ]
-        },
-        {
-            "name": "Test text preprocessors - collapseEmphaticSequences",
-            "func": "findTerms",
-            "mode": "split",
-            "text": "すっっごーーい",
-            "options": [
-                "default",
-                {
-                    "type": "terms"
-                }
-            ]
-        },
-        {
-            "name": "Test text preprocessors - capitalizeFirstLetter",
-            "func": "findTerms",
-            "mode": "split",
-            "text": "english",
-            "options": [
-                "default",
-                {
-                    "type": "terms",
-                    "language": "en",
-                    "removeNonJapaneseCharacters": false
-                }
-            ]
-        },
-        {
-            "name": "Test text preprocessors - decapitalize",
-            "func": "findTerms",
-            "mode": "split",
-            "text": "LANGUAGE",
-            "options": [
-                "default",
-                {
-                    "type": "terms",
-                    "language": "en",
-                    "removeNonJapaneseCharacters": false
-                }
-            ]
         }
     ]
 }

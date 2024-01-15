@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2021-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,7 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {generateId} from '../core/utilities.js';
+import {generateId} from '../core.js';
+import {yomitan} from '../yomitan.js';
 
 /**
  * This class is used to return the ancestor frame IDs for the current frame.
@@ -27,11 +28,11 @@ import {generateId} from '../core/utilities.js';
 export class FrameAncestryHandler {
     /**
      * Creates a new instance.
-     * @param {import('../comm/cross-frame-api.js').CrossFrameAPI} crossFrameApi
+     * @param {number} frameId The frame ID of the current frame the instance is instantiated in.
      */
-    constructor(crossFrameApi) {
-        /** @type {import('../comm/cross-frame-api.js').CrossFrameAPI} */
-        this._crossFrameApi = crossFrameApi;
+    constructor(frameId) {
+        /** @type {number} */
+        this._frameId = frameId;
         /** @type {boolean} */
         this._isPrepared = false;
         /** @type {string} */
@@ -45,12 +46,20 @@ export class FrameAncestryHandler {
     }
 
     /**
+     * Gets the frame ID that the instance is instantiated in.
+     * @type {number}
+     */
+    get frameId() {
+        return this._frameId;
+    }
+
+    /**
      * Initializes event event listening.
      */
     prepare() {
         if (this._isPrepared) { return; }
         window.addEventListener('message', this._onWindowMessage.bind(this), false);
-        this._crossFrameApi.registerHandlers([
+        yomitan.crossFrame.registerHandlers([
             ['frameAncestryHandlerRequestFrameInfoResponse', this._onFrameAncestryHandlerRequestFrameInfoResponse.bind(this)]
         ]);
         this._isPrepared = true;
@@ -105,9 +114,8 @@ export class FrameAncestryHandler {
      */
     _getFrameAncestryInfo(timeout = 5000) {
         return new Promise((resolve, reject) => {
-            const {frameId} = this._crossFrameApi;
             const targetWindow = window.parent;
-            if (frameId === null || window === targetWindow) {
+            if (window === targetWindow) {
                 resolve([]);
                 return;
             }
@@ -131,10 +139,11 @@ export class FrameAncestryHandler {
                 if (params.nonce !== nonce) { return null; }
 
                 // Add result
-                results.push(params.frameId);
+                const {frameId, more} = params;
+                results.push(frameId);
                 nonce = generateId(16);
 
-                if (!params.more) {
+                if (!more) {
                     // Cleanup
                     cleanup();
 
@@ -156,6 +165,7 @@ export class FrameAncestryHandler {
             // Start
             this._addResponseHandler(uniqueId, onMessage);
             resetTimeout();
+            const frameId = this._frameId;
             this._requestFrameInfo(targetWindow, frameId, frameId, uniqueId, nonce);
         });
     }
@@ -176,7 +186,7 @@ export class FrameAncestryHandler {
         const {params} = /** @type {import('core').SerializableObject} */ (data);
         if (typeof params !== 'object' || params === null) { return; }
 
-        void this._onRequestFrameInfo(/** @type {import('core').SerializableObject} */ (params), source);
+        this._onRequestFrameInfo(/** @type {import('core').SerializableObject} */ (params), source);
     }
 
     /**
@@ -196,14 +206,12 @@ export class FrameAncestryHandler {
                 return;
             }
 
-            const {frameId} = this._crossFrameApi;
-            if (frameId === null) { return; }
-
+            const frameId = this._frameId;
             const {parent} = window;
             const more = (window !== parent);
 
             try {
-                const response = await this._crossFrameApi.invoke(originFrameId, 'frameAncestryHandlerRequestFrameInfoResponse', {uniqueId, frameId, nonce, more});
+                const response = await yomitan.crossFrame.invoke(originFrameId, 'frameAncestryHandlerRequestFrameInfoResponse', {uniqueId, frameId, nonce, more});
                 if (response === null) { return; }
                 const nonce2 = response.nonce;
                 if (typeof nonce2 !== 'string') { return; }
@@ -288,7 +296,6 @@ export class FrameAncestryHandler {
                 }
 
                 /** @type {?ShadowRoot|undefined} */
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 const shadowRoot = (
                     element.shadowRoot ||
                     // @ts-expect-error - openOrClosedShadowRoot is available to Firefox 63+ for WebExtensions

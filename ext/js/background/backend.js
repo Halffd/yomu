@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2016-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,32 +16,29 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import * as wanakana from '../../lib/wanakana.js';
 import {AccessibilityController} from '../accessibility/accessibility-controller.js';
 import {AnkiConnect} from '../comm/anki-connect.js';
 import {ClipboardMonitor} from '../comm/clipboard-monitor.js';
 import {ClipboardReader} from '../comm/clipboard-reader.js';
 import {Mecab} from '../comm/mecab.js';
+import {clone, deferPromise, isObject, log, promiseTimeout} from '../core.js';
 import {createApiMap, invokeApiMapHandler} from '../core/api-map.js';
 import {ExtensionError} from '../core/extension-error.js';
-import {fetchText} from '../core/fetch-utilities.js';
-import {logErrorLevelToNumber} from '../core/log-utilities.js';
-import {log} from '../core/log.js';
-import {isObjectNotArray} from '../core/object-utilities.js';
-import {clone, deferPromise, promiseTimeout} from '../core/utilities.js';
-import {invalidNoteId, isNoteDataValid} from '../data/anki-util.js';
-import {arrayBufferToBase64} from '../data/array-buffer-util.js';
+import {readResponseJson} from '../core/json.js';
+import {AnkiUtil} from '../data/anki-util.js';
 import {OptionsUtil} from '../data/options-util.js';
-import {getAllPermissions, hasPermissions, hasRequiredPermissionsForOptions} from '../data/permissions-util.js';
+import {PermissionsUtil} from '../data/permissions-util.js';
+import {ArrayBufferUtil} from '../data/sandbox/array-buffer-util.js';
 import {DictionaryDatabase} from '../dictionary/dictionary-database.js';
 import {Environment} from '../extension/environment.js';
 import {ObjectPropertyAccessor} from '../general/object-property-accessor.js';
-import {distributeFuriganaInflected, isCodePointJapanese, convertKatakanaToHiragana as jpConvertKatakanaToHiragana} from '../language/ja/japanese.js';
-import {getLanguageSummaries, isTextLookupWorthy} from '../language/languages.js';
+import {JapaneseUtil} from '../language/sandbox/japanese-util.js';
 import {Translator} from '../language/translator.js';
 import {AudioDownloader} from '../media/audio-downloader.js';
-import {getFileExtensionFromAudioMediaType, getFileExtensionFromImageMediaType} from '../media/media-util.js';
+import {MediaUtil} from '../media/media-util.js';
 import {ClipboardReaderProxy, DictionaryDatabaseProxy, OffscreenProxy, TranslatorProxy} from './offscreen-proxy.js';
-import {createSchema, normalizeContext} from './profile-conditions-util.js';
+import {ProfileConditionsUtil} from './profile-conditions-util.js';
 import {RequestBuilder} from './request-builder.js';
 import {injectStylesheet} from './script-manager.js';
 
@@ -51,11 +48,11 @@ import {injectStylesheet} from './script-manager.js';
  */
 export class Backend {
     /**
-     * @param {import('../extension/web-extension.js').WebExtension} webExtension
+     * Creates a new instance.
      */
-    constructor(webExtension) {
-        /** @type {import('../extension/web-extension.js').WebExtension} */
-        this._webExtension = webExtension;
+    constructor() {
+        /** @type {JapaneseUtil} */
+        this._japaneseUtil = new JapaneseUtil(wanakana);
         /** @type {Environment} */
         this._environment = new Environment();
         /** @type {AnkiConnect} */
@@ -69,17 +66,20 @@ export class Backend {
             /** @type {DictionaryDatabase|DictionaryDatabaseProxy} */
             this._dictionaryDatabase = new DictionaryDatabase();
             /** @type {Translator|TranslatorProxy} */
-            this._translator = new Translator(this._dictionaryDatabase);
+            this._translator = new Translator({
+                japaneseUtil: this._japaneseUtil,
+                database: this._dictionaryDatabase
+            });
             /** @type {ClipboardReader|ClipboardReaderProxy} */
-            this._clipboardReader = new ClipboardReader(
+            this._clipboardReader = new ClipboardReader({
                 // eslint-disable-next-line no-undef
-                (typeof document === 'object' && document !== null ? document : null),
-                '#clipboard-paste-target',
-                '#clipboard-rich-content-paste-target'
-            );
+                document: (typeof document === 'object' && document !== null ? document : null),
+                pasteTargetSelector: '#clipboard-paste-target',
+                richContentPasteTargetSelector: '#clipboard-rich-content-paste-target'
+            });
         } else {
             /** @type {?OffscreenProxy} */
-            this._offscreen = new OffscreenProxy(webExtension);
+            this._offscreen = new OffscreenProxy();
             /** @type {DictionaryDatabase|DictionaryDatabaseProxy} */
             this._dictionaryDatabase = new DictionaryDatabaseProxy(this._offscreen);
             /** @type {Translator|TranslatorProxy} */
@@ -89,21 +89,25 @@ export class Backend {
         }
 
         /** @type {ClipboardMonitor} */
-        this._clipboardMonitor = new ClipboardMonitor(this._clipboardReader);
+        this._clipboardMonitor = new ClipboardMonitor({
+            japaneseUtil: this._japaneseUtil,
+            clipboardReader: this._clipboardReader
+        });
         /** @type {?import('settings').Options} */
         this._options = null;
         /** @type {import('../data/json-schema.js').JsonSchema[]} */
         this._profileConditionsSchemaCache = [];
-        /** @type {?string} */
-        this._ankiClipboardImageFilenameCache = null;
-        /** @type {?string} */
-        this._ankiClipboardImageDataUrlCache = null;
+        /** @type {ProfileConditionsUtil} */
+        this._profileConditionsUtil = new ProfileConditionsUtil();
         /** @type {?string} */
         this._defaultAnkiFieldTemplates = null;
         /** @type {RequestBuilder} */
         this._requestBuilder = new RequestBuilder();
         /** @type {AudioDownloader} */
-        this._audioDownloader = new AudioDownloader(this._requestBuilder);
+        this._audioDownloader = new AudioDownloader({
+            japaneseUtil: this._japaneseUtil,
+            requestBuilder: this._requestBuilder
+        });
         /** @type {OptionsUtil} */
         this._optionsUtil = new OptionsUtil();
         /** @type {AccessibilityController} */
@@ -137,13 +141,12 @@ export class Backend {
         this._logErrorLevel = null;
         /** @type {?chrome.permissions.Permissions} */
         this._permissions = null;
-        /** @type {Map<string, (() => void)[]>} */
-        this._applicationReadyHandlers = new Map();
+        /** @type {PermissionsUtil} */
+        this._permissionsUtil = new PermissionsUtil();
 
-        /* eslint-disable @stylistic/no-multi-spaces */
+        /* eslint-disable no-multi-spaces */
         /** @type {import('api').ApiMap} */
         this._apiMap = createApiMap([
-            ['applicationReady',             this._onApiApplicationReady.bind(this)],
             ['requestBackendReadySignal',    this._onApiRequestBackendReadySignal.bind(this)],
             ['optionsGet',                   this._onApiOptionsGet.bind(this)],
             ['optionsGetFull',               this._onApiOptionsGetFull.bind(this)],
@@ -155,7 +158,7 @@ export class Backend {
             ['addAnkiNote',                  this._onApiAddAnkiNote.bind(this)],
             ['getAnkiNoteInfo',              this._onApiGetAnkiNoteInfo.bind(this)],
             ['injectAnkiNoteMedia',          this._onApiInjectAnkiNoteMedia.bind(this)],
-            ['viewNotes',                    this._onApiViewNotes.bind(this)],
+            ['noteView',                     this._onApiNoteView.bind(this)],
             ['suspendAnkiCardsForNote',      this._onApiSuspendAnkiCardsForNote.bind(this)],
             ['commandExec',                  this._onApiCommandExec.bind(this)],
             ['getTermAudioInfoList',         this._onApiGetTermAudioInfoList.bind(this)],
@@ -166,12 +169,13 @@ export class Backend {
             ['getStylesheetContent',         this._onApiGetStylesheetContent.bind(this)],
             ['getEnvironmentInfo',           this._onApiGetEnvironmentInfo.bind(this)],
             ['clipboardGet',                 this._onApiClipboardGet.bind(this)],
+            ['getDisplayTemplatesHtml',      this._onApiGetDisplayTemplatesHtml.bind(this)],
             ['getZoom',                      this._onApiGetZoom.bind(this)],
             ['getDefaultAnkiFieldTemplates', this._onApiGetDefaultAnkiFieldTemplates.bind(this)],
             ['getDictionaryInfo',            this._onApiGetDictionaryInfo.bind(this)],
             ['purgeDatabase',                this._onApiPurgeDatabase.bind(this)],
             ['getMedia',                     this._onApiGetMedia.bind(this)],
-            ['logGenericErrorBackend',       this._onApiLogGenericErrorBackend.bind(this)],
+            ['log',                          this._onApiLog.bind(this)],
             ['logIndicatorClear',            this._onApiLogIndicatorClear.bind(this)],
             ['modifySettings',               this._onApiModifySettings.bind(this)],
             ['getSettings',                  this._onApiGetSettings.bind(this)],
@@ -180,13 +184,12 @@ export class Backend {
             ['isTabSearchPopup',             this._onApiIsTabSearchPopup.bind(this)],
             ['triggerDatabaseUpdated',       this._onApiTriggerDatabaseUpdated.bind(this)],
             ['testMecab',                    this._onApiTestMecab.bind(this)],
-            ['isTextLookupWorthy',           this._onApiIsTextLookupWorthy.bind(this)],
+            ['textHasJapaneseCharacters',    this._onApiTextHasJapaneseCharacters.bind(this)],
             ['getTermFrequencies',           this._onApiGetTermFrequencies.bind(this)],
             ['findAnkiNotes',                this._onApiFindAnkiNotes.bind(this)],
-            ['openCrossFramePort',           this._onApiOpenCrossFramePort.bind(this)],
-            ['getLanguageSummaries',         this._onApiGetLanguageSummaries.bind(this)]
+            ['openCrossFramePort',           this._onApiOpenCrossFramePort.bind(this)]
         ]);
-        /* eslint-enable @stylistic/no-multi-spaces */
+        /* eslint-enable no-multi-spaces */
 
         /** @type {Map<string, (params?: import('core').SerializableObject) => void>} */
         this._commandHandlers = new Map(/** @type {[name: string, handler: (params?: import('core').SerializableObject) => void][]} */ ([
@@ -215,7 +218,7 @@ export class Backend {
                     this._prepareCompleteReject(error);
                 }
             );
-            void promise.finally(() => this._updateBadge());
+            promise.finally(() => this._updateBadge());
             this._preparePromise = promise;
         }
         return this._prepareCompletePromise;
@@ -227,12 +230,12 @@ export class Backend {
      * @returns {void}
      */
     _prepareInternalSync() {
-        if (isObjectNotArray(chrome.commands) && isObjectNotArray(chrome.commands.onCommand)) {
+        if (isObject(chrome.commands) && isObject(chrome.commands.onCommand)) {
             const onCommand = this._onWebExtensionEventWrapper(this._onCommand.bind(this));
             chrome.commands.onCommand.addListener(onCommand);
         }
 
-        if (isObjectNotArray(chrome.tabs) && isObjectNotArray(chrome.tabs.onZoomChange)) {
+        if (isObject(chrome.tabs) && isObject(chrome.tabs.onZoomChange)) {
             const onZoomChange = this._onWebExtensionEventWrapper(this._onZoomChange.bind(this));
             chrome.tabs.onZoomChange.addListener(onZoomChange);
         }
@@ -256,15 +259,15 @@ export class Backend {
         try {
             this._prepareInternalSync();
 
-            this._permissions = await getAllPermissions();
-            this._defaultBrowserActionTitle = this._getBrowserIconTitle();
+            this._permissions = await this._permissionsUtil.getAllPermissions();
+            this._defaultBrowserActionTitle = await this._getBrowserIconTitle();
             this._badgePrepareDelayTimer = setTimeout(() => {
                 this._badgePrepareDelayTimer = null;
                 this._updateBadge();
             }, 1000);
             this._updateBadge();
 
-            log.on('logGenericError', this._onLogGenericError.bind(this));
+            log.on('log', this._onLog.bind(this));
 
             await this._requestBuilder.prepare();
             await this._environment.prepare();
@@ -279,17 +282,19 @@ export class Backend {
                 log.error(e);
             }
 
-            void this._translator.prepare();
+            /** @type {import('deinflector').ReasonsRaw} */
+            const deinflectionReasons = await this._fetchJson('/data/deinflect.json');
+            this._translator.prepare(deinflectionReasons);
 
             await this._optionsUtil.prepare();
-            this._defaultAnkiFieldTemplates = (await fetchText('/data/templates/default-anki-field-templates.handlebars')).trim();
+            this._defaultAnkiFieldTemplates = (await this._fetchText('/data/templates/default-anki-field-templates.handlebars')).trim();
             this._options = await this._optionsUtil.load();
 
             this._applyOptions('background');
 
             const options = this._getProfileOptions({current: true}, false);
             if (options.general.showGuide) {
-                void this._openWelcomeGuidePageOnce();
+                this._openWelcomeGuidePageOnce();
             }
 
             this._clipboardMonitor.on('change', this._onClipboardTextChange.bind(this));
@@ -313,11 +318,7 @@ export class Backend {
      * @param {import('clipboard-monitor').EventArgument<'change'>} details
      */
     async _onClipboardTextChange({text}) {
-        const {
-            general: {language},
-            clipboard: {maximumSearchLength}
-        } = this._getProfileOptions({current: true}, false);
-        if (!isTextLookupWorthy(text, language)) { return; }
+        const {clipboard: {maximumSearchLength}} = this._getProfileOptions({current: true}, false);
         if (text.length > maximumSearchLength) {
             text = text.substring(0, maximumSearchLength);
         }
@@ -335,11 +336,11 @@ export class Backend {
     }
 
     /**
-     * @param {import('log').Events['logGenericError']} params
+     * @param {{level: import('log').LogLevel}} params
      */
-    _onLogGenericError({level}) {
-        const levelValue = logErrorLevelToNumber(level);
-        const currentLogErrorLevel = this._logErrorLevel !== null ? logErrorLevelToNumber(this._logErrorLevel) : 0;
+    _onLog({level}) {
+        const levelValue = log.getLogErrorLevelValue(level);
+        const currentLogErrorLevel = this._logErrorLevel !== null ? log.getLogErrorLevelValue(this._logErrorLevel) : 0;
         if (levelValue <= currentLogErrorLevel) { return; }
 
         this._logErrorLevel = level;
@@ -356,18 +357,12 @@ export class Backend {
     _onWebExtensionEventWrapper(handler) {
         return /** @type {T} */ ((...args) => {
             if (this._isPrepared) {
-                // This is using SafeAny to just forward the parameters
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                 handler(...args);
                 return;
             }
 
             this._prepareCompletePromise.then(
-                () => {
-                    // This is using SafeAny to just forward the parameters
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-                    handler(...args);
-                },
+                () => { handler(...args); },
                 () => {} // NOP
             );
         });
@@ -416,7 +411,7 @@ export class Backend {
      * @returns {void}
      */
     _onPermissionsChanged() {
-        void this._checkPermissions();
+        this._checkPermissions();
     }
 
     /**
@@ -424,29 +419,14 @@ export class Backend {
      */
     _onInstalled({reason}) {
         if (reason !== 'install') { return; }
-        void this._requestPersistentStorage();
+        this._requestPersistentStorage();
     }
 
     // Message handlers
 
-    /** @type {import('api').ApiHandler<'applicationReady'>} */
-    _onApiApplicationReady(_params, sender) {
-        const {tab, frameId} = sender;
-        if (!tab || typeof frameId !== 'number') { return; }
-        const {id} = tab;
-        if (typeof id !== 'number') { return; }
-        const key = `${id}:${frameId}`;
-        const handlers = this._applicationReadyHandlers.get(key);
-        if (typeof handlers === 'undefined') { return; }
-        for (const handler of handlers) {
-            handler();
-        }
-        this._applicationReadyHandlers.delete(key);
-    }
-
     /** @type {import('api').ApiHandler<'requestBackendReadySignal'>} */
     _onApiRequestBackendReadySignal(_params, sender) {
-        // Tab ID isn't set in background (e.g. browser_action)
+        // tab ID isn't set in background (e.g. browser_action)
         /** @type {import('application').ApiMessage<'applicationBackendReady'>} */
         const data = {action: 'applicationBackendReady'};
         if (typeof sender.tab === 'undefined') {
@@ -539,81 +519,38 @@ export class Backend {
         return await this._anki.addNote(note);
     }
 
-    /**
-     * @param {import('anki').Note[]} notes
-     * @returns {Promise<import('backend').CanAddResults>}
-     */
-    async partitionAddibleNotes(notes) {
-        // `allowDuplicate` is on for all notes by default, so we temporarily set it to false
-        // to check which notes are duplicates.
-        const notesNoDuplicatesAllowed = notes.map((note) => ({...note, options: {...note.options, allowDuplicate: false}}));
-
-        // If only older AnkiConnect available, use `canAddNotes`.
-        const withDuplicatesAllowed = await this._anki.canAddNotes(notes);
-        const noDuplicatesAllowed = await this._anki.canAddNotes(notesNoDuplicatesAllowed);
-
-        /** @type {{ note: import('anki').Note, isDuplicate: boolean }[]} */
-        const canAddArray = [];
-
-        /** @type {import('anki').Note[]} */
-        const cannotAddArray = [];
-
-        for (let i = 0; i < withDuplicatesAllowed.length; i++) {
-            if (withDuplicatesAllowed[i] === noDuplicatesAllowed[i]) {
-                canAddArray.push({note: notes[i], isDuplicate: false});
-            } else {
-                canAddArray.push({note: notes[i], isDuplicate: true});
-            }
-        }
-
-        return {canAddArray, cannotAddArray};
-    }
-
     /** @type {import('api').ApiHandler<'getAnkiNoteInfo'>} */
     async _onApiGetAnkiNoteInfo({notes, fetchAdditionalInfo}) {
-        const {canAddArray, cannotAddArray} = await this.partitionAddibleNotes(notes);
-
         /** @type {import('anki').NoteInfoWrapper[]} */
-        const results = cannotAddArray
-            .filter((note) => isNoteDataValid(note))
-            .map(() => ({canAdd: false, valid: false, noteIds: null}));
+        const results = [];
+        /** @type {{note: import('anki').Note, info: import('anki').NoteInfoWrapper}[]} */
+        const cannotAdd = [];
+        const canAddArray = await this._anki.canAddNotes(notes);
 
-        /** @type {import('anki').Note[]} */
-        const duplicateNotes = [];
-
-        /** @type {number[]} */
-        const originalIndices = [];
-
-        for (let i = 0; i < canAddArray.length; i++) {
-            if (canAddArray[i].isDuplicate) {
-                duplicateNotes.push(canAddArray[i].note);
-                // Keep original indices to locate duplicate inside `duplicateNoteIds`
-                originalIndices.push(i);
+        for (let i = 0; i < notes.length; ++i) {
+            const note = notes[i];
+            let canAdd = canAddArray[i];
+            const valid = AnkiUtil.isNoteDataValid(note);
+            if (!valid) { canAdd = false; }
+            const info = {canAdd, valid, noteIds: null};
+            results.push(info);
+            if (!canAdd && valid) {
+                cannotAdd.push({note, info});
             }
         }
 
-        const duplicateNoteIds = await this._anki.findNoteIds(duplicateNotes);
-
-        for (let i = 0; i < canAddArray.length; ++i) {
-            const {note, isDuplicate} = canAddArray[i];
-
-            const valid = isNoteDataValid(note);
-
-            if (isDuplicate && duplicateNoteIds[originalIndices.indexOf(i)].length === 0) {
-                duplicateNoteIds[originalIndices.indexOf(i)] = [invalidNoteId];
+        if (cannotAdd.length > 0) {
+            const cannotAddNotes = cannotAdd.map(({note}) => note);
+            const noteIdsArray = await this._anki.findNoteIds(cannotAddNotes);
+            for (let i = 0, ii = Math.min(cannotAdd.length, noteIdsArray.length); i < ii; ++i) {
+                const noteIds = noteIdsArray[i];
+                if (noteIds.length > 0) {
+                    cannotAdd[i].info.noteIds = noteIds;
+                    if (fetchAdditionalInfo) {
+                        cannotAdd[i].info.noteInfos = await this._anki.notesInfo(noteIds);
+                    }
+                }
             }
-
-            const noteIds = isDuplicate ? duplicateNoteIds[originalIndices.indexOf(i)] : null;
-            const noteInfos = (fetchAdditionalInfo && noteIds !== null && noteIds.length > 0) ? await this._anki.notesInfo(noteIds) : [];
-
-            const info = {
-                canAdd: valid,
-                valid,
-                noteIds: noteIds,
-                noteInfos: noteInfos
-            };
-
-            results.push(info);
         }
 
         return results;
@@ -632,11 +569,11 @@ export class Backend {
         );
     }
 
-    /** @type {import('api').ApiHandler<'viewNotes'>} */
-    async _onApiViewNotes({noteIds, mode, allowFallback}) {
-        if (noteIds.length === 1 && mode === 'edit') {
+    /** @type {import('api').ApiHandler<'noteView'>} */
+    async _onApiNoteView({noteId, mode, allowFallback}) {
+        if (mode === 'edit') {
             try {
-                await this._anki.guiEditNote(noteIds[0]);
+                await this._anki.guiEditNote(noteId);
                 return 'edit';
             } catch (e) {
                 if (!(e instanceof Error && this._anki.isErrorUnsupportedAction(e))) {
@@ -646,7 +583,8 @@ export class Backend {
                 }
             }
         }
-        await this._anki.guiBrowseNotes(noteIds);
+        // Fallback
+        await this._anki.guiBrowseNote(noteId);
         return 'browse';
     }
 
@@ -704,10 +642,7 @@ export class Backend {
         const tab = sender.tab;
         const tabId = tab ? tab.id : void 0;
         const frameId = sender.frameId;
-        return {
-            tabId: typeof tabId === 'number' ? tabId : null,
-            frameId: typeof frameId === 'number' ? frameId : null
-        };
+        return Promise.resolve({tabId, frameId});
     }
 
     /** @type {import('api').ApiHandler<'injectStylesheet'>} */
@@ -722,7 +657,7 @@ export class Backend {
         if (!url.startsWith('/') || url.startsWith('//') || !url.endsWith('.css')) {
             throw new Error('Invalid URL');
         }
-        return await fetchText(url);
+        return await this._fetchText(url);
     }
 
     /** @type {import('api').ApiHandler<'getEnvironmentInfo'>} */
@@ -733,6 +668,11 @@ export class Backend {
     /** @type {import('api').ApiHandler<'clipboardGet'>} */
     async _onApiClipboardGet() {
         return this._clipboardReader.getText(false);
+    }
+
+    /** @type {import('api').ApiHandler<'getDisplayTemplatesHtml'>} */
+    async _onApiGetDisplayTemplatesHtml() {
+        return await this._fetchText('/display-templates.html');
     }
 
     /** @type {import('api').ApiHandler<'getZoom'>} */
@@ -751,7 +691,7 @@ export class Backend {
                 typeof chrome.tabs.getZoom === 'function'
             )) {
                 // Not supported
-                resolve({zoomFactor: 1});
+                resolve({zoomFactor: 1.0});
                 return;
             }
             chrome.tabs.getZoom(tabId, (zoomFactor) => {
@@ -786,9 +726,9 @@ export class Backend {
         return await this._getNormalizedDictionaryDatabaseMedia(targets);
     }
 
-    /** @type {import('api').ApiHandler<'logGenericErrorBackend'>} */
-    _onApiLogGenericErrorBackend({error, level, context}) {
-        log.logGenericError(ExtensionError.deserialize(error), level, context);
+    /** @type {import('api').ApiHandler<'log'>} */
+    _onApiLog({error, level, context}) {
+        log.log(ExtensionError.deserialize(error), level, context);
     }
 
     /** @type {import('api').ApiHandler<'logIndicatorClear'>} */
@@ -860,7 +800,7 @@ export class Backend {
 
         let permissionsOkay = false;
         try {
-            permissionsOkay = await hasPermissions({permissions: ['nativeMessaging']});
+            permissionsOkay = await this._permissionsUtil.hasPermissions({permissions: ['nativeMessaging']});
         } catch (e) {
             // NOP
         }
@@ -889,9 +829,9 @@ export class Backend {
         return true;
     }
 
-    /** @type {import('api').ApiHandler<'isTextLookupWorthy'>} */
-    _onApiIsTextLookupWorthy({text, language}) {
-        return isTextLookupWorthy(text, language);
+    /** @type {import('api').ApiHandler<'textHasJapaneseCharacters'>} */
+    _onApiTextHasJapaneseCharacters({text}) {
+        return this._japaneseUtil.isStringPartiallyJapanese(text);
     }
 
     /** @type {import('api').ApiHandler<'getTermFrequencies'>} */
@@ -954,11 +894,6 @@ export class Backend {
         targetPort.onDisconnect.addListener(cleanup);
 
         return {targetTabId, targetFrameId};
-    }
-
-    /** @type {import('api').ApiHandler<'getLanguageSummaries'>} */
-    _onApiGetLanguageSummaries() {
-        return getLanguageSummaries();
     }
 
     // Command handlers
@@ -1097,7 +1032,7 @@ export class Backend {
         if (this._searchPopupTabCreatePromise === null) {
             const promise = this._getOrCreateSearchPopup();
             this._searchPopupTabCreatePromise = promise;
-            void promise.then(() => { this._searchPopupTabCreatePromise = null; });
+            promise.then(() => { this._searchPopupTabCreatePromise = null; });
         }
         return this._searchPopupTabCreatePromise;
     }
@@ -1133,7 +1068,7 @@ export class Backend {
         }
 
         // chrome.windows not supported (e.g. on Firefox mobile)
-        if (!isObjectNotArray(chrome.windows)) {
+        if (!isObject(chrome.windows)) {
             throw new Error('Window creation not supported');
         }
 
@@ -1289,7 +1224,7 @@ export class Backend {
             this._clipboardMonitor.stop();
         }
 
-        void this._accessibilityController.update(this._getOptionsFull(false));
+        this._accessibilityController.update(this._getOptionsFull(false));
 
         this._sendMessageAllTabsIgnoreResponse({action: 'applicationOptionsUpdated', params: {source}});
     }
@@ -1352,7 +1287,7 @@ export class Backend {
      * @returns {?import('settings').Profile}
      */
     _getProfileFromContext(options, optionsContext) {
-        const normalizedOptionsContext = normalizeContext(optionsContext);
+        const normalizedOptionsContext = this._profileConditionsUtil.normalizeContext(optionsContext);
 
         let index = 0;
         for (const profile of options.profiles) {
@@ -1362,7 +1297,7 @@ export class Backend {
             if (index < this._profileConditionsSchemaCache.length) {
                 schema = this._profileConditionsSchemaCache[index];
             } else {
-                schema = createSchema(conditionGroups);
+                schema = this._profileConditionsUtil.createSchema(conditionGroups);
                 this._profileConditionsSchemaCache.push(schema);
             }
 
@@ -1420,6 +1355,7 @@ export class Backend {
      * @returns {Promise<import('api').ParseTextLine[]>}
      */
     async _textParseScanning(text, scanLength, optionsContext) {
+        const jp = this._japaneseUtil;
         /** @type {import('translator').FindTermsMode} */
         const mode = 'simple';
         const options = this._getProfileOptions(optionsContext, false);
@@ -1441,13 +1377,13 @@ export class Backend {
             if (
                 dictionaryEntries.length > 0 &&
                 originalTextLength > 0 &&
-                (originalTextLength !== character.length || isCodePointJapanese(codePoint))
+                (originalTextLength !== character.length || jp.isCodePointJapanese(codePoint))
             ) {
                 previousUngroupedSegment = null;
                 const {headwords: [{term, reading}]} = dictionaryEntries[0];
                 const source = text.substring(i, i + originalTextLength);
                 const textSegments = [];
-                for (const {text: text2, reading: reading2} of distributeFuriganaInflected(term, reading, source)) {
+                for (const {text: text2, reading: reading2} of jp.distributeFuriganaInflected(term, reading, source)) {
                     textSegments.push({text: text2, reading: reading2});
                 }
                 results.push(textSegments);
@@ -1470,6 +1406,8 @@ export class Backend {
      * @returns {Promise<import('backend').MecabParseResults>}
      */
     async _textParseMecab(text) {
+        const jp = this._japaneseUtil;
+
         let parseTextResults;
         try {
             parseTextResults = await this._mecab.parseText(text);
@@ -1485,9 +1423,9 @@ export class Backend {
             for (const line of lines) {
                 for (const {term, reading, source} of line) {
                     const termParts = [];
-                    for (const {text: text2, reading: reading2} of distributeFuriganaInflected(
+                    for (const {text: text2, reading: reading2} of jp.distributeFuriganaInflected(
                         term.length > 0 ? term : source,
-                        jpConvertKatakanaToHiragana(reading),
+                        jp.convertKatakanaToHiragana(reading),
                         source
                     )) {
                         termParts.push({text: text2, reading: reading2});
@@ -1596,18 +1534,15 @@ export class Backend {
     }
 
     /**
-     * Returns the action's default title.
-     * @throws {Error}
-     * @returns {string}
+     * @returns {Promise<string>}
      */
     _getBrowserIconTitle() {
-        const manifest = /** @type {chrome.runtime.ManifestV3} */ (chrome.runtime.getManifest());
-        const action = manifest.action;
-        if (typeof action === 'undefined') { throw new Error('Failed to find action'); }
-        const defaultTitle = action.default_title;
-        if (typeof defaultTitle === 'undefined') { throw new Error('Failed to find default_title'); }
-
-        return defaultTitle;
+        return (
+            isObject(chrome.action) &&
+            typeof chrome.action.getTitle === 'function' ?
+                new Promise((resolve) => chrome.action.getTitle({}, resolve)) :
+                Promise.resolve('')
+        );
     }
 
     /**
@@ -1615,7 +1550,7 @@ export class Backend {
      */
     _updateBadge() {
         let title = this._defaultBrowserActionTitle;
-        if (title === null || !isObjectNotArray(chrome.action)) {
+        if (title === null || !isObject(chrome.action)) {
             // Not ready or invalid
             return;
         }
@@ -1665,16 +1600,16 @@ export class Backend {
         }
 
         if (color !== null && typeof chrome.action.setBadgeBackgroundColor === 'function') {
-            void chrome.action.setBadgeBackgroundColor({color});
+            chrome.action.setBadgeBackgroundColor({color});
         }
         if (text !== null && typeof chrome.action.setBadgeText === 'function') {
-            void chrome.action.setBadgeText({text});
+            chrome.action.setBadgeText({text});
         }
         if (typeof chrome.action.setTitle === 'function') {
             if (status !== null) {
                 title = `${title} - ${status}`;
             }
-            void chrome.action.setTitle({title});
+            chrome.action.setTitle({title});
         }
     }
 
@@ -1759,8 +1694,10 @@ export class Backend {
                 // NOP
             }
 
-            if (okay && !done && add(item)) {
-                done = true;
+            if (okay && !done) {
+                if (add(item)) {
+                    done = true;
+                }
             }
         };
 
@@ -1831,7 +1768,16 @@ export class Backend {
         }
 
         try {
-            const tabWindow = await this._getWindow(tab.windowId);
+            const tabWindow = await new Promise((resolve, reject) => {
+                chrome.windows.get(tab.windowId, {}, (value) => {
+                    const e = chrome.runtime.lastError;
+                    if (e) {
+                        reject(new Error(e.message));
+                    } else {
+                        resolve(value);
+                    }
+                });
+            });
             if (!tabWindow.focused) {
                 await /** @type {Promise<void>} */ (new Promise((resolve, reject) => {
                     chrome.windows.update(tab.windowId, {focused: true}, () => {
@@ -1850,23 +1796,6 @@ export class Backend {
     }
 
     /**
-     * @param {number} windowId
-     * @returns {Promise<chrome.windows.Window>}
-     */
-    _getWindow(windowId) {
-        return new Promise((resolve, reject) => {
-            chrome.windows.get(windowId, {}, (value) => {
-                const e = chrome.runtime.lastError;
-                if (e) {
-                    reject(new Error(e.message));
-                } else {
-                    resolve(value);
-                }
-            });
-        });
-    }
-
-    /**
      * @param {number} tabId
      * @param {number} frameId
      * @param {?number} [timeout=null]
@@ -1876,8 +1805,18 @@ export class Backend {
         return new Promise((resolve, reject) => {
             /** @type {?import('core').Timeout} */
             let timer = null;
+            /** @type {?import('extension').ChromeRuntimeOnMessageCallback<import('application').ApiMessageAny>} */
+            let onMessage = (message, sender) => {
+                if (
+                    !sender.tab ||
+                    sender.tab.id !== tabId ||
+                    sender.frameId !== frameId ||
+                    !(typeof message === 'object' && message !== null) ||
+                    message.action !== 'applicationReady'
+                ) {
+                    return;
+                }
 
-            const readyHandler = () => {
                 cleanup();
                 resolve();
             };
@@ -1886,10 +1825,13 @@ export class Backend {
                     clearTimeout(timer);
                     timer = null;
                 }
-                this._removeApplicationReadyHandler(tabId, frameId, readyHandler);
+                if (onMessage !== null) {
+                    chrome.runtime.onMessage.removeListener(onMessage);
+                    onMessage = null;
+                }
             };
 
-            this._addApplicationReadyHandler(tabId, frameId, readyHandler);
+            chrome.runtime.onMessage.addListener(onMessage);
 
             this._sendMessageTabPromise(tabId, {action: 'applicationIsReady'}, {frameId})
                 .then(
@@ -1912,11 +1854,50 @@ export class Backend {
     }
 
     /**
+     * @param {string} url
+     * @returns {Promise<Response>}
+     */
+    async _fetchAsset(url) {
+        const response = await fetch(chrome.runtime.getURL(url), {
+            method: 'GET',
+            mode: 'no-cors',
+            cache: 'default',
+            credentials: 'omit',
+            redirect: 'follow',
+            referrerPolicy: 'no-referrer'
+        });
+        if (!response.ok) {
+            throw new Error(`Failed to fetch ${url}: ${response.status}`);
+        }
+        return response;
+    }
+
+    /**
+     * @param {string} url
+     * @returns {Promise<string>}
+     */
+    async _fetchText(url) {
+        const response = await this._fetchAsset(url);
+        return await response.text();
+    }
+
+    /**
+     * @template [T=unknown]
+     * @param {string} url
+     * @returns {Promise<T>}
+     */
+    async _fetchJson(url) {
+        const response = await this._fetchAsset(url);
+        return await readResponseJson(response);
+    }
+
+    /**
      * @template {import('application').ApiNames} TName
      * @param {import('application').ApiMessage<TName>} message
      */
     _sendMessageIgnoreResponse(message) {
-        this._webExtension.sendMessageIgnoreResponse(message);
+        const callback = () => this._checkLastError(chrome.runtime.lastError);
+        chrome.runtime.sendMessage(message, callback);
     }
 
     /**
@@ -2066,7 +2047,7 @@ export class Backend {
 
         try {
             if (screenshotDetails !== null) {
-                screenshotFileName = await this._injectAnkiNoteScreenshot(ankiConnect, timestamp, screenshotDetails);
+                screenshotFileName = await this._injectAnkiNoteScreenshot(ankiConnect, timestamp, definitionDetails, screenshotDetails);
             }
         } catch (e) {
             errors.push(ExtensionError.serialize(e));
@@ -2074,7 +2055,7 @@ export class Backend {
 
         try {
             if (clipboardDetails !== null && clipboardDetails.image) {
-                clipboardImageFileName = await this._injectAnkiNoteClipboardImage(ankiConnect, timestamp);
+                clipboardImageFileName = await this._injectAnkiNoteClipboardImage(ankiConnect, timestamp, definitionDetails);
             }
         } catch (e) {
             errors.push(ExtensionError.serialize(e));
@@ -2100,7 +2081,7 @@ export class Backend {
         let dictionaryMedia;
         try {
             let errors2;
-            ({results: dictionaryMedia, errors: errors2} = await this._injectAnkiNoteDictionaryMedia(ankiConnect, timestamp, dictionaryMediaDetails));
+            ({results: dictionaryMedia, errors: errors2} = await this._injectAnkiNoteDictionaryMedia(ankiConnect, timestamp, definitionDetails, dictionaryMediaDetails));
             for (const error of errors2) {
                 errors.push(ExtensionError.serialize(error));
             }
@@ -2149,9 +2130,9 @@ export class Backend {
             return null;
         }
 
-        let extension = contentType !== null ? getFileExtensionFromAudioMediaType(contentType) : null;
+        let extension = contentType !== null ? MediaUtil.getFileExtensionFromAudioMediaType(contentType) : null;
         if (extension === null) { extension = '.mp3'; }
-        let fileName = this._generateAnkiNoteMediaFileName('yomitan_audio', extension, timestamp);
+        let fileName = this._generateAnkiNoteMediaFileName('yomitan_audio', extension, timestamp, definitionDetails);
         fileName = fileName.replace(/\]/g, '');
         return await ankiConnect.storeMediaFile(fileName, data);
     }
@@ -2159,64 +2140,56 @@ export class Backend {
     /**
      * @param {AnkiConnect} ankiConnect
      * @param {number} timestamp
+     * @param {import('api').InjectAnkiNoteMediaDefinitionDetails} definitionDetails
      * @param {import('api').InjectAnkiNoteMediaScreenshotDetails} details
      * @returns {Promise<?string>}
      */
-    async _injectAnkiNoteScreenshot(ankiConnect, timestamp, details) {
+    async _injectAnkiNoteScreenshot(ankiConnect, timestamp, definitionDetails, details) {
         const {tabId, frameId, format, quality} = details;
         const dataUrl = await this._getScreenshot(tabId, frameId, format, quality);
 
         const {mediaType, data} = this._getDataUrlInfo(dataUrl);
-        const extension = getFileExtensionFromImageMediaType(mediaType);
+        const extension = MediaUtil.getFileExtensionFromImageMediaType(mediaType);
         if (extension === null) {
             throw new Error('Unknown media type for screenshot image');
         }
 
-        const fileName = this._generateAnkiNoteMediaFileName('yomitan_browser_screenshot', extension, timestamp);
+        const fileName = this._generateAnkiNoteMediaFileName('yomitan_browser_screenshot', extension, timestamp, definitionDetails);
         return await ankiConnect.storeMediaFile(fileName, data);
     }
 
     /**
      * @param {AnkiConnect} ankiConnect
      * @param {number} timestamp
+     * @param {import('api').InjectAnkiNoteMediaDefinitionDetails} definitionDetails
      * @returns {Promise<?string>}
      */
-    async _injectAnkiNoteClipboardImage(ankiConnect, timestamp) {
+    async _injectAnkiNoteClipboardImage(ankiConnect, timestamp, definitionDetails) {
         const dataUrl = await this._clipboardReader.getImage();
         if (dataUrl === null) {
             return null;
         }
 
         const {mediaType, data} = this._getDataUrlInfo(dataUrl);
-        const extension = getFileExtensionFromImageMediaType(mediaType);
+        const extension = MediaUtil.getFileExtensionFromImageMediaType(mediaType);
         if (extension === null) {
             throw new Error('Unknown media type for clipboard image');
         }
 
-        const fileName = dataUrl === this._ankiClipboardImageDataUrlCache && this._ankiClipboardImageFilenameCache ?
-            this._ankiClipboardImageFilenameCache :
-            this._generateAnkiNoteMediaFileName('yomitan_clipboard_image', extension, timestamp);
-
-        const storedFileName = await ankiConnect.storeMediaFile(fileName, data);
-
-        if (storedFileName !== null) {
-            this._ankiClipboardImageDataUrlCache = dataUrl;
-            this._ankiClipboardImageFilenameCache = storedFileName;
-        }
-
-        return storedFileName;
+        const fileName = this._generateAnkiNoteMediaFileName('yomitan_clipboard_image', extension, timestamp, definitionDetails);
+        return await ankiConnect.storeMediaFile(fileName, data);
     }
 
     /**
      * @param {AnkiConnect} ankiConnect
      * @param {number} timestamp
+     * @param {import('api').InjectAnkiNoteMediaDefinitionDetails} definitionDetails
      * @param {import('api').InjectAnkiNoteMediaDictionaryMediaDetails[]} dictionaryMediaDetails
      * @returns {Promise<{results: import('api').InjectAnkiNoteDictionaryMediaResult[], errors: unknown[]}>}
      */
-    async _injectAnkiNoteDictionaryMedia(ankiConnect, timestamp, dictionaryMediaDetails) {
+    async _injectAnkiNoteDictionaryMedia(ankiConnect, timestamp, definitionDetails, dictionaryMediaDetails) {
         const targets = [];
         const detailsList = [];
-        /** @type {Map<string, {dictionary: string, path: string, media: ?import('dictionary-database').MediaDataStringContent}>} */
         const detailsMap = new Map();
         for (const {dictionary, path} of dictionaryMediaDetails) {
             const target = {dictionary, path};
@@ -2244,11 +2217,12 @@ export class Backend {
             let fileName = null;
             if (media !== null) {
                 const {content, mediaType} = media;
-                const extension = getFileExtensionFromImageMediaType(mediaType);
+                const extension = MediaUtil.getFileExtensionFromImageMediaType(mediaType);
                 fileName = this._generateAnkiNoteMediaFileName(
                     `yomitan_dictionary_media_${i + 1}`,
                     extension !== null ? extension : '',
-                    timestamp
+                    timestamp,
+                    definitionDetails
                 );
                 try {
                     fileName = await ankiConnect.storeMediaFile(fileName, content);
@@ -2329,10 +2303,27 @@ export class Backend {
      * @param {string} prefix
      * @param {string} extension
      * @param {number} timestamp
+     * @param {import('api').InjectAnkiNoteMediaDefinitionDetails} definitionDetails
      * @returns {string}
      */
-    _generateAnkiNoteMediaFileName(prefix, extension, timestamp) {
+    _generateAnkiNoteMediaFileName(prefix, extension, timestamp, definitionDetails) {
         let fileName = prefix;
+
+        switch (definitionDetails.type) {
+            case 'kanji':
+                {
+                    const {character} = definitionDetails;
+                    if (character) { fileName += `_${character}`; }
+                }
+                break;
+            default:
+                {
+                    const {reading, term} = definitionDetails;
+                    if (reading) { fileName += `_${reading}`; }
+                    if (term) { fileName += `_${term}`; }
+                }
+                break;
+        }
 
         fileName += `_${this._ankNoteDateToString(new Date(timestamp))}`;
         fileName += extension;
@@ -2348,7 +2339,7 @@ export class Backend {
      */
     _replaceInvalidFileNameCharacters(fileName) {
         // eslint-disable-next-line no-control-regex
-        return fileName.replace(/[<>:"/\\|?*\u0000-\u001F]/g, '-');
+        return fileName.replace(/[<>:"/\\|?*\x00-\x1F]/g, '-');
     }
 
     /**
@@ -2362,8 +2353,7 @@ export class Backend {
         const hours = date.getUTCHours().toString().padStart(2, '0');
         const minutes = date.getUTCMinutes().toString().padStart(2, '0');
         const seconds = date.getUTCSeconds().toString().padStart(2, '0');
-        const milliseconds = date.getUTCMilliseconds().toString().padStart(3, '0');
-        return `${year}-${month}-${day}-${hours}-${minutes}-${seconds}-${milliseconds}`;
+        return `${year}-${month}-${day}-${hours}-${minutes}-${seconds}`;
     }
 
     /**
@@ -2391,7 +2381,7 @@ export class Backend {
      * @param {import('backend').DatabaseUpdateCause} cause
      */
     _triggerDatabaseUpdated(type, cause) {
-        void this._translator.clearDatabaseCaches();
+        this._translator.clearDatabaseCaches();
         this._sendMessageAllTabsIgnoreResponse({action: 'applicationDatabaseUpdated', params: {type, cause}});
     }
 
@@ -2418,9 +2408,15 @@ export class Backend {
         if (typeof deinflect !== 'boolean') { deinflect = true; }
         const enabledDictionaryMap = this._getTranslatorEnabledDictionaryMap(options);
         const {
-            general: {mainDictionary, sortFrequencyDictionary, sortFrequencyDictionaryOrder, language},
+            general: {mainDictionary, sortFrequencyDictionary, sortFrequencyDictionaryOrder},
             scanning: {alphanumeric},
             translation: {
+                convertHalfWidthCharacters,
+                convertNumericCharacters,
+                convertAlphabeticCharacters,
+                convertHiraganaToKatakana,
+                convertKatakanaToHiragana,
+                collapseEmphaticSequences,
                 textReplacements: textReplacementsOptions,
                 searchResolution
             }
@@ -2432,8 +2428,7 @@ export class Backend {
                 index: enabledDictionaryMap.size,
                 priority: 0,
                 allowSecondarySearches: false,
-                partsOfSpeechFilter: true,
-                useDeinflections: true
+                partsOfSpeechFilter: true
             });
             excludeDictionaryDefinitions = new Set();
             excludeDictionaryDefinitions.add(mainDictionary);
@@ -2445,11 +2440,16 @@ export class Backend {
             sortFrequencyDictionary,
             sortFrequencyDictionaryOrder,
             removeNonJapaneseCharacters: !alphanumeric,
+            convertHalfWidthCharacters,
+            convertNumericCharacters,
+            convertAlphabeticCharacters,
+            convertHiraganaToKatakana,
+            convertKatakanaToHiragana,
+            collapseEmphaticSequences,
             searchResolution,
             textReplacements,
             enabledDictionaryMap,
-            excludeDictionaryDefinitions,
-            language
+            excludeDictionaryDefinitions
         };
     }
 
@@ -2474,13 +2474,12 @@ export class Backend {
         const enabledDictionaryMap = new Map();
         for (const dictionary of options.dictionaries) {
             if (!dictionary.enabled) { continue; }
-            const {name, priority, allowSecondarySearches, partsOfSpeechFilter, useDeinflections} = dictionary;
+            const {name, priority, allowSecondarySearches, partsOfSpeechFilter} = dictionary;
             enabledDictionaryMap.set(name, {
                 index: enabledDictionaryMap.size,
                 priority,
                 allowSecondarySearches,
-                partsOfSpeechFilter,
-                useDeinflections
+                partsOfSpeechFilter
             });
         }
         return enabledDictionaryMap;
@@ -2520,13 +2519,12 @@ export class Backend {
      * @returns {Promise<void>}
      */
     async _openWelcomeGuidePageOnce() {
-        const result = await chrome.storage.session.get(['openedWelcomePage']);
-        if (!result.openedWelcomePage) {
-            await Promise.all([
-                this._openWelcomeGuidePage(),
-                chrome.storage.session.set({openedWelcomePage: true})
-            ]);
-        }
+        chrome.storage.session.get(['openedWelcomePage']).then((result) => {
+            if (!result.openedWelcomePage) {
+                this._openWelcomeGuidePage();
+                chrome.storage.session.set({'openedWelcomePage': true});
+            }
+        });
     }
 
     /**
@@ -2613,7 +2611,7 @@ export class Backend {
      * @returns {Promise<void>}
      */
     async _checkPermissions() {
-        this._permissions = await getAllPermissions();
+        this._permissions = await this._permissionsUtil.getAllPermissions();
         this._updateBadge();
     }
 
@@ -2621,7 +2619,7 @@ export class Backend {
      * @returns {boolean}
      */
     _canObservePermissionsChanges() {
-        return isObjectNotArray(chrome.permissions) && isObjectNotArray(chrome.permissions.onAdded) && isObjectNotArray(chrome.permissions.onRemoved);
+        return isObject(chrome.permissions) && isObject(chrome.permissions.onAdded) && isObject(chrome.permissions.onRemoved);
     }
 
     /**
@@ -2630,7 +2628,7 @@ export class Backend {
      */
     _hasRequiredPermissionsForSettings(options) {
         if (!this._canObservePermissionsChanges()) { return true; }
-        return this._permissions === null || hasRequiredPermissionsForOptions(this._permissions, options);
+        return this._permissions === null || this._permissionsUtil.hasRequiredPermissionsForOptions(this._permissions, options);
     }
 
     /**
@@ -2648,7 +2646,7 @@ export class Backend {
             const match = /^\d+/.exec(version);
             if (match === null) { return; }
 
-            const versionNumber = Number.parseInt(match[0], 10);
+            const versionNumber = Number.parseInt(match[0]);
             if (!(Number.isFinite(versionNumber) && versionNumber >= 77)) { return; }
 
             await navigator.storage.persist();
@@ -2665,7 +2663,7 @@ export class Backend {
         const results = [];
         for (const item of await this._dictionaryDatabase.getMedia(targets)) {
             const {content, dictionary, height, mediaType, path, width} = item;
-            const content2 = arrayBufferToBase64(content);
+            const content2 = ArrayBufferUtil.arrayBufferToBase64(content);
             results.push({content: content2, dictionary, height, mediaType, path, width});
         }
         return results;
@@ -2684,39 +2682,5 @@ export class Backend {
             default:
                 return defaultValue;
         }
-    }
-
-    /**
-     * @param {number} tabId
-     * @param {number} frameId
-     * @param {() => void} handler
-     */
-    _addApplicationReadyHandler(tabId, frameId, handler) {
-        const key = `${tabId}:${frameId}`;
-        let handlers = this._applicationReadyHandlers.get(key);
-        if (typeof handlers === 'undefined') {
-            handlers = [];
-            this._applicationReadyHandlers.set(key, handlers);
-        }
-        handlers.push(handler);
-    }
-
-    /**
-     * @param {number} tabId
-     * @param {number} frameId
-     * @param {() => void} handler
-     * @returns {boolean}
-     */
-    _removeApplicationReadyHandler(tabId, frameId, handler) {
-        const key = `${tabId}:${frameId}`;
-        const handlers = this._applicationReadyHandlers.get(key);
-        if (typeof handlers === 'undefined') { return false; }
-        const index = handlers.indexOf(handler);
-        if (index < 0) { return false; }
-        handlers.splice(index, 1);
-        if (handlers.length === 0) {
-            this._applicationReadyHandlers.delete(key);
-        }
-        return true;
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2020-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -23,7 +23,10 @@ export class Modal extends PanelElement {
      * @param {HTMLElement} node
      */
     constructor(node) {
-        super(node, 375); // Milliseconds; includes buffer
+        super({
+            node,
+            closingAnimationDuration: 375 // Milliseconds; includes buffer
+        });
         /** @type {?Element} */
         this._contentNode = null;
         /** @type {boolean} */

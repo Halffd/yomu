@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2020-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {isInputElementFocused} from '../../dom/document-util.js';
+import {DocumentUtil} from '../../dom/document-util.js';
 import {PopupMenu} from '../../dom/popup-menu.js';
 import {querySelectorNotNull} from '../../dom/query-selector.js';
 import {SelectorObserver} from '../../dom/selector-observer.js';
@@ -184,7 +184,7 @@ export class SettingsDisplayController {
     _onKeyDown(e) {
         switch (e.code) {
             case 'Escape':
-                if (!isInputElementFocused()) {
+                if (!DocumentUtil.isInputElementFocused()) {
                     this._closeTopMenuOrModal();
                     e.preventDefault();
                 }
@@ -290,7 +290,7 @@ export class SettingsDisplayController {
      */
     _getMoreContainer(link) {
         const v = link.dataset.parentDistance;
-        const distance = v ? Number.parseInt(v, 10) : 1;
+        const distance = v ? parseInt(v, 10) : 1;
         if (Number.isNaN(distance)) { return null; }
 
         /** @type {?Element} */
@@ -338,7 +338,7 @@ export class SettingsDisplayController {
 
         let indent = '\t';
         if (args.length > 1) {
-            const count = Number.parseInt(args[1], 10);
+            const count = parseInt(args[1], 10);
             indent = (Number.isFinite(count) && count >= 0 ? ' '.repeat(count) : args[1]);
         }
 

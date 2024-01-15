@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2020-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -17,13 +17,12 @@
  */
 
 import fs from 'fs';
+import JSZip from 'jszip';
 import path from 'path';
 import {performance} from 'perf_hooks';
 import {fileURLToPath} from 'url';
-import {getDictionaryArchiveEntries, getDictionaryArchiveJson, getIndexFileName, readArchiveEntryDataJson} from './dictionary-archive-util.js';
 import {parseJson} from './json.js';
 import {createJsonSchema} from './schema-validate.js';
-import {toError} from './to-error.js';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -39,70 +38,70 @@ function readSchema(relativeFileName) {
 
 /**
  * @param {import('dev/schema-validate').ValidateMode} mode
- * @param {import('@zip.js/zip.js').Entry[]} entries
- * @param {import('dev/dictionary-validate').SchemasDetails} schemasDetails
+ * @param {import('jszip')} zip
+ * @param {string} fileNameFormat
+ * @param {import('dev/dictionary-validate').Schema} schema
  */
-async function validateDictionaryBanks(mode, entries, schemasDetails) {
-    for (const entry of entries) {
-        const {filename} = entry;
-        for (const [fileNameFormat, schema] of schemasDetails) {
-            if (!fileNameFormat.test(filename)) { continue; }
+async function validateDictionaryBanks(mode, zip, fileNameFormat, schema) {
+    let jsonSchema;
+    try {
+        jsonSchema = createJsonSchema(mode, schema);
+    } catch (e) {
+        const e2 = e instanceof Error ? e : new Error(`${e}`);
+        e2.message += `\n(in file ${fileNameFormat})}`;
+        throw e2;
+    }
+    let index = 1;
+    while (true) {
+        const fileName = fileNameFormat.replace(/\?/, `${index}`);
 
-            let jsonSchema;
-            try {
-                jsonSchema = createJsonSchema(mode, schema);
-            } catch (e) {
-                const e2 = toError(e);
-                e2.message += `\n(in file ${filename})`;
-                throw e2;
-            }
+        const file = zip.files[fileName];
+        if (!file) { break; }
 
-            const data = await readArchiveEntryDataJson(entry);
-
-            try {
-                jsonSchema.validate(data);
-            } catch (e) {
-                const e2 = toError(e);
-                e2.message += `\n(in file ${filename})`;
-                throw e2;
-            }
-            break;
+        const data = parseJson(await file.async('string'));
+        try {
+            jsonSchema.validate(data);
+        } catch (e) {
+            const e2 = e instanceof Error ? e : new Error(`${e}`);
+            e2.message += `\n(in file ${fileName})}`;
+            throw e2;
         }
+
+        ++index;
     }
 }
 
 /**
  * Validates a dictionary from its zip archive.
  * @param {import('dev/schema-validate').ValidateMode} mode
- * @param {ArrayBuffer} archiveData
+ * @param {import('jszip')} archive
  * @param {import('dev/dictionary-validate').Schemas} schemas
  */
-export async function validateDictionary(mode, archiveData, schemas) {
-    const entries = await getDictionaryArchiveEntries(archiveData);
-    const indexFileName = getIndexFileName();
+export async function validateDictionary(mode, archive, schemas) {
+    const indexFileName = 'index.json';
+    const indexFile = archive.files[indexFileName];
+    if (!indexFile) {
+        throw new Error('No dictionary index found in archive');
+    }
+
     /** @type {import('dictionary-data').Index} */
-    const index = await getDictionaryArchiveJson(entries, indexFileName);
+    const index = parseJson(await indexFile.async('string'));
     const version = index.format || index.version;
 
     try {
         const jsonSchema = createJsonSchema(mode, schemas.index);
         jsonSchema.validate(index);
     } catch (e) {
-        const e2 = toError(e);
-        e2.message += `\n(in file ${indexFileName})`;
+        const e2 = e instanceof Error ? e : new Error(`${e}`);
+        e2.message += `\n(in file ${indexFileName})}`;
         throw e2;
     }
 
-    /** @type {import('dev/dictionary-validate').SchemasDetails} */
-    const schemasDetails = [
-        [/^term_bank_(\d+)\.json$/, version === 1 ? schemas.termBankV1 : schemas.termBankV3],
-        [/^term_meta_bank_(\d+)\.json$/, schemas.termMetaBankV3],
-        [/^kanji_bank_(\d+)\.json$/, version === 1 ? schemas.kanjiBankV1 : schemas.kanjiBankV3],
-        [/^kanji_meta_bank_(\d+)\.json$/, schemas.kanjiMetaBankV3],
-        [/^tag_bank_(\d+)\.json$/, schemas.tagBankV3]
-    ];
-
-    await validateDictionaryBanks(mode, entries, schemasDetails);
+    await validateDictionaryBanks(mode, archive, 'term_bank_?.json', version === 1 ? schemas.termBankV1 : schemas.termBankV3);
+    await validateDictionaryBanks(mode, archive, 'term_meta_bank_?.json', schemas.termMetaBankV3);
+    await validateDictionaryBanks(mode, archive, 'kanji_bank_?.json', version === 1 ? schemas.kanjiBankV1 : schemas.kanjiBankV3);
+    await validateDictionaryBanks(mode, archive, 'kanji_meta_bank_?.json', schemas.kanjiMetaBankV3);
+    await validateDictionaryBanks(mode, archive, 'tag_bank_?.json', schemas.tagBankV3);
 }
 
 /**
@@ -135,7 +134,8 @@ export async function testDictionaryFiles(mode, dictionaryFileNames) {
         try {
             console.log(`Validating ${dictionaryFileName}...`);
             const source = fs.readFileSync(dictionaryFileName);
-            await validateDictionary(mode, source.buffer, schemas);
+            const archive = await JSZip.loadAsync(source);
+            await validateDictionary(mode, archive, schemas);
             const end = performance.now();
             console.log(`No issues detected (${((end - start) / 1000).toFixed(2)}s)`);
         } catch (e) {

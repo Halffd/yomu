@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,7 +18,6 @@
 import type * as Api from './api';
 
 export type DatabaseUpdateType = 'dictionary';
-
 export type DatabaseUpdateCause = 'purge' | 'delete' | 'import';
 
 export type MecabParseResults = [
@@ -32,8 +31,3 @@ export type TabInfo = {
 };
 
 export type FindTabsPredicate = (tabInfo: TabInfo) => boolean | Promise<boolean>;
-
-export type CanAddResults = {
-    canAddArray: {note: import('anki').Note, isDuplicate: boolean}[];
-    cannotAddArray: import('anki').Note[];
-};

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 import {test as teardown} from '@playwright/test';
 import fs from 'fs';
 import path from 'path';
-import {root} from './playwright-util.js';
+import {root} from './playwright-util';
 
 const manifestPath = path.join(root, 'ext/manifest.json');
 const copyManifestPath = path.join(root, 'ext/manifest-old.json');

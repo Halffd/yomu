@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2021-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,48 +16,44 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/**
- * This is a static class because this file is not imported as a module.
- */
-// eslint-disable-next-line unicorn/no-static-only-class
 class HtmlTestUtilities {
     /**
      * @param {Element} element
      */
     static requestFullscreen(element) {
         if (element.requestFullscreen) {
-            void element.requestFullscreen();
+            element.requestFullscreen();
             // @ts-expect-error - Browser compatibility
         } else if (element.mozRequestFullScreen) {
             // @ts-expect-error - Browser compatibility
-            void element.mozRequestFullScreen();
+            element.mozRequestFullScreen();
             // @ts-expect-error - Browser compatibility
         } else if (element.webkitRequestFullscreen) {
             // @ts-expect-error - Browser compatibility
-            void element.webkitRequestFullscreen();
+            element.webkitRequestFullscreen();
             // @ts-expect-error - Browser compatibility
         } else if (element.msRequestFullscreen) {
             // @ts-expect-error - Browser compatibility
-            void element.msRequestFullscreen();
+            element.msRequestFullscreen();
         }
     }
 
     /** */
     static exitFullscreen() {
         if (document.exitFullscreen) {
-            void document.exitFullscreen();
+            document.exitFullscreen();
             // @ts-expect-error - Browser compatibility
         } else if (document.mozCancelFullScreen) {
             // @ts-expect-error - Browser compatibility
-            void document.mozCancelFullScreen();
+            document.mozCancelFullScreen();
             // @ts-expect-error - Browser compatibility
         } else if (document.webkitExitFullscreen) {
             // @ts-expect-error - Browser compatibility
-            void document.webkitExitFullscreen();
+            document.webkitExitFullscreen();
             // @ts-expect-error - Browser compatibility
         } else if (document.msExitFullscreen) {
             // @ts-expect-error - Browser compatibility
-            void document.msExitFullscreen();
+            document.msExitFullscreen();
         }
     }
 

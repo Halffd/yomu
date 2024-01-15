@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2021-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -208,9 +208,9 @@ export type TermDictionaryEntry = {
      */
     isPrimary: boolean;
     /**
-     * Ways that a looked-up word might be an inflected form of this term.
+     * A list of inflections that was applied to get the term.
      */
-    inflectionRuleChainCandidates: InflectionRuleChainCandidate[];
+    inflections: string[];
     /**
      * A score for the dictionary entry.
      */
@@ -232,9 +232,9 @@ export type TermDictionaryEntry = {
      */
     sourceTermExactMatchCount: number;
     /**
-     * The maximum length of the original text for all primary sources.
+     * The maximum length of the transformed text for all primary sources.
      */
-    maxOriginalTextLength: number;
+    maxTransformedTextLength: number;
     /**
      * Headwords for the entry.
      */
@@ -252,15 +252,6 @@ export type TermDictionaryEntry = {
      */
     frequencies: TermFrequency[];
 };
-
-export type InflectionRuleChainCandidate = {
-    source: InflectionSource;
-    inflectionRules: InflectionRuleChain;
-};
-
-export type InflectionRuleChain = string[];
-
-export type InflectionSource = 'algorithm' | 'dictionary' | 'both';
 
 /**
  * A term headword is a combination of a term, reading, and auxiliary information.
@@ -346,7 +337,7 @@ export type TermDefinition = {
     /**
      * The definition entries.
      */
-    entries: DictionaryData.TermGlossaryContent[];
+    entries: DictionaryData.TermGlossary[];
 };
 
 /**

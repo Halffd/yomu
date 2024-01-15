@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2020-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,7 +16,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+/* eslint-disable no-multi-spaces */
+
 import {describe, expect, test} from 'vitest';
+import {parseJson} from '../dev/json.js';
 import {JsonSchema} from '../ext/js/data/json-schema.js';
 
 /**
@@ -46,8 +49,18 @@ function createProxy(schema, value) {
     return new JsonSchema(schema).createProxy(value);
 }
 
+/**
+ * @template [T=unknown]
+ * @param {T} value
+ * @returns {T}
+ */
+function clone(value) {
+    return parseJson(JSON.stringify(value));
+}
 
-describe('JsonSchema', () => {
+
+/** */
+function testValidate1() {
     describe('Validate1', () => {
         /** @type {import('ext/json-schema').Schema} */
         const schema = {
@@ -107,9 +120,11 @@ describe('JsonSchema', () => {
             }
         });
     });
+}
 
+/** */
+function testValidate2() {
     describe('Validate2', () => {
-        /* eslint-disable @stylistic/no-multi-spaces */
         /** @type {{schema: import('ext/json-schema').Schema, inputs: {expected: boolean, value: unknown}[]}[]} */
         const data = [
             // String tests
@@ -503,16 +518,19 @@ describe('JsonSchema', () => {
                 ]
             }
         ];
-        /* eslint-enable @stylistic/no-multi-spaces */
 
         describe.each(data)('Schema %#', ({schema, inputs}) => {
-            test.each(inputs)(`schemaValidate(${JSON.stringify(schema)}, $value) -> $expected`, ({expected, value}) => {
+            test.each(inputs)(`schemaValidate(${schema}, $value) -> $expected`, ({expected, value}) => {
                 const actual = schemaValidate(schema, value);
                 expect(actual).toStrictEqual(expected);
             });
         });
     });
+}
 
+
+/** */
+function testGetValidValueOrDefault1() {
     describe('GetValidValueOrDefault1', () => {
         /** @type {{schema: import('ext/json-schema').Schema, inputs: [value: unknown, expected: unknown][]}[]} */
         const data = [
@@ -860,15 +878,18 @@ describe('JsonSchema', () => {
         ];
 
         describe.each(data)('Schema %#', ({schema, inputs}) => {
-            test.each(inputs)(`getValidValueOrDefault(${JSON.stringify(schema)}, %o) -> %o`, (value, expected) => {
+            test.each(inputs)(`getValidValueOrDefault(${schema}, %o) -> %o`, (value, expected) => {
                 const actual = getValidValueOrDefault(schema, value);
                 expect(actual).toStrictEqual(expected);
             });
         });
     });
+}
 
+
+/** */
+function testProxy1() {
     describe('Proxy1', () => {
-        /* eslint-disable @stylistic/no-multi-spaces */
         /** @type {{schema: import('ext/json-schema').Schema, tests: {error: boolean, value?: import('ext/json-schema').Value, action: (value: import('core').SafeAny) => void}[]}[]} */
         const data = [
             // Object tests
@@ -963,15 +984,11 @@ describe('JsonSchema', () => {
                     {error: true,  value: ['default'], action: (value) => { value[0] = null; }},
                     {error: false, value: ['default'], action: (value) => { delete value[0]; }},
                     {error: false, value: ['default'], action: (value) => { value[1] = 'string'; }},
-                    {
-                        error: false,
-                        value: ['default'],
-                        action: (value) => {
-                            value[1] = 'string';
-                            if (value.length !== 2) { throw new Error(`Invalid length; expected=2; actual=${value.length}`); }
-                            if (typeof value.push !== 'function') { throw new Error(`Invalid push; expected=function; actual=${typeof value.push}`); }
-                        }
-                    }
+                    {error: false, value: ['default'], action: (value) => {
+                        value[1] = 'string';
+                        if (value.length !== 2) { throw new Error(`Invalid length; expected=2; actual=${value.length}`); }
+                        if (typeof value.push !== 'function') { throw new Error(`Invalid push; expected=function; actual=${typeof value.push}`); }
+                    }}
                 ]
             },
 
@@ -1002,12 +1019,11 @@ describe('JsonSchema', () => {
                 ]
             }
         ];
-        /* eslint-enable @stylistic/no-multi-spaces */
 
         describe.each(data)('Schema %#', ({schema, tests}) => {
             test.each(tests)('proxy %#', ({error, value, action}) => {
                 if (typeof value === 'undefined') { value = getValidValueOrDefault(schema, void 0); }
-                value = structuredClone(value);
+                value = clone(value);
                 expect(schemaValidate(schema, value)).toBe(true);
                 const valueProxy = createProxy(schema, value);
                 if (error) {
@@ -1021,7 +1037,7 @@ describe('JsonSchema', () => {
         for (const {schema, tests} of data) {
             for (let {error, value, action} of tests) {
                 if (typeof value === 'undefined') { value = getValidValueOrDefault(schema, void 0); }
-                value = structuredClone(value);
+                value = clone(value);
                 expect(schemaValidate(schema, value)).toBe(true);
                 const valueProxy = createProxy(schema, value);
                 if (error) {
@@ -1032,4 +1048,16 @@ describe('JsonSchema', () => {
             }
         }
     });
-});
+}
+
+
+/** */
+function main() {
+    testValidate1();
+    testValidate2();
+    testGetValidValueOrDefault1();
+    testProxy1();
+}
+
+
+main();

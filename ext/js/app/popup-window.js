@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2020-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,7 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {EventDispatcher} from '../core/event-dispatcher.js';
+import {EventDispatcher} from '../core.js';
+import {yomitan} from '../yomitan.js';
 
 /**
  * This class represents a popup that is hosted in a new native window.
@@ -24,15 +25,15 @@ import {EventDispatcher} from '../core/event-dispatcher.js';
  */
 export class PopupWindow extends EventDispatcher {
     /**
-     * @param {import('../application.js').Application} application The main application instance.
-     * @param {string} id The identifier of the popup.
-     * @param {number} depth The depth of the popup.
-     * @param {number} frameId The frameId of the host frame.
+     * Creates a new instance.
+     * @param {import('popup').PopupWindowConstructorDetails} details Details about how to set up the instance.
      */
-    constructor(application, id, depth, frameId) {
+    constructor({
+        id,
+        depth,
+        frameId
+    }) {
         super();
-        /** @type {import('../application.js').Application} */
-        this._application = application;
         /** @type {string} */
         this._id = id;
         /** @type {number} */
@@ -141,7 +142,7 @@ export class PopupWindow extends EventDispatcher {
      * @returns {Promise<boolean>} `true` if the popup is visible, `false` otherwise.
      */
     async isVisible() {
-        return (this._popupTabId !== null && await this._application.api.isTabSearchPopup(this._popupTabId));
+        return (this._popupTabId !== null && await yomitan.api.isTabSearchPopup(this._popupTabId));
     }
 
     /**
@@ -273,7 +274,7 @@ export class PopupWindow extends EventDispatcher {
      * @returns {Promise<import('display').DirectApiReturn<TName>|undefined>}
      */
     async _invoke(open, action, params) {
-        if (this._application.webExtension.unloaded) {
+        if (yomitan.isExtensionUnloaded) {
             return void 0;
         }
 
@@ -282,14 +283,14 @@ export class PopupWindow extends EventDispatcher {
         const frameId = 0;
         if (this._popupTabId !== null) {
             try {
-                return /** @type {import('display').DirectApiReturn<TName>} */ (await this._application.crossFrame.invokeTab(
+                return /** @type {import('display').DirectApiReturn<TName>} */ (await yomitan.crossFrame.invokeTab(
                     this._popupTabId,
                     frameId,
                     'displayPopupMessage2',
                     message
                 ));
             } catch (e) {
-                if (this._application.webExtension.unloaded) {
+                if (yomitan.isExtensionUnloaded) {
                     open = false;
                 }
             }
@@ -300,10 +301,10 @@ export class PopupWindow extends EventDispatcher {
             return void 0;
         }
 
-        const {tabId} = await this._application.api.getOrCreateSearchPopup({focus: 'ifCreated'});
+        const {tabId} = await yomitan.api.getOrCreateSearchPopup({focus: 'ifCreated'});
         this._popupTabId = tabId;
 
-        return /** @type {import('display').DirectApiReturn<TName>} */ (await this._application.crossFrame.invokeTab(
+        return /** @type {import('display').DirectApiReturn<TName>} */ (await yomitan.crossFrame.invokeTab(
             this._popupTabId,
             frameId,
             'displayPopupMessage2',

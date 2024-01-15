@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2020-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {describe, expect, test} from 'vitest';
+import {expect, test} from 'vitest';
 import {ObjectPropertyAccessor} from '../ext/js/general/object-property-accessor.js';
 
 /**
@@ -38,7 +38,9 @@ function createTestObject() {
     };
 }
 
-describe('ObjectPropertyAccessor', () => {
+
+/** */
+function testGet1() {
     test('Get1', () => {
         /** @type {[pathArray: (string|number)[], getExpected: (object: import('core').SafeAny) => unknown][]} */
         const data = [
@@ -62,7 +64,10 @@ describe('ObjectPropertyAccessor', () => {
             expect(accessor.get(pathArray)).toStrictEqual(expected);
         }
     });
+}
 
+/** */
+function testGet2() {
     test('Get2', () => {
         const object = createTestObject();
         const accessor = new ObjectPropertyAccessor(object);
@@ -94,7 +99,11 @@ describe('ObjectPropertyAccessor', () => {
             expect(() => accessor.get(pathArray)).toThrow(message);
         }
     });
+}
 
+
+/** */
+function testSet1() {
     test('Set1', () => {
         const testValue = {};
         /** @type {(string|number)[][]} */
@@ -118,7 +127,10 @@ describe('ObjectPropertyAccessor', () => {
             expect(accessor.get(pathArray)).toStrictEqual(testValue);
         }
     });
+}
 
+/** */
+function testSet2() {
     test('Set2', () => {
         const object = createTestObject();
         const accessor = new ObjectPropertyAccessor(object);
@@ -144,7 +156,11 @@ describe('ObjectPropertyAccessor', () => {
             expect(() => accessor.set(pathArray, testValue)).toThrow(message);
         }
     });
+}
 
+
+/** */
+function testDelete1() {
     test('Delete1', () => {
         /**
          * @param {unknown} object
@@ -171,7 +187,10 @@ describe('ObjectPropertyAccessor', () => {
             expect(validate(object)).toBe(true);
         }
     });
+}
 
+/** */
+function testDelete2() {
     test('Delete2', () => {
         /** @type {[pathArray: (string|number)[], message: string][]} */
         const data = [
@@ -199,7 +218,11 @@ describe('ObjectPropertyAccessor', () => {
             expect(() => accessor.delete(pathArray)).toThrow(message);
         }
     });
+}
 
+
+/** */
+function testSwap1() {
     test('Swap1', () => {
         /** @type {[pathArray: (string|number)[], compareValues: boolean][]} */
         const data = [
@@ -234,7 +257,10 @@ describe('ObjectPropertyAccessor', () => {
             }
         }
     });
+}
 
+/** */
+function testSwap2() {
     test('Swap2', () => {
         /** @type {[pathArray1: (string|number)[], pathArray2: (string|number)[], checkRevert: boolean, message: string][]} */
         const data = [
@@ -271,7 +297,11 @@ describe('ObjectPropertyAccessor', () => {
             expect(value2a).toStrictEqual(value2b);
         }
     });
+}
 
+
+/** */
+function testGetPathString1() {
     test('GetPathString1', () => {
         /** @type {[pathArray: (string|number)[], expected: string][]} */
         const data = [
@@ -292,7 +322,10 @@ describe('ObjectPropertyAccessor', () => {
             expect(ObjectPropertyAccessor.getPathString(pathArray)).toStrictEqual(expected);
         }
     });
+}
 
+/** */
+function testGetPathString2() {
     test('GetPathString2', () => {
         /** @type {[pathArray: unknown[], message: string][]} */
         const data = [
@@ -305,7 +338,11 @@ describe('ObjectPropertyAccessor', () => {
             expect(() => ObjectPropertyAccessor.getPathString(pathArray)).toThrow(message);
         }
     });
+}
 
+
+/** */
+function testGetPathArray1() {
     test('GetPathArray1', () => {
         /** @type {[pathString: string, pathArray: (string|number)[]][]} */
         const data = [
@@ -330,7 +367,10 @@ describe('ObjectPropertyAccessor', () => {
             expect(ObjectPropertyAccessor.getPathArray(pathString)).toStrictEqual(expected);
         }
     });
+}
 
+/** */
+function testGetPathArray2() {
     test('GetPathArray2', () => {
         /** @type {[pathString: string, message: string][]} */
         const data = [
@@ -362,7 +402,11 @@ describe('ObjectPropertyAccessor', () => {
             expect(() => ObjectPropertyAccessor.getPathArray(pathString)).toThrow(message);
         }
     });
+}
 
+
+/** */
+function testHasProperty() {
     test('HasProperty', () => {
         /** @type {[object: unknown, property: unknown, expected: boolean][]} */
         const data = [
@@ -384,7 +428,10 @@ describe('ObjectPropertyAccessor', () => {
             expect(ObjectPropertyAccessor.hasProperty(object, property)).toStrictEqual(expected);
         }
     });
+}
 
+/** */
+function testIsValidPropertyType() {
     test('IsValidPropertyType', () => {
         /** @type {[object: unknown, property: unknown, expected: boolean][]} */
         const data = [
@@ -406,4 +453,26 @@ describe('ObjectPropertyAccessor', () => {
             expect(ObjectPropertyAccessor.isValidPropertyType(object, property)).toStrictEqual(expected);
         }
     });
-});
+}
+
+
+/** */
+function main() {
+    testGet1();
+    testGet2();
+    testSet1();
+    testSet2();
+    testDelete1();
+    testDelete2();
+    testSwap1();
+    testSwap2();
+    testGetPathString1();
+    testGetPathString2();
+    testGetPathArray1();
+    testGetPathArray2();
+    testHasProperty();
+    testIsValidPropertyType();
+}
+
+
+main();

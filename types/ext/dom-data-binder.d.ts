@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,6 +37,15 @@ export type SetValuesDetails<T = unknown> = {
 };
 
 export type OnErrorCallback<T = unknown> = (error: Error, stale: boolean, element: Element, metadata: T) => void;
+
+export type ConstructorDetails<T = unknown> = {
+    selector: string;
+    createElementMetadata: CreateElementMetadataCallback<T>;
+    compareElementMetadata: CompareElementMetadataCallback<T>;
+    getValues: GetValuesCallback<T>;
+    setValues: SetValuesCallback<T>;
+    onError?: OnErrorCallback<T> | null;
+};
 
 export type ElementObserver<T = unknown> = {
     element: Element;

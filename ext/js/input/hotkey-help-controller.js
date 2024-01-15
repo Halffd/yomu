@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2021-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,8 +16,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {isObject} from '../core.js';
 import {parseJson} from '../core/json.js';
-import {isObjectNotArray} from '../core/object-utilities.js';
+import {yomitan} from '../yomitan.js';
 import {HotkeyUtil} from './hotkey-util.js';
 
 export class HotkeyHelpController {
@@ -33,10 +34,10 @@ export class HotkeyHelpController {
     }
 
     /**
-     * @param {import('../comm/api.js').API} api
+     * @returns {Promise<void>}
      */
-    async prepare(api) {
-        const {platform: {os}} = await api.getEnvironmentInfo();
+    async prepare() {
+        const {platform: {os}} = await yomitan.api.getEnvironmentInfo();
         this._hotkeyUtil.os = os;
         await this._setupGlobalCommands(this._globalActionHotkeys);
     }
@@ -67,10 +68,9 @@ export class HotkeyHelpController {
             const hotkey = (global ? this._globalActionHotkeys : this._localActionHotkeys).get(action);
             for (let i = 0, ii = attributes.length; i < ii; ++i) {
                 const attribute = attributes[i];
-                /** @type {unknown} */
                 let value;
                 if (typeof hotkey !== 'undefined') {
-                    value = multipleValues ? values[i] : values;
+                    value = /** @type {unknown} */ (multipleValues ? values[i] : values);
                     if (typeof value === 'string') {
                         value = value.replace(replacementPattern, hotkey);
                     }
@@ -90,11 +90,11 @@ export class HotkeyHelpController {
     // Private
 
     /**
-     * @returns {Promise<chrome.commands.Command[]>}
+     * @param {Map<string, string>} commandMap
      */
-    _getAllCommands() {
-        return new Promise((resolve, reject) => {
-            if (!(isObjectNotArray(chrome.commands) && typeof chrome.commands.getAll === 'function')) {
+    async _setupGlobalCommands(commandMap) {
+        const commands = await new Promise((resolve, reject) => {
+            if (!(isObject(chrome.commands) && typeof chrome.commands.getAll === 'function')) {
                 resolve([]);
                 return;
             }
@@ -108,17 +108,10 @@ export class HotkeyHelpController {
                 }
             });
         });
-    }
-
-    /**
-     * @param {Map<string, string>} commandMap
-     */
-    async _setupGlobalCommands(commandMap) {
-        const commands = await this._getAllCommands();
 
         commandMap.clear();
         for (const {name, shortcut} of commands) {
-            if (typeof name !== 'string' || typeof shortcut !== 'string' || shortcut.length === 0) { continue; }
+            if (shortcut.length === 0) { continue; }
             const {key, modifiers} = this._hotkeyUtil.convertCommandToInput(shortcut);
             commandMap.set(name, this._hotkeyUtil.getInputDisplayValue(key, modifiers));
         }
@@ -159,8 +152,7 @@ export class HotkeyHelpController {
         if (typeof hotkey !== 'string') { return null; }
         const data = /** @type {unknown} */ (parseJson(hotkey));
         if (!Array.isArray(data)) { return null; }
-        const dataArray = /** @type {unknown[]} */ (data);
-        const [action, attributes, values] = dataArray;
+        const [action, attributes, values] = data;
         if (typeof action !== 'string') { return null; }
         /** @type {string[]} */
         const attributesArray = [];
@@ -178,41 +170,9 @@ export class HotkeyHelpController {
         return {
             action: global ? action.substring(globalPrexix.length) : action,
             global,
-            attributes: attributesArray,
+            attributes,
             values,
             defaultAttributeValues
         };
-    }
-
-    /**
-     * @param {HTMLElement} node
-     * @returns {?string}
-     */
-    getHotkeyLabel(node) {
-        const {hotkey} = node.dataset;
-        if (typeof hotkey !== 'string') { return null; }
-
-        const data = /** @type {unknown} */ (parseJson(hotkey));
-        if (!Array.isArray(data)) { return null; }
-
-        const values = /** @type {unknown[]} */ (data)[2];
-        if (typeof values !== 'string') { return null; }
-
-        return values;
-    }
-
-    /**
-     * @param {HTMLElement} node
-     * @param {string} label
-     */
-    setHotkeyLabel(node, label) {
-        const {hotkey} = node.dataset;
-        if (typeof hotkey !== 'string') { return; }
-
-        const data = /** @type {unknown} */ (parseJson(hotkey));
-        if (!Array.isArray(data)) { return; }
-
-        data[2] = label;
-        node.dataset.hotkey = JSON.stringify(data);
     }
 }

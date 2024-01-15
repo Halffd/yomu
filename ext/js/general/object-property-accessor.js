@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2016-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -117,14 +117,14 @@ export class ObjectPropertyAccessor {
         /** @type {import('core').SerializableObject} */ (target1)[key1] = value2;
         try {
             /** @type {import('core').SerializableObject} */ (target2)[key2] = value1;
-        } catch (error) {
+        } catch (e) {
             // Revert
             try {
                 /** @type {import('core').SerializableObject} */ (target1)[key1] = value1;
-            } catch (error2) {
+            } catch (e2) {
                 // NOP
             }
-            throw error;
+            throw e;
         }
     }
 

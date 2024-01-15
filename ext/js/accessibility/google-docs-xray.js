@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 
 /** Entry point. */
 function main() {
-    /** @type {unknown} */
+    /** @type {Window} */
     // @ts-expect-error - Firefox Xray vision
     const window2 = window.wrappedJSObject;
     if (!(typeof window2 === 'object' && window2 !== null)) { return; }

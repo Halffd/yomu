@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2019-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -17,14 +17,12 @@
  */
 
 import {Dexie} from '../../../lib/dexie.js';
+import {isObject, log} from '../../core.js';
 import {parseJson} from '../../core/json.js';
-import {log} from '../../core/log.js';
-import {isObjectNotArray} from '../../core/object-utilities.js';
-import {toError} from '../../core/to-error.js';
-import {arrayBufferUtf8Decode} from '../../data/array-buffer-util.js';
 import {OptionsUtil} from '../../data/options-util.js';
-import {getAllPermissions} from '../../data/permissions-util.js';
+import {ArrayBufferUtil} from '../../data/sandbox/array-buffer-util.js';
 import {querySelectorNotNull} from '../../dom/query-selector.js';
+import {yomitan} from '../../yomitan.js';
 import {DictionaryController} from './dictionary-controller.js';
 
 export class BackupController {
@@ -133,9 +131,9 @@ export class BackupController {
      */
     async _getSettingsExportData(date) {
         const optionsFull = await this._settingsController.getOptionsFull();
-        const environment = await this._settingsController.application.api.getEnvironmentInfo();
-        const fieldTemplatesDefault = await this._settingsController.application.api.getDefaultAnkiFieldTemplates();
-        const permissions = await getAllPermissions();
+        const environment = await yomitan.api.getEnvironmentInfo();
+        const fieldTemplatesDefault = await yomitan.api.getDefaultAnkiFieldTemplates();
+        const permissions = await this._settingsController.permissionsUtil.getAllPermissions();
 
         // Format options
         for (const {options} of optionsFull.profiles) {
@@ -144,7 +142,7 @@ export class BackupController {
             }
         }
 
-        return {
+        const data = {
             version: this._currentVersion,
             date: this._getSettingsExportDateString(date, '-', ' ', ':', 6),
             url: chrome.runtime.getURL('/'),
@@ -154,6 +152,8 @@ export class BackupController {
             permissions,
             options: optionsFull
         };
+
+        return data;
     }
 
     /**
@@ -354,7 +354,7 @@ export class BackupController {
         const warnings = [];
 
         const anki = options.anki;
-        if (isObjectNotArray(anki)) {
+        if (isObject(anki)) {
             const fieldTemplates = anki.fieldTemplates;
             if (typeof fieldTemplates === 'string') {
                 warnings.push('anki.fieldTemplates contains a non-default value');
@@ -372,12 +372,12 @@ export class BackupController {
         }
 
         const audio = options.audio;
-        if (isObjectNotArray(audio)) {
+        if (isObject(audio)) {
             const sources = audio.sources;
             if (Array.isArray(sources)) {
                 for (let i = 0, ii = sources.length; i < ii; ++i) {
                     const source = sources[i];
-                    if (!isObjectNotArray(source)) { continue; }
+                    if (!isObject(source)) { continue; }
                     const {url} = source;
                     if (typeof url === 'string' && url.length > 0 && !this._isLocalhostUrl(url)) {
                         warnings.push(`audio.sources[${i}].url uses a non-localhost URL`);
@@ -403,9 +403,9 @@ export class BackupController {
         const profiles = optionsFull.profiles;
         if (Array.isArray(profiles)) {
             for (const profile of profiles) {
-                if (!isObjectNotArray(profile)) { continue; }
+                if (!isObject(profile)) { continue; }
                 const options = profile.options;
-                if (!isObjectNotArray(options)) { continue; }
+                if (!isObject(options)) { continue; }
 
                 const warnings2 = this._settingsImportSanitizeProfileOptions(options, dryRun);
                 for (const warning of warnings2) {
@@ -423,12 +423,12 @@ export class BackupController {
     async _importSettingsFile(file) {
         if (this._optionsUtil === null) { throw new Error('OptionsUtil invalid'); }
 
-        const dataString = arrayBufferUtf8Decode(await this._readFileArrayBuffer(file));
+        const dataString = ArrayBufferUtil.arrayBufferUtf8Decode(await this._readFileArrayBuffer(file));
         /** @type {import('backup-controller').BackupData} */
         const data = parseJson(dataString);
 
         // Type check
-        if (!isObjectNotArray(data)) {
+        if (!isObject(data)) {
             throw new Error(`Invalid data type: ${typeof data}`);
         }
 
@@ -451,7 +451,7 @@ export class BackupController {
 
         // Verify options exists
         let optionsFull = data.options;
-        if (!isObjectNotArray(optionsFull)) {
+        if (!isObject(optionsFull)) {
             throw new Error(`Invalid options type: ${typeof optionsFull}`);
         }
 
@@ -498,7 +498,7 @@ export class BackupController {
         try {
             await this._importSettingsFile(file);
         } catch (error) {
-            this._showSettingsImportError(toError(error));
+            this._showSettingsImportError(error instanceof Error ? error : new Error(`${error}`));
         }
     }
 
@@ -557,14 +557,16 @@ export class BackupController {
      * @param {{totalRows: number, completedRows: number, done: boolean}} details
      */
     _databaseExportProgressCallback({totalRows, completedRows, done}) {
-        log.log(`Progress: ${completedRows} of ${totalRows} rows completed`);
+        // eslint-disable-next-line no-console
+        console.log(`Progress: ${completedRows} of ${totalRows} rows completed`);
         /** @type {HTMLElement} */
         const messageContainer = querySelectorNotNull(document, '#db-ops-progress-report');
         messageContainer.style.display = 'block';
         messageContainer.textContent = `Export Progress: ${completedRows} of ${totalRows} rows completed`;
 
         if (done) {
-            log.log('Done exporting.');
+            // eslint-disable-next-line no-console
+            console.log('Done exporting.');
             messageContainer.style.display = 'none';
         }
     }
@@ -574,16 +576,10 @@ export class BackupController {
      * @returns {Promise<Blob>}
      */
     async _exportDatabase(databaseName) {
-        const DexieConstructor = /** @type {import('dexie').DexieConstructor} */ (/** @type {unknown} */ (Dexie));
-        const db = new DexieConstructor(databaseName);
-        await db.open();
-        /** @type {unknown} */
-        // @ts-expect-error - The export function is declared as an extension which has no type information.
-        const blob = await db.export({
-            progressCallback: this._databaseExportProgressCallback.bind(this)
-        });
-        db.close();
-        return /** @type {Blob} */ (blob);
+        const db = await new Dexie(databaseName).open();
+        const blob = await db.export({progressCallback: this._databaseExportProgressCallback});
+        await db.close();
+        return blob;
     }
 
     /** */
@@ -609,7 +605,8 @@ export class BackupController {
             const blob = new Blob([data], {type: 'application/json'});
             this._saveBlob(blob, fileName);
         } catch (error) {
-            log.log(error);
+            // eslint-disable-next-line no-console
+            console.log(error);
             this._databaseExportImportErrorMessage('Errors encountered while exporting. Please try again. Restart the browser if it continues to fail.');
         } finally {
             pageExitPrevention.end();
@@ -623,7 +620,8 @@ export class BackupController {
      * @param {{totalRows: number, completedRows: number, done: boolean}} details
      */
     _databaseImportProgressCallback({totalRows, completedRows, done}) {
-        log.log(`Progress: ${completedRows} of ${totalRows} rows completed`);
+        // eslint-disable-next-line no-console
+        console.log(`Progress: ${completedRows} of ${totalRows} rows completed`);
         /** @type {HTMLElement} */
         const messageContainer = querySelectorNotNull(document, '#db-ops-progress-report');
         messageContainer.style.display = 'block';
@@ -631,23 +629,22 @@ export class BackupController {
         messageContainer.textContent = `Import Progress: ${completedRows} of ${totalRows} rows completed`;
 
         if (done) {
-            log.log('Done importing.');
+            // eslint-disable-next-line no-console
+            console.log('Done importing.');
             messageContainer.style.color = '#006633';
             messageContainer.textContent = 'Done importing. You will need to re-enable the dictionaries and refresh afterward. If you run into issues, please restart the browser. If it continues to fail, reinstall Yomitan and import dictionaries one-by-one.';
         }
     }
 
     /**
-     * @param {string} _databaseName
+     * @param {string} databaseName
      * @param {File} file
      */
-    async _importDatabase(_databaseName, file) {
-        await this._settingsController.application.api.purgeDatabase();
-        await Dexie.import(file, {
-            progressCallback: this._databaseImportProgressCallback.bind(this)
-        });
-        void this._settingsController.application.api.triggerDatabaseUpdated('dictionary', 'import');
-        this._settingsController.application.triggerStorageChanged();
+    async _importDatabase(databaseName, file) {
+        await yomitan.api.purgeDatabase();
+        await Dexie.import(file, {progressCallback: this._databaseImportProgressCallback});
+        yomitan.api.triggerDatabaseUpdated('dictionary', 'import');
+        yomitan.triggerStorageChanged();
     }
 
     /** */
@@ -684,7 +681,8 @@ export class BackupController {
             this._settingsExportDatabaseToken = token;
             await this._importDatabase(this._dictionariesDatabaseName, file);
         } catch (error) {
-            log.log(error);
+            // eslint-disable-next-line no-console
+            console.log(error);
             /** @type {HTMLElement} */
             const messageContainer = querySelectorNotNull(document, '#db-ops-progress-report');
             messageContainer.style.color = 'red';

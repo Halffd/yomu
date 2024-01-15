@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2019-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -17,11 +17,11 @@
  */
 
 import {ExtensionError} from '../../core/extension-error.js';
-import {toError} from '../../core/to-error.js';
 import {AnkiNoteBuilder} from '../../data/anki-note-builder.js';
-import {getDynamicTemplates} from '../../data/anki-template-util.js';
 import {querySelectorNotNull} from '../../dom/query-selector.js';
+import {JapaneseUtil} from '../../language/sandbox/japanese-util.js';
 import {TemplateRendererProxy} from '../../templates/template-renderer-proxy.js';
+import {yomitan} from '../../yomitan.js';
 
 export class AnkiTemplatesController {
     /**
@@ -55,12 +55,12 @@ export class AnkiTemplatesController {
         /** @type {?import('./modal.js').Modal} */
         this._fieldTemplateResetModal = null;
         /** @type {AnkiNoteBuilder} */
-        this._ankiNoteBuilder = new AnkiNoteBuilder(settingsController.application.api, new TemplateRendererProxy());
+        this._ankiNoteBuilder = new AnkiNoteBuilder(new JapaneseUtil(null), new TemplateRendererProxy());
     }
 
     /** */
     async prepare() {
-        this._defaultFieldTemplates = await this._settingsController.application.api.getDefaultAnkiFieldTemplates();
+        this._defaultFieldTemplates = await yomitan.api.getDefaultAnkiFieldTemplates();
 
         /** @type {HTMLButtonElement} */
         const menuButton = querySelectorNotNull(document, '#anki-card-templates-test-field-menu-button');
@@ -157,7 +157,7 @@ export class AnkiTemplatesController {
     /** */
     _onValidateCompile() {
         if (this._compileResultInfo === null) { return; }
-        void this._validate(this._compileResultInfo, '{expression}', 'term-kanji', false, true);
+        this._validate(this._compileResultInfo, '{expression}', 'term-kanji', false, true);
     }
 
     /**
@@ -170,7 +170,7 @@ export class AnkiTemplatesController {
         const infoNode = /** @type {HTMLElement} */ (this._renderResult);
         infoNode.hidden = true;
         this._cachedDictionaryEntryText = null;
-        void this._validate(infoNode, field, 'term-kanji', true, false);
+        this._validate(infoNode, field, 'term-kanji', true, false);
     }
 
     /**
@@ -205,7 +205,7 @@ export class AnkiTemplatesController {
      */
     async _getDictionaryEntry(text, optionsContext) {
         if (this._cachedDictionaryEntryText !== text) {
-            const {dictionaryEntries} = await this._settingsController.application.api.termsFind(text, {}, optionsContext);
+            const {dictionaryEntries} = await yomitan.api.termsFind(text, {}, optionsContext);
             if (dictionaryEntries.length === 0) { return null; }
 
             this._cachedDictionaryEntryValue = dictionaryEntries[0];
@@ -245,7 +245,8 @@ export class AnkiTemplatesController {
                     query: sentenceText,
                     fullQuery: sentenceText
                 };
-                const template = this._getAnkiTemplate(options);
+                let template = options.anki.fieldTemplates;
+                if (typeof template !== 'string') { template = this._defaultFieldTemplates; }
                 const {general: {resultOutputMode, glossaryLayoutMode, compactTags}} = options;
                 const {note, errors} = await this._ankiNoteBuilder.createNote(/** @type {import('anki-note-builder').CreateNoteDetails} */ ({
                     dictionaryEntry,
@@ -265,7 +266,7 @@ export class AnkiTemplatesController {
                 allErrors.push(...errors);
             }
         } catch (e) {
-            allErrors.push(toError(e));
+            allErrors.push(e instanceof Error ? e : new Error(`${e}`));
         }
 
         /**
@@ -292,16 +293,5 @@ export class AnkiTemplatesController {
         if (invalidateInput) {
             /** @type {HTMLTextAreaElement} */ (this._fieldTemplatesTextarea).dataset.invalid = `${hasError}`;
         }
-    }
-
-    /**
-     * @param {import('settings').ProfileOptions} options
-     * @returns {string}
-     */
-    _getAnkiTemplate(options) {
-        let staticTemplates = options.anki.fieldTemplates;
-        if (typeof staticTemplates !== 'string') { staticTemplates = this._defaultFieldTemplates; }
-        const dynamicTemplates = getDynamicTemplates(options);
-        return staticTemplates + '\n' + dynamicTemplates;
     }
 }

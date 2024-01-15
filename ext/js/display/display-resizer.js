@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2021-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {EventListenerCollection} from '../core/event-listener-collection.js';
+import {EventListenerCollection} from '../core.js';
 
 export class DisplayResizer {
     /**
@@ -87,7 +87,7 @@ export class DisplayResizer {
         } else {
             if (this._startSize === null) { return; }
             const {clientX: x, clientY: y} = e;
-            void this._updateFrameSize(x, y);
+            this._updateFrameSize(x, y);
         }
     }
 
@@ -115,7 +115,7 @@ export class DisplayResizer {
         const primaryTouch = this._getTouch(e.changedTouches, this._touchIdentifier);
         if (primaryTouch === null) { return; }
         const {clientX: x, clientY: y} = primaryTouch;
-        void this._updateFrameSize(x, y);
+        this._updateFrameSize(x, y);
     }
 
     /**
@@ -138,7 +138,7 @@ export class DisplayResizer {
             documentElement.dataset.isResizing = 'true';
         }
 
-        void this._initializeFrameResize(token);
+        this._initializeFrameResize(token);
     }
 
     /**
@@ -163,7 +163,7 @@ export class DisplayResizer {
             documentElement.dataset.isResizing = 'true';
         }
 
-        void this._initializeFrameResize(token);
+        this._initializeFrameResize(token);
     }
 
     /**

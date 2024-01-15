@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,5 +22,4 @@
 import type {ParseAst, ParseAstAsync} from 'rollup';
 
 export const parseAst: ParseAst;
-
 export const parseAstAsync: ParseAstAsync;

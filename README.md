@@ -20,6 +20,23 @@ In addition, we are beginning to make important bug fixes and minor enhancements
 
 Since the owner requested forks be uniquely named, we have chosen a new name, _yomitan_. (_-tan_ is an honorific used for anthropomorphic moe characters.) While we've made some substantial changes, the majority of the extension's functionality is thanks to hard work of foosoft and numerous other open source contributors from 2016-2023.
 
+Fork Additional Features:
+  Custom Search
+    Display every word definition
+    Display each kanji meaning
+    Show results from wiktionary, kanjidamage, kanjipedia and ichi.moe
+    Filter searched words by frequency or kanji
+    Save word on click
+    Hotkeys (arrows to navigate, space to expand, 0-9 to jump to, enter to save and add to anki)
+    Reading mode (No definitions, arrows to show meanings)
+    Particles filtering
+    Automaticly add(before or after previous) from clipboard
+    Customize search page hiding elements
+    Analyze texts
+  Anki auto copy to clipoard and play completion sound
+  Anki additional note kanji info
+
+
 ## Contributing
 
 Since this is a distributed effort, we **highly welcome new contributors**! Feel free to browse the [issue tracker](https://github.com/themoeway/yomitan/issues), and read our [contributing guidelines](./CONTRIBUTING.md). You can also find us on [TheMoeWay Discord](https://discord.gg/UGNPMDE7zC) at [#yomitan-development](https://discord.com/channels/617136488840429598/1081538711742844980).
@@ -27,7 +44,7 @@ Since this is a distributed effort, we **highly welcome new contributors**! Feel
 ## What's Yomitan?<!-- omit from toc -->
 
 Yomitan turns your web browser into a tool for building Japanese language literacy by helping you to decipher texts
-which would be otherwise too difficult to tackle. This extension is similar to [10ten Japanese Reader (formerly Rikaichamp)](https://addons.mozilla.org/en-US/firefox/addon/10ten-ja-reader/) for Firefox and [Rikaikun](https://chrome.google.com/webstore/detail/rikaikun/jipdnfibhldikgcjhfnomkfpcebammhp) for Chrome, but it stands apart in its goal of being an all-encompassing learning tool as opposed to a mere browser-based dictionary.
+which would be otherwise too difficult tackle. This extension is similar to [10ten Japanese Reader (formerly Rikaichamp)](https://addons.mozilla.org/en-US/firefox/addon/10ten-ja-reader/) for Firefox and [Rikaikun](https://chrome.google.com/webstore/detail/rikaikun/jipdnfibhldikgcjhfnomkfpcebammhp?hl=en) for Chrome, but it stands apart in its goal of being an all-encompassing learning tool as opposed to a mere browser-based dictionary.
 
 Yomitan provides advanced features not available in other browser-based dictionaries:
 
@@ -58,7 +75,6 @@ Yomitan provides advanced features not available in other browser-based dictiona
 Yomitan comes in two flavors: _stable_ and _testing_. New changes are initially introduced into the _testing_ version, and after some time spent ensuring that they are relatively bug free, they will be promoted to the _stable_ version. If you are technically savvy and don't mind submitting issues on GitHub, try the _testing_ version; otherwise, the _stable_ version will be your best bet.
 
 - **Google Chrome**
-
   - [stable](https://chrome.google.com/webstore/detail/yomitan/likgccmbimhjbgkjambclfkhldnlhbnn)
   - [testing](https://chrome.google.com/webstore/detail/yomitan-development-build/glnaenfapkkecknnmginabpmgkenenml)
 
@@ -89,7 +105,7 @@ updates automatically.
 
     <img src="resources/images/search-popup-terms.png" width="300" alt="popup with search terms">
 
-4.  Click on the <img src="ext/images/play-audio.svg" width="16" height="16" alt="loudspeaker icon"> _speaker_ button to hear the term pronounced by a native speaker. If an audio sample is not available, you will hear a short click instead. For more options, see [Audio Configuration](./docs/audio.md).
+4.  Click on the <img src="ext/images/play-audio.svg" width="16" height="16" alt="loudspeaker icon"> _speaker_ button to hear the term pronounced by a native speaker. If an audio sample is not available, you will hear a short click instead. You can configure the sources used to retrieve audio samples in the options page.
 
 5.  Click on individual kanji in the term definition results to view additional information about those characters, including stroke order diagrams, readings, meanings, as well as other useful data.
 
@@ -115,13 +131,11 @@ Required licensing notices for this project follow below:
 
 Yomitan uses several third-party libraries to function.
 
-<!-- The following table is generated using the command `npm run license-report:markdown`. -->
-
-| Name                | Installed version | License type | Link                                             |
-| :------------------ | :---------------- | :----------- | :----------------------------------------------- |
-| @zip.js/zip.js      | 2.7.32            | BSD-3-Clause | git+https://github.com/gildas-lormeau/zip.js.git |
-| dexie               | 3.2.4             | Apache-2.0   | git+https://github.com/dfahlander/Dexie.js.git   |
-| dexie-export-import | 4.0.7             | Apache-2.0   | git+https://github.com/dexie/Dexie.js.git        |
-| yomitan-handlebars  | 1.0.0             | MIT          | n/a                                              |
-| parse5              | 7.1.2             | MIT          | git://github.com/inikulin/parse5.git             |
-| wanakana            | 5.3.1             | MIT          | git+ssh://git@github.com/WaniKani/WanaKana.git   |
+| Name                | Installed version | License type | Link                                                     |
+| :------------------ | :---------------- | :----------- | :------------------------------------------------------- |
+| @zip.js/zip.js      | 2.7.31            | BSD-3-Clause | git+https://github.com/gildas-lormeau/zip.js.git         |
+| dexie               | 3.2.4             | Apache-2.0   | git+https://github.com/dfahlander/Dexie.js.git           |
+| dexie-export-import | 4.0.7             | Apache-2.0   | git+https://github.com/dexie/Dexie.js.git                |
+| handlebars          | 4.7.8             | MIT          | git+https://github.com/handlebars-lang/handlebars.js.git |
+| parse5              | 7.1.2             | MIT          | git://github.com/inikulin/parse5.git                     |
+| wanakana            | 5.3.1             | MIT          | git+ssh://git@github.com/WaniKani/WanaKana.git           |

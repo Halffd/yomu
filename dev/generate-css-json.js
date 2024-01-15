@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2021-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -91,7 +91,6 @@ function removeProperty(styles, property, removedProperties) {
  * @returns {string}
  */
 export function formatRulesJson(rules) {
-    // This is similar to the following code, but formatted a but more succinctly:
     // return JSON.stringify(rules, null, 4);
     const indent1 = '    ';
     const indent2 = indent1.repeat(2);
@@ -102,11 +101,11 @@ export function formatRulesJson(rules) {
     for (const {selectors, styles} of rules) {
         if (ruleIndex > 0) { result += ','; }
         result += `\n${indent1}{\n${indent2}"selectors": `;
-        result += (
-            selectors.length === 1 ?
-            `[${JSON.stringify(selectors[0], null, 4)}]` :
-            JSON.stringify(selectors, null, 4).replace(/\n/g, '\n' + indent2)
-        );
+        if (selectors.length === 1) {
+            result += `[${JSON.stringify(selectors[0], null, 4)}]`;
+        } else {
+            result += JSON.stringify(selectors, null, 4).replace(/\n/g, '\n' + indent2);
+        }
         result += `,\n${indent2}"styles": [`;
         let styleIndex = 0;
         for (const [key, value] of styles) {
@@ -120,7 +119,6 @@ export function formatRulesJson(rules) {
     }
     if (ruleIndex > 0) { result += '\n'; }
     result += ']';
-    result += '\n';
     return result;
 }
 
@@ -152,10 +150,7 @@ export function generateRules(cssFilePath, overridesCssFilePath) {
         const styles = [];
         if (typeof declarations !== 'undefined') {
             for (const declaration of declarations) {
-                if (declaration.type !== 'declaration') {
-                    console.log(declaration);
-                    continue;
-                }
+                if (declaration.type !== 'declaration') { console.log(declaration); continue; }
                 const {property, value} = /** @type {css.Declaration} */ (declaration);
                 if (typeof property !== 'string' || typeof value !== 'string') { continue; }
                 styles.push([property, value]);

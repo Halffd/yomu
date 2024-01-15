@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2020-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -194,10 +194,9 @@ export class Database {
         request.onsuccess = (e) => {
             const cursor = /** @type {IDBRequest<?IDBCursorWithValue>} */ (e.target).result;
             if (cursor) {
-                /** @type {unknown} */
-                const value = cursor.value;
-                if (noPredicate || predicate(/** @type {TResult} */ (value), predicateArg)) {
-                    resolve(/** @type {TResult} */ (value), data);
+                const {value} = cursor;
+                if (noPredicate || predicate(value, predicateArg)) {
+                    resolve(value, data);
                 } else {
                     cursor.continue();
                 }
@@ -354,9 +353,7 @@ export class Database {
         for (const {version, stores} of upgrades) {
             if (oldVersion >= version) { continue; }
 
-            /** @type {[objectStoreName: string, value: import('database').StoreDefinition][]} */
-            const entries = Object.entries(stores);
-            for (const [objectStoreName, {primaryKey, indices}] of entries) {
+            for (const [objectStoreName, {primaryKey, indices}] of Object.entries(stores)) {
                 const existingObjectStoreNames = transaction.objectStoreNames || db.objectStoreNames;
                 const objectStore = (
                     this._listContains(existingObjectStoreNames, objectStoreName) ?
@@ -397,14 +394,8 @@ export class Database {
      */
     _getAllFast(objectStoreOrIndex, query, onSuccess, onReject, data) {
         const request = objectStoreOrIndex.getAll(query);
-        request.onerror = (e) => {
-            const target = /** @type {IDBRequest<TResult[]>} */ (e.target);
-            onReject(target.error, data);
-        };
-        request.onsuccess = (e) => {
-            const target = /** @type {IDBRequest<TResult[]>} */ (e.target);
-            onSuccess(target.result, data);
-        };
+        request.onerror = (e) => onReject(/** @type {IDBRequest<import('core').SafeAny[]>} */ (e.target).error, data);
+        request.onsuccess = (e) => onSuccess(/** @type {IDBRequest<import('core').SafeAny[]>} */ (e.target).result, data);
     }
 
     /**
@@ -424,9 +415,7 @@ export class Database {
         request.onsuccess = (e) => {
             const cursor = /** @type {IDBRequest<?IDBCursorWithValue>} */ (e.target).result;
             if (cursor) {
-                /** @type {unknown} */
-                const value = cursor.value;
-                results.push(/** @type {TResult} */ (value));
+                results.push(cursor.value);
                 cursor.continue();
             } else {
                 onSuccess(results, data);

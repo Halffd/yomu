@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2019-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,27 +16,24 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {EventDispatcher} from '../core/event-dispatcher.js';
-import {log} from '../core/log.js';
+import {EventDispatcher, log} from '../core.js';
 import {querySelectorNotNull} from '../dom/query-selector.js';
-import {convertHiraganaToKatakana, convertKatakanaToHiragana, isStringEntirelyKana} from '../language/ja/japanese.js';
 import {TextScanner} from '../language/text-scanner.js';
+import {yomitan} from '../yomitan.js';
 
 /**
  * @augments EventDispatcher<import('query-parser').Events>
  */
 export class QueryParser extends EventDispatcher {
     /**
-     * @param {import('../comm/api.js').API} api
-     * @param {import('../dom/text-source-generator').TextSourceGenerator} textSourceGenerator
-     * @param {import('display').GetSearchContextCallback} getSearchContext
+     * @param {import('display').QueryParserConstructorDetails} details
      */
-    constructor(api, textSourceGenerator, getSearchContext) {
+    constructor({getSearchContext, japaneseUtil}) {
         super();
-        /** @type {import('../comm/api.js').API} */
-        this._api = api;
         /** @type {import('display').GetSearchContextCallback} */
         this._getSearchContext = getSearchContext;
+        /** @type {import('../language/sandbox/japanese-util.js').JapaneseUtil} */
+        this._japaneseUtil = japaneseUtil;
         /** @type {string} */
         this._text = '';
         /** @type {?import('core').TokenObject} */
@@ -61,18 +58,12 @@ export class QueryParser extends EventDispatcher {
         this._queryParserModeSelect = querySelectorNotNull(document, '#query-parser-mode-select');
         /** @type {TextScanner} */
         this._textScanner = new TextScanner({
-            api,
             node: this._queryParser,
             getSearchContext,
             searchTerms: true,
             searchKanji: false,
-            searchOnClick: true,
-            textSourceGenerator
+            searchOnClick: true
         });
-        /** @type {?(import('../language/ja/japanese-wanakana.js'))} */
-        this._japaneseWanakanaModule = null;
-        /** @type {?Promise<import('../language/ja/japanese-wanakana.js')>} */
-        this._japaneseWanakanaModuleImport = null;
     }
 
     /** @type {string} */
@@ -84,15 +75,14 @@ export class QueryParser extends EventDispatcher {
     prepare() {
         this._textScanner.prepare();
         this._textScanner.on('clear', this._onTextScannerClear.bind(this));
-        this._textScanner.on('searchSuccess', this._onSearchSuccess.bind(this));
-        this._textScanner.on('searchError', this._onSearchError.bind(this));
+        this._textScanner.on('searched', this._onSearched.bind(this));
         this._queryParserModeSelect.addEventListener('change', this._onParserChange.bind(this), false);
     }
 
     /**
      * @param {import('display').QueryParserOptions} display
      */
-    setOptions({selectedParser, termSpacing, readingMode, useInternalParser, useMecabParser, language, scanning}) {
+    setOptions({selectedParser, termSpacing, readingMode, useInternalParser, useMecabParser, scanning}) {
         let selectedParserChanged = false;
         if (selectedParser === null || typeof selectedParser === 'string') {
             selectedParserChanged = (this._selectedParser !== selectedParser);
@@ -102,7 +92,7 @@ export class QueryParser extends EventDispatcher {
             this._queryParser.dataset.termSpacing = `${termSpacing}`;
         }
         if (typeof readingMode === 'string') {
-            this._setReadingMode(readingMode);
+            this._readingMode = readingMode;
         }
         if (typeof useInternalParser === 'boolean') {
             this._useInternalParser = useInternalParser;
@@ -115,7 +105,6 @@ export class QueryParser extends EventDispatcher {
             if (typeof scanLength === 'number') {
                 this._scanLength = scanLength;
             }
-            this._textScanner.language = language;
             this._textScanner.setOptions(scanning);
         }
         this._textScanner.setEnabled(true);
@@ -134,7 +123,7 @@ export class QueryParser extends EventDispatcher {
         /** @type {?import('core').TokenObject} */
         const token = {};
         this._setTextToken = token;
-        this._parseResults = await this._api.parseText(text, this._getOptionsContext(), this._scanLength, this._useInternalParser, this._useMecabParser);
+        this._parseResults = await yomitan.api.parseText(text, this._getOptionsContext(), this._scanLength, this._useInternalParser, this._useMecabParser);
         if (this._setTextToken !== token) { return; }
 
         this._refreshSelectedParser();
@@ -151,26 +140,36 @@ export class QueryParser extends EventDispatcher {
     }
 
     /**
-     * @param {import('text-scanner').EventArgument<'searchSuccess'>} details
+     * @param {import('text-scanner').SearchedEventDetails} e
      */
-    _onSearchSuccess({type, dictionaryEntries, sentence, inputInfo, textSource, optionsContext}) {
+    _onSearched(e) {
+        const {error} = e;
+        if (error !== null) {
+            log.error(error);
+            return;
+        }
+
+        const {
+            textScanner,
+            type,
+            dictionaryEntries,
+            sentence,
+            inputInfo,
+            textSource,
+            optionsContext
+        } = e;
+        if (type === null || dictionaryEntries === null || sentence === null || optionsContext === null) { return; }
+
         this.trigger('searched', {
-            textScanner: this._textScanner,
+            textScanner,
             type,
             dictionaryEntries,
             sentence,
             inputInfo,
             textSource,
             optionsContext,
-            sentenceOffset: this._getSentenceOffset(textSource)
+            sentenceOffset: this._getSentenceOffset(e.textSource)
         });
-    }
-
-    /**
-     * @param {import('text-scanner').EventArgument<'searchError'>} details
-     */
-    _onSearchError({error}) {
-        log.error(error);
     }
 
     /**
@@ -210,7 +209,7 @@ export class QueryParser extends EventDispatcher {
             scope: 'profile',
             optionsContext
         };
-        void this._api.modifySettings([modification], 'search');
+        yomitan.api.modifySettings([modification], 'search');
     }
 
     /**
@@ -346,15 +345,15 @@ export class QueryParser extends EventDispatcher {
     _convertReading(term, reading) {
         switch (this._readingMode) {
             case 'hiragana':
-                return convertKatakanaToHiragana(reading);
+                return this._japaneseUtil.convertKatakanaToHiragana(reading);
             case 'katakana':
-                return convertHiraganaToKatakana(reading);
+                return this._japaneseUtil.convertHiraganaToKatakana(reading);
             case 'romaji':
-                if (this._japaneseWanakanaModule !== null) {
+                if (this._japaneseUtil.convertToRomajiSupported()) {
                     if (reading.length > 0) {
-                        return this._japaneseWanakanaModule.convertToRomaji(reading);
-                    } else if (isStringEntirelyKana(term)) {
-                        return this._japaneseWanakanaModule.convertToRomaji(term);
+                        return this._japaneseUtil.convertToRomaji(reading);
+                    } else if (this._japaneseUtil.isStringEntirelyKana(term)) {
+                        return this._japaneseUtil.convertToRomaji(term);
                     }
                 }
                 return reading;
@@ -397,22 +396,5 @@ export class QueryParser extends EventDispatcher {
             if (node.nodeType === ELEMENT_NODE) { return /** @type {Element} */ (node); }
             node = node.parentNode;
         }
-    }
-
-    /**
-     * @param {import('settings').ParsingReadingMode} value
-     */
-    _setReadingMode(value) {
-        this._readingMode = value;
-        if (value === 'romaji') {
-            this._loadJapaneseWanakanaModule();
-        }
-    }
-
-    /** */
-    _loadJapaneseWanakanaModule() {
-        if (this._japaneseWanakanaModuleImport !== null) { return; }
-        this._japaneseWanakanaModuleImport = import('../language/ja/japanese-wanakana.js');
-        void this._japaneseWanakanaModuleImport.then((value) => { this._japaneseWanakanaModule = value; });
     }
 }

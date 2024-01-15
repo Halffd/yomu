@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2020-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -25,14 +25,7 @@ export class SelectorObserver {
      * Creates a new instance.
      * @param {import('selector-observer').ConstructorDetails<T>} details The configuration for the object.
      */
-    constructor({
-        selector,
-        ignoreSelector = null,
-        onAdded = null,
-        onRemoved = null,
-        onChildrenUpdated = null,
-        isStale = null
-    }) {
+    constructor({selector, ignoreSelector = null, onAdded = null, onRemoved = null, onChildrenUpdated = null, isStale = null}) {
         /** @type {string} */
         this._selector = selector;
         /** @type {?string} */
@@ -177,7 +170,7 @@ export class SelectorObserver {
 
         if (
             this._onChildrenUpdated !== null &&
-            (removedNodes.length > 0 || addedNodes.length > 0)
+            (addedNodes.length !== 0 || addedNodes.length !== 0)
         ) {
             for (let node = /** @type {?Node} */ (target); node !== null; node = node.parentNode) {
                 const observer = this._elementMap.get(node);

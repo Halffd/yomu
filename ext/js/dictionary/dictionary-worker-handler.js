@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2021-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -41,13 +41,13 @@ export class DictionaryWorkerHandler {
         const {action, params} = event.data;
         switch (action) {
             case 'importDictionary':
-                void this._onMessageWithProgress(params, this._importDictionary.bind(this));
+                this._onMessageWithProgress(params, this._importDictionary.bind(this));
                 break;
             case 'deleteDictionary':
-                void this._onMessageWithProgress(params, this._deleteDictionary.bind(this));
+                this._onMessageWithProgress(params, this._deleteDictionary.bind(this));
                 break;
             case 'getDictionaryCounts':
-                void this._onMessageWithProgress(params, this._getDictionaryCounts.bind(this));
+                this._onMessageWithProgress(params, this._getDictionaryCounts.bind(this));
                 break;
             case 'getImageDetails.response':
                 this._mediaLoader.handleMessage(params);
@@ -95,7 +95,7 @@ export class DictionaryWorkerHandler {
                 errors: errors.map((error) => ExtensionError.serialize(error))
             };
         } finally {
-            void dictionaryDatabase.close();
+            dictionaryDatabase.close();
         }
     }
 
@@ -109,7 +109,7 @@ export class DictionaryWorkerHandler {
         try {
             return await dictionaryDatabase.deleteDictionary(dictionaryTitle, 1000, onProgress);
         } finally {
-            void dictionaryDatabase.close();
+            dictionaryDatabase.close();
         }
     }
 
@@ -122,7 +122,7 @@ export class DictionaryWorkerHandler {
         try {
             return await dictionaryDatabase.getDictionaryCounts(dictionaryNames, getTotal);
         } finally {
-            void dictionaryDatabase.close();
+            dictionaryDatabase.close();
         }
     }
 

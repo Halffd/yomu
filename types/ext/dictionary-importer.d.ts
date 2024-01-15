@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -45,7 +45,7 @@ export type ProgressData = {
 };
 
 export type ImportResult = {
-    result: Summary | null;
+    result: Summary;
     errors: Error[];
 };
 
@@ -65,8 +65,6 @@ export type Summary = {
     url?: string;
     description?: string;
     attribution?: string;
-    sourceLanguage?: string;
-    targetLanguage?: string;
     frequencyMode?: 'occurrence-based' | 'rank-based';
 };
 
@@ -115,9 +113,9 @@ export type ImportRequirementContext = {
 export type ArchiveFileMap = Map<string, ZipJS.Entry>;
 
 /**
- * An array of tuples of a file type inside a dictionary and its corresponding regular expression.
+ * A map of file types inside a dictionary and its corresponding regular expressions.
  */
-export type QueryDetails = [fileType: string, fileNameFormat: RegExp][];
+export type QueryDetails = Map<string, RegExp>;
 
 /**
  * A map of file types inside a dictionary and its matching entries.

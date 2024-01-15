@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2021-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -23,6 +23,15 @@ import path from 'path';
 import {parseJson} from './json.js';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
+
+/**
+ * @template [T=unknown]
+ * @param {T} value
+ * @returns {T}
+ */
+function clone(value) {
+    return parseJson(JSON.stringify(value));
+}
 
 
 export class ManifestUtil {
@@ -61,7 +70,7 @@ export class ManifestUtil {
             }
         }
 
-        return structuredClone(this._manifest);
+        return clone(this._manifest);
     }
 
     /**
@@ -180,7 +189,7 @@ export class ManifestUtil {
                             const {start, deleteCount, items} = modification;
                             /** @type {unknown[]} */
                             const value = this._getObjectProperties(manifest, path2, path2.length);
-                            const itemsNew = items.map((v) => structuredClone(v));
+                            const itemsNew = items.map((v) => clone(v));
                             value.splice(start, deleteCount, ...itemsNew);
                         }
                         break;
@@ -220,7 +229,7 @@ export class ManifestUtil {
                             const {items} = modification;
                             /** @type {unknown[]} */
                             const value = this._getObjectProperties(manifest, path2, path2.length);
-                            const itemsNew = items.map((v) => structuredClone(v));
+                            const itemsNew = items.map((v) => clone(v));
                             value.push(...itemsNew);
                         }
                         break;
@@ -326,7 +335,7 @@ export class ManifestUtil {
      * @returns {import('dev/manifest').Manifest}
      */
     _createVariantManifest(manifest, variant) {
-        let modifiedManifest = structuredClone(manifest);
+        let modifiedManifest = clone(manifest);
         for (const {modifications} of this._getInheritanceChain(variant)) {
             modifiedManifest = this._applyModifications(modifiedManifest, modifications);
         }

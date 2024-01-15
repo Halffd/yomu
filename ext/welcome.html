@@ -13,7 +13,6 @@
     <link rel="icon" type="image/png" href="/images/icon128.png" sizes="128x128">
     <link rel="stylesheet" type="text/css" href="/css/material.css">
     <link rel="stylesheet" type="text/css" href="/css/settings.css">
-    <script src="/js/pages/welcome-main.js" type="module"></script>
 </head>
 <body>
 
@@ -31,7 +30,7 @@
       <div class="settings-item">
         <div class="settings-item-inner settings-item-inner-wrappable"><div class="settings-item-left"><div class="settings-item-label">
               <p>
-                There are custom Anki templates in your settings. Note that <a href="https://github.com/themoeway/yomitan/blob/master/docs/yomichan-migration.md#custom-templates" target="_blank" rel="noopener noreferrer">some syntax has changed from previous versions of Yomitan.</a>
+                There are custom Anki templates in your settings. Note that <a href="https://github.com/themoeway/yomitan#custom-templates" target="_blank" rel="noopener noreferrer">some syntax has changed from previous versions of Yomitan.</a>
                 Please ensure that your custom templates are using the updated syntax.
               </p>
           </div></div></div>
@@ -63,7 +62,7 @@
         <div class="settings-item">
             <div class="settings-item-inner"><div class="settings-item-left"><div class="settings-item-label">
                 Yomitan requires one or more dictionaries to be installed in order to look up terms, kanji, and other information.
-                Several downloadable dictionaries can be found on the <a href="https://github.com/themoeway/yomitan/blob/master/docs/dictionaries.md#dictionaries" target="_blank" rel="noopener noreferrer">Yomitan homepage</a>.
+                Several downloadable dictionaries can be found on the <a href="https://github.com/themoeway/yomitan#dictionaries" target="_blank" rel="noopener noreferrer">Yomitan homepage</a>.
                 Dictionaries can be configured using the button below,
                 or later from the <a href="/settings.html" rel="noopener">Settings</a> page.
             </div></div></div>
@@ -85,11 +84,11 @@
                 <br><br>
 
                 If you are migrating from Yomichan, you may be interested in importing your data into Yomitan.
-                Please follow instructions from <a href="https://github.com/themoeway/yomitan/blob/master/docs/yomichan-migration.md#migrating-from-yomichan" target="_blank" rel="noopener noreferrer">Yomitan's README</a> for that.
+                Please follow instructions from <a href="https://github.com/themoeway/yomitan#migrating-from-yomichan" target="_blank" rel="noopener noreferrer">Yomitan's README</a> for that.
 
                 <br><br>
 
-                If you are using or planning to use custom templates for Anki note creation, note that <a href="https://github.com/themoeway/yomitan/blob/master/docs/yomichan-migration.md#custom-templates" target="_blank" rel="noopener noreferrer">some syntax has changed from Yomichan and Yomibaba.</a>
+                If you are using or planning to use custom templates for Anki note creation, note that <a href="https://github.com/themoeway/yomitan#custom-templates" target="_blank" rel="noopener noreferrer">some syntax has changed from Yomichan and Yomibaba.</a>
                 Please ensure that your custom templates are using the updated syntax.
             </div></div></div>
         </div>
@@ -203,7 +202,7 @@
             </div>
             <div class="settings-item-right">
                 <select data-setting="general.popupTheme" class="short-width">
-                    <option value="light">Light</option>
+                    <option value="default">Light</option>
                     <option value="dark">Dark</option>
                 </select>
             </div>
@@ -285,7 +284,7 @@
 
         <div class="warning-text margin-above no-dictionaries-installed-warning" hidden>
             No dictionaries have been installed yet.
-            Visit the <a href="https://github.com/themoeway/yomitan/blob/master/docs/dictionaries.md#dictionaries" target="_blank" rel="noopener noreferrer">Yomitan homepage</a>
+            Visit the <a href="https://github.com/themoeway/yomitan#dictionaries" target="_blank" rel="noopener noreferrer">Yomitan homepage</a>
             for a list of free dictionaries or click the <em>Import</em> button below to select a dictionary file to import.
         </div>
         <div id="dictionary-error" class="danger-text margin-above" hidden></div>
@@ -384,23 +383,6 @@
                 <p><a tabindex="0" class="more-toggle" data-parent-distance="3">Hide&hellip;</a></p>
             </div>
         </div>
-        <div class="settings-item dictionary-use-deinflections-setting" hidden>
-            <div class="settings-item-inner">
-                <div class="settings-item-left">
-                    <div class="settings-item-label">
-                        Use deinflections
-                        <a tabindex="0" class="more-toggle more-only" data-parent-distance="4">(?)</a>
-                    </div>
-                </div>
-                <div class="settings-item-right">
-                    <label class="toggle"><input type="checkbox" class="dictionary-use-deinflections-toggle"><span class="toggle-body"><span class="toggle-track"></span><span class="toggle-knob"></span></span></label>
-                </div>
-            </div>
-            <div class="settings-item-children more" hidden>
-                Deinflections from this dictionary will be used.
-                <p><a tabindex="0" class="more-toggle" data-parent-distance="3">Hide&hellip;</a></p>
-            </div>
-        </div>
         <hr>
         <div class="settings-item"><div class="settings-item-children">
             <div class="dictionary-details-table"></div>
@@ -425,6 +407,43 @@
         <button type="button" data-modal-action="hide" id="dictionary-move-button">Move</button>
     </div>
 </div></div>
+
+
+<!-- Dictionary templates -->
+<template id="dictionary-template">
+    <div class="dictionary-list-index generic-list-index-prefix"></div>
+    <label class="toggle dictionary-item-enabled-toggle-container"><input type="checkbox" class="dictionary-enabled"><span class="toggle-body"><span class="toggle-track"></span><span class="toggle-knob"></span></span></label>
+    <div class="dictionary-item-title-container">
+        <span>
+            <strong class="dictionary-title"></strong> <span class="light dictionary-version"></span>
+        </span>
+        <button type="button" class="dictionary-outdated-button" hidden>
+            <div class="badge warning-badge"><span class="icon" data-icon="exclamation-point-short"></span></div>
+        </button>
+        <button type="button" class="dictionary-integrity-button" hidden>
+            <div class="badge info-badge badge-small-icon"><span class="icon" data-icon="checkmark"></span></div>
+        </button>
+    </div>
+    <input type="number" step="1" class="short-height dictionary-priority">
+    <button type="button" class="icon-button dictionary-menu-button" data-menu="dictionary-menu" data-menu-position="below left"><span class="icon-button-inner"><span class="icon" data-icon="kebab-menu"></span></span></button>
+</template>
+
+<template id="dictionary-details-entry-template"><div class="dictionary-details-entry">
+    <span class="dictionary-details-entry-label"></span>
+    <span class="dictionary-details-entry-info"></span>
+</div></template>
+
+<template id="dictionary-menu-template"><div class="popup-menu-container" tabindex="-1" role="dialog"><div class="popup-menu"><div class="popup-menu-body">
+    <button type="button" class="popup-menu-item" data-menu-action="showDetails">Details&hellip;</button>
+    <button type="button" class="popup-menu-item" data-menu-action="moveUp">Move up</button>
+    <button type="button" class="popup-menu-item" data-menu-action="moveDown">Move down</button>
+    <button type="button" class="popup-menu-item" data-menu-action="moveTo">Move to&hellip;</button>
+    <button type="button" class="popup-menu-item" data-menu-action="delete">Delete</button>
+</div></div></div></template>
+
+
+<!-- Scripts -->
+<script src="/js/pages/welcome-main.js" type="module"></script>
 
 </body>
 </html>

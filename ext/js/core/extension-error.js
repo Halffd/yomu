@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,8 +26,6 @@ export class ExtensionError extends Error {
      */
     constructor(message) {
         super(message);
-        /** @type {string} */
-        this.name = 'ExtensionError';
         /** @type {unknown} */
         this._data = void 0;
     }

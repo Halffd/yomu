@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2021-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,8 +16,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {EventListenerCollection} from '../../core/event-listener-collection.js';
+import {EventListenerCollection} from '../../core.js';
 import {querySelectorNotNull} from '../../dom/query-selector.js';
+import {yomitan} from '../../yomitan.js';
 
 export class CollapsibleDictionaryController {
     /**
@@ -44,7 +45,7 @@ export class CollapsibleDictionaryController {
     async prepare() {
         await this._onDatabaseUpdated();
 
-        this._settingsController.application.on('databaseUpdated', this._onDatabaseUpdated.bind(this));
+        yomitan.on('databaseUpdated', this._onDatabaseUpdated.bind(this));
         this._settingsController.on('optionsChanged', this._onOptionsChanged.bind(this));
         this._settingsController.on('dictionarySettingsReordered', this._onDictionarySettingsReordered.bind(this));
     }
@@ -99,7 +100,7 @@ export class CollapsibleDictionaryController {
 
     /** */
     _onDefinitionsCollapsibleChange() {
-        void this._updateAllSelectFresh();
+        this._updateAllSelectFresh();
     }
 
     /**
@@ -109,7 +110,7 @@ export class CollapsibleDictionaryController {
         const {value} = /** @type {HTMLSelectElement} */ (e.currentTarget);
         const value2 = this._normalizeDictionaryDefinitionsCollapsible(value);
         if (value2 === null) { return; }
-        void this._setDefinitionsCollapsibleAll(value2);
+        this._setDefinitionsCollapsibleAll(value2);
     }
 
     /** */
@@ -156,7 +157,9 @@ export class CollapsibleDictionaryController {
         const versionNode = querySelectorNotNull(node, '.dictionary-version');
         versionNode.textContent = version;
 
-        return querySelectorNotNull(node, '.definitions-collapsible');
+        /** @type {HTMLSelectElement} */
+        const select = querySelectorNotNull(node, '.definitions-collapsible');
+        return select;
     }
 
     /** */

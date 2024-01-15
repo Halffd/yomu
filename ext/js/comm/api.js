@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2016-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -20,11 +20,11 @@ import {ExtensionError} from '../core/extension-error.js';
 
 export class API {
     /**
-     * @param {import('../extension/web-extension.js').WebExtension} webExtension
+     * @param {import('../yomitan.js').Yomitan} yomitan
      */
-    constructor(webExtension) {
-        /** @type {import('../extension/web-extension.js').WebExtension} */
-        this._webExtension = webExtension;
+    constructor(yomitan) {
+        /** @type {import('../yomitan.js').Yomitan} */
+        this._yomitan = yomitan;
     }
 
     /**
@@ -118,13 +118,13 @@ export class API {
     }
 
     /**
-     * @param {import('api').ApiParam<'viewNotes', 'noteIds'>} noteIds
-     * @param {import('api').ApiParam<'viewNotes', 'mode'>} mode
-     * @param {import('api').ApiParam<'viewNotes', 'allowFallback'>} allowFallback
-     * @returns {Promise<import('api').ApiReturn<'viewNotes'>>}
+     * @param {import('api').ApiParam<'noteView', 'noteId'>} noteId
+     * @param {import('api').ApiParam<'noteView', 'mode'>} mode
+     * @param {import('api').ApiParam<'noteView', 'allowFallback'>} allowFallback
+     * @returns {Promise<import('api').ApiReturn<'noteView'>>}
      */
-    viewNotes(noteIds, mode, allowFallback) {
-        return this._invoke('viewNotes', {noteIds, mode, allowFallback});
+    noteView(noteId, mode, allowFallback) {
+        return this._invoke('noteView', {noteId, mode, allowFallback});
     }
 
     /**
@@ -210,6 +210,13 @@ export class API {
     }
 
     /**
+     * @returns {Promise<import('api').ApiReturn<'getDisplayTemplatesHtml'>>}
+     */
+    getDisplayTemplatesHtml() {
+        return this._invoke('getDisplayTemplatesHtml', void 0);
+    }
+
+    /**
      * @returns {Promise<import('api').ApiReturn<'getZoom'>>}
      */
     getZoom() {
@@ -246,13 +253,13 @@ export class API {
     }
 
     /**
-     * @param {import('api').ApiParam<'logGenericErrorBackend', 'error'>} error
-     * @param {import('api').ApiParam<'logGenericErrorBackend', 'level'>} level
-     * @param {import('api').ApiParam<'logGenericErrorBackend', 'context'>} context
-     * @returns {Promise<import('api').ApiReturn<'logGenericErrorBackend'>>}
+     * @param {import('api').ApiParam<'log', 'error'>} error
+     * @param {import('api').ApiParam<'log', 'level'>} level
+     * @param {import('api').ApiParam<'log', 'context'>} context
+     * @returns {Promise<import('api').ApiReturn<'log'>>}
      */
-    logGenericErrorBackend(error, level, context) {
-        return this._invoke('logGenericErrorBackend', {error, level, context});
+    log(error, level, context) {
+        return this._invoke('log', {error, level, context});
     }
 
     /**
@@ -321,12 +328,11 @@ export class API {
     }
 
     /**
-     * @param {import('api').ApiParam<'isTextLookupWorthy', 'text'>} text
-     * @param {import('api').ApiParam<'isTextLookupWorthy', 'language'>} language
-     * @returns {Promise<import('api').ApiReturn<'isTextLookupWorthy'>>}
+     * @param {import('api').ApiParam<'textHasJapaneseCharacters', 'text'>} text
+     * @returns {Promise<import('api').ApiReturn<'textHasJapaneseCharacters'>>}
      */
-    isTextLookupWorthy(text, language) {
-        return this._invoke('isTextLookupWorthy', {text, language});
+    textHasJapaneseCharacters(text) {
+        return this._invoke('textHasJapaneseCharacters', {text});
     }
 
     /**
@@ -355,13 +361,6 @@ export class API {
         return this._invoke('openCrossFramePort', {targetTabId, targetFrameId});
     }
 
-    /**
-     * @returns {Promise<import('api').ApiReturn<'getLanguageSummaries'>>}
-     */
-    getLanguageSummaries() {
-        return this._invoke('getLanguageSummaries', void 0);
-    }
-
     // Utilities
 
     /**
@@ -376,15 +375,13 @@ export class API {
         const data = {action, params};
         return new Promise((resolve, reject) => {
             try {
-                this._webExtension.sendMessage(data, (response) => {
-                    this._webExtension.getLastError();
+                this._yomitan.sendMessage(data, (response) => {
+                    this._checkLastError(chrome.runtime.lastError);
                     if (response !== null && typeof response === 'object') {
-                        const {error} = /** @type {import('core').UnknownObject} */ (response);
-                        if (typeof error !== 'undefined') {
-                            reject(ExtensionError.deserialize(/** @type {import('core').SerializedError} */ (error)));
+                        if (typeof response.error !== 'undefined') {
+                            reject(ExtensionError.deserialize(response.error));
                         } else {
-                            const {result} = /** @type {import('core').UnknownObject} */ (response);
-                            resolve(/** @type {import('api').ApiReturn<TAction>} */ (result));
+                            resolve(response.result);
                         }
                     } else {
                         const message = response === null ? 'Unexpected null response' : `Unexpected response of type ${typeof response}`;
@@ -395,5 +392,12 @@ export class API {
                 reject(e);
             }
         });
+    }
+
+    /**
+     * @param {chrome.runtime.LastError|undefined} _ignore
+     */
+    _checkLastError(_ignore) {
+        // NOP
     }
 }

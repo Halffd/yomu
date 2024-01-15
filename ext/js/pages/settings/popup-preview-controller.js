@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2019-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -38,7 +38,7 @@ export class PopupPreviewController {
     }
 
     /** */
-    prepare() {
+    async prepare() {
         if (new URLSearchParams(location.search).get('popup-preview') === 'false') { return; }
 
         this._customCss.addEventListener('input', this._onCustomCssChange.bind(this), false);
@@ -47,14 +47,6 @@ export class PopupPreviewController {
         this._customOuterCss.addEventListener('settingChanged', this._onCustomOuterCssChange.bind(this), false);
         this._frame.addEventListener('load', this._onFrameLoad.bind(this), false);
         this._settingsController.on('optionsContextChanged', this._onOptionsContextChange.bind(this));
-        this._settingsController.on('optionsChanged', this._onOptionsChanged.bind(this));
-        const languageSelect = querySelectorNotNull(document, '#language-select');
-        languageSelect.addEventListener(
-            /** @type {string} */ ('settingChanged'),
-            /** @type {EventListener} */ (this._onLanguageSelectChanged.bind(this)),
-            false
-        );
-
 
         this._frame.src = '/popup-preview.html';
     }
@@ -71,41 +63,24 @@ export class PopupPreviewController {
     /** */
     _onCustomCssChange() {
         const css = /** @type {HTMLTextAreaElement} */ (this._customCss).value;
-        this._invoke('setCustomCss', {css});
+        this._invoke('PopupPreviewFrame.setCustomCss', {css});
     }
 
     /** */
     _onCustomOuterCssChange() {
         const css = /** @type {HTMLTextAreaElement} */ (this._customOuterCss).value;
-        this._invoke('setCustomOuterCss', {css});
+        this._invoke('PopupPreviewFrame.setCustomOuterCss', {css});
     }
 
     /** */
     _onOptionsContextChange() {
         const optionsContext = this._settingsController.getOptionsContext();
-        this._invoke('updateOptionsContext', {optionsContext});
+        this._invoke('PopupPreviewFrame.updateOptionsContext', {optionsContext});
     }
 
     /**
-     * @param {import('settings-controller').EventArgument<'optionsChanged'>} details
-     */
-    _onOptionsChanged({options}) {
-        this._invoke('setLanguageExampleText', {language: options.general.language});
-    }
-
-    /**
-     * @param {import('dom-data-binder').SettingChangedEvent} settingChangedEvent
-     */
-    _onLanguageSelectChanged(settingChangedEvent) {
-        const {value} = settingChangedEvent.detail;
-        if (typeof value !== 'string') { return; }
-        this._invoke('setLanguageExampleText', {language: value});
-    }
-
-    /**
-     * @template {import('popup-preview-frame').ApiNames} TName
-     * @param {TName} action
-     * @param {import('popup-preview-frame').ApiParams<TName>} params
+     * @param {string} action
+     * @param {import('core').SerializableObject} params
      */
     _invoke(action, params) {
         if (this._frame === null || this._frame.contentWindow === null) { return; }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2019-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -17,7 +17,8 @@
  */
 
 import {FrameOffsetForwarder} from '../comm/frame-offset-forwarder.js';
-import {generateId} from '../core/utilities.js';
+import {generateId} from '../core.js';
+import {yomitan} from '../yomitan.js';
 import {PopupProxy} from './popup-proxy.js';
 import {PopupWindow} from './popup-window.js';
 import {Popup} from './popup.js';
@@ -28,13 +29,13 @@ import {Popup} from './popup.js';
 export class PopupFactory {
     /**
      * Creates a new instance.
-     * @param {import('../application.js').Application} application
+     * @param {number} frameId The frame ID of the host frame.
      */
-    constructor(application) {
-        /** @type {import('../application.js').Application} */
-        this._application = application;
+    constructor(frameId) {
+        /** @type {number} */
+        this._frameId = frameId;
         /** @type {FrameOffsetForwarder} */
-        this._frameOffsetForwarder = new FrameOffsetForwarder(application.crossFrame);
+        this._frameOffsetForwarder = new FrameOffsetForwarder(frameId);
         /** @type {Map<string, import('popup').PopupAny>} */
         this._popups = new Map();
         /** @type {Map<string, {popup: import('popup').PopupAny, token: string}[]>} */
@@ -46,8 +47,8 @@ export class PopupFactory {
      */
     prepare() {
         this._frameOffsetForwarder.prepare();
-        /* eslint-disable @stylistic/no-multi-spaces */
-        this._application.crossFrame.registerHandlers([
+        /* eslint-disable no-multi-spaces */
+        yomitan.crossFrame.registerHandlers([
             ['popupFactoryGetOrCreatePopup',     this._onApiGetOrCreatePopup.bind(this)],
             ['popupFactorySetOptionsContext',    this._onApiSetOptionsContext.bind(this)],
             ['popupFactoryHide',                 this._onApiHide.bind(this)],
@@ -64,7 +65,7 @@ export class PopupFactory {
             ['popupFactoryGetFrameSize',         this._onApiGetFrameSize.bind(this)],
             ['popupFactorySetFrameSize',         this._onApiSetFrameSize.bind(this)]
         ]);
-        /* eslint-enable @stylistic/no-multi-spaces */
+        /* eslint-enable no-multi-spaces */
     }
 
     /**
@@ -112,34 +113,29 @@ export class PopupFactory {
             depth = 0;
         }
 
-        const currentFrameId = this._application.frameId;
-        if (currentFrameId === null) { throw new Error('Cannot create popup: no frameId'); }
-
         if (popupWindow) {
             // New unique id
             if (id === null) {
                 id = generateId(16);
             }
-            const popup = new PopupWindow(
-                this._application,
+            const popup = new PopupWindow({
                 id,
                 depth,
-                currentFrameId
-            );
+                frameId: this._frameId
+            });
             this._popups.set(id, popup);
             return popup;
-        } else if (frameId === currentFrameId) {
+        } else if (frameId === this._frameId) {
             // New unique id
             if (id === null) {
                 id = generateId(16);
             }
-            const popup = new Popup(
-                this._application,
+            const popup = new Popup({
                 id,
                 depth,
-                currentFrameId,
+                frameId: this._frameId,
                 childrenSupported
-            );
+            });
             if (parent !== null) {
                 if (parent.child !== null) {
                     throw new Error('Parent popup already has a child');
@@ -155,20 +151,20 @@ export class PopupFactory {
                 throw new Error('Invalid frameId');
             }
             const useFrameOffsetForwarder = (parentPopupId === null);
-            const info = await this._application.crossFrame.invoke(frameId, 'popupFactoryGetOrCreatePopup', {
+            /** @type {{id: string, depth: number, frameId: number}} */
+            const info = await yomitan.crossFrame.invoke(frameId, 'popupFactoryGetOrCreatePopup', /** @type {import('popup-factory').GetOrCreatePopupDetails} */ ({
                 id,
                 parentPopupId,
                 frameId,
                 childrenSupported
-            });
+            }));
             id = info.id;
-            const popup = new PopupProxy(
-                this._application,
+            const popup = new PopupProxy({
                 id,
-                info.depth,
-                info.frameId,
-                useFrameOffsetForwarder ? this._frameOffsetForwarder : null
-            );
+                depth: info.depth,
+                frameId: info.frameId,
+                frameOffsetForwarder: useFrameOffsetForwarder ? this._frameOffsetForwarder : null
+            });
             this._popups.set(id, popup);
             return popup;
         }

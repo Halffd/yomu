@@ -291,18 +291,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 1,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 1,
+        "maxTransformedTextLength": 1,
         "headwords": [
           {
             "index": 0,
@@ -459,18 +454,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 1,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 1,
+        "maxTransformedTextLength": 1,
         "headwords": [
           {
             "index": 0,
@@ -646,18 +636,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 10,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 2,
+        "maxTransformedTextLength": 2,
         "headwords": [
           {
             "index": 0,
@@ -816,18 +801,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 10,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 2,
+        "maxTransformedTextLength": 2,
         "headwords": [
           {
             "index": 0,
@@ -986,18 +966,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 1,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 2,
+        "maxTransformedTextLength": 2,
         "headwords": [
           {
             "index": 0,
@@ -1156,18 +1131,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 1,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 2,
+        "maxTransformedTextLength": 2,
         "headwords": [
           {
             "index": 0,
@@ -1326,18 +1296,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 1,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 1,
+        "maxTransformedTextLength": 1,
         "headwords": [
           {
             "index": 0,
@@ -1494,18 +1459,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 1,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 1,
+        "maxTransformedTextLength": 1,
         "headwords": [
           {
             "index": 0,
@@ -1681,18 +1641,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 10,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 4,
+        "maxTransformedTextLength": 4,
         "headwords": [
           {
             "index": 0,
@@ -1875,18 +1830,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 10,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 4,
+        "maxTransformedTextLength": 4,
         "headwords": [
           {
             "index": 0,
@@ -2069,18 +2019,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 1,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 4,
+        "maxTransformedTextLength": 4,
         "headwords": [
           {
             "index": 0,
@@ -2263,18 +2208,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 1,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 4,
+        "maxTransformedTextLength": 4,
         "headwords": [
           {
             "index": 0,
@@ -2457,20 +2397,15 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": [
-              "masu stem"
-            ]
-          }
+        "inflections": [
+          "masu stem"
         ],
         "score": 10,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 2,
+        "maxTransformedTextLength": 2,
         "headwords": [
           {
             "index": 0,
@@ -2629,20 +2564,15 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": [
-              "masu stem"
-            ]
-          }
+        "inflections": [
+          "masu stem"
         ],
         "score": 10,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 2,
+        "maxTransformedTextLength": 2,
         "headwords": [
           {
             "index": 0,
@@ -2801,20 +2731,15 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": [
-              "masu stem"
-            ]
-          }
+        "inflections": [
+          "masu stem"
         ],
         "score": 1,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 2,
+        "maxTransformedTextLength": 2,
         "headwords": [
           {
             "index": 0,
@@ -2973,20 +2898,15 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": [
-              "masu stem"
-            ]
-          }
+        "inflections": [
+          "masu stem"
         ],
         "score": 1,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 2,
+        "maxTransformedTextLength": 2,
         "headwords": [
           {
             "index": 0,
@@ -3145,18 +3065,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 1,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 1,
+        "maxTransformedTextLength": 1,
         "headwords": [
           {
             "index": 0,
@@ -3313,18 +3228,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 1,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 1,
+        "maxTransformedTextLength": 1,
         "headwords": [
           {
             "index": 0,
@@ -3500,18 +3410,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 1,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 2,
+        "maxTransformedTextLength": 2,
         "headwords": [
           {
             "index": 0,
@@ -3618,18 +3523,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 1,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 0,
-        "maxOriginalTextLength": 1,
+        "maxTransformedTextLength": 1,
         "headwords": [
           {
             "index": 0,
@@ -3792,18 +3692,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 1,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 0,
-        "maxOriginalTextLength": 3,
+        "maxTransformedTextLength": 3,
         "headwords": [
           {
             "index": 0,
@@ -3969,174 +3864,6 @@
             "displayValueParsed": false
           }
         ]
-      },
-      {
-        "type": "term",
-        "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
-        "score": 1,
-        "frequencyOrder": 0,
-        "dictionaryIndex": 0,
-        "dictionaryPriority": 0,
-        "sourceTermExactMatchCount": 0,
-        "maxOriginalTextLength": 1,
-        "headwords": [
-          {
-            "index": 0,
-            "term": "打",
-            "reading": "だ",
-            "sources": [
-              {
-                "originalText": "ダ",
-                "transformedText": "だ",
-                "deinflectedText": "だ",
-                "matchType": "exact",
-                "matchSource": "reading",
-                "isPrimary": true
-              }
-            ],
-            "tags": [
-              {
-                "name": "E1",
-                "category": "default",
-                "order": 0,
-                "score": 0,
-                "content": [
-                  "example tag 1"
-                ],
-                "dictionaries": [
-                  "Test Dictionary 2"
-                ],
-                "redundant": false
-              }
-            ],
-            "wordClasses": [
-              "n"
-            ]
-          }
-        ],
-        "definitions": [
-          {
-            "index": 0,
-            "headwordIndices": [
-              0
-            ],
-            "dictionary": "Test Dictionary 2",
-            "dictionaryIndex": 0,
-            "dictionaryPriority": 0,
-            "id": 1,
-            "score": 1,
-            "frequencyOrder": 0,
-            "sequences": [
-              1
-            ],
-            "isPrimary": true,
-            "tags": [
-              {
-                "name": "n",
-                "category": "partOfSpeech",
-                "order": 0,
-                "score": 0,
-                "content": [
-                  "noun"
-                ],
-                "dictionaries": [
-                  "Test Dictionary 2"
-                ],
-                "redundant": false
-              }
-            ],
-            "entries": [
-              "da definition 1",
-              "da definition 2"
-            ]
-          }
-        ],
-        "pronunciations": [],
-        "frequencies": [
-          {
-            "index": 0,
-            "headwordIndex": 0,
-            "dictionary": "Test Dictionary 2",
-            "dictionaryIndex": 0,
-            "dictionaryPriority": 0,
-            "hasReading": false,
-            "frequency": 1,
-            "displayValue": null,
-            "displayValueParsed": false
-          },
-          {
-            "index": 1,
-            "headwordIndex": 0,
-            "dictionary": "Test Dictionary 2",
-            "dictionaryIndex": 0,
-            "dictionaryPriority": 0,
-            "hasReading": false,
-            "frequency": 0,
-            "displayValue": "four",
-            "displayValueParsed": true
-          },
-          {
-            "index": 2,
-            "headwordIndex": 0,
-            "dictionary": "Test Dictionary 2",
-            "dictionaryIndex": 0,
-            "dictionaryPriority": 0,
-            "hasReading": false,
-            "frequency": 5,
-            "displayValue": "five (5)",
-            "displayValueParsed": true
-          },
-          {
-            "index": 3,
-            "headwordIndex": 0,
-            "dictionary": "Test Dictionary 2",
-            "dictionaryIndex": 0,
-            "dictionaryPriority": 0,
-            "hasReading": true,
-            "frequency": 8,
-            "displayValue": null,
-            "displayValueParsed": false
-          },
-          {
-            "index": 4,
-            "headwordIndex": 0,
-            "dictionary": "Test Dictionary 2",
-            "dictionaryIndex": 0,
-            "dictionaryPriority": 0,
-            "hasReading": true,
-            "frequency": 0,
-            "displayValue": "fourteen",
-            "displayValueParsed": true
-          },
-          {
-            "index": 5,
-            "headwordIndex": 0,
-            "dictionary": "Test Dictionary 2",
-            "dictionaryIndex": 0,
-            "dictionaryPriority": 0,
-            "hasReading": true,
-            "frequency": 20,
-            "displayValue": "twenty (20)",
-            "displayValueParsed": true
-          },
-          {
-            "index": 6,
-            "headwordIndex": 0,
-            "dictionary": "Test Dictionary 2",
-            "dictionaryIndex": 0,
-            "dictionaryPriority": 0,
-            "hasReading": true,
-            "frequency": 26,
-            "displayValue": null,
-            "displayValueParsed": false
-          }
-        ]
       }
     ]
   },
@@ -4147,18 +3874,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 10,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 0,
-        "maxOriginalTextLength": 2,
+        "maxTransformedTextLength": 2,
         "headwords": [
           {
             "index": 0,
@@ -4317,18 +4039,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 1,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 0,
-        "maxOriginalTextLength": 2,
+        "maxTransformedTextLength": 2,
         "headwords": [
           {
             "index": 0,
@@ -4493,18 +4210,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 10,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 0,
-        "maxOriginalTextLength": 2,
+        "maxTransformedTextLength": 2,
         "headwords": [
           {
             "index": 0,
@@ -4663,18 +4375,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 1,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 0,
-        "maxOriginalTextLength": 2,
+        "maxTransformedTextLength": 2,
         "headwords": [
           {
             "index": 0,
@@ -4839,18 +4546,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 10,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 0,
-        "maxOriginalTextLength": 4,
+        "maxTransformedTextLength": 4,
         "headwords": [
           {
             "index": 0,
@@ -5033,18 +4735,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 1,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 0,
-        "maxOriginalTextLength": 4,
+        "maxTransformedTextLength": 4,
         "headwords": [
           {
             "index": 0,
@@ -5227,20 +4924,15 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": [
-              "masu stem"
-            ]
-          }
+        "inflections": [
+          "masu stem"
         ],
         "score": 10,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 0,
-        "maxOriginalTextLength": 2,
+        "maxTransformedTextLength": 2,
         "headwords": [
           {
             "index": 0,
@@ -5399,20 +5091,15 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": [
-              "masu stem"
-            ]
-          }
+        "inflections": [
+          "masu stem"
         ],
         "score": 1,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 0,
-        "maxOriginalTextLength": 2,
+        "maxTransformedTextLength": 2,
         "headwords": [
           {
             "index": 0,
@@ -5577,18 +5264,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 10,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 0,
-        "maxOriginalTextLength": 4,
+        "maxTransformedTextLength": 4,
         "headwords": [
           {
             "index": 0,
@@ -5771,18 +5453,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 1,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 0,
-        "maxOriginalTextLength": 4,
+        "maxTransformedTextLength": 4,
         "headwords": [
           {
             "index": 0,
@@ -5965,20 +5642,15 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": [
-              "masu stem"
-            ]
-          }
+        "inflections": [
+          "masu stem"
         ],
         "score": 10,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 0,
-        "maxOriginalTextLength": 2,
+        "maxTransformedTextLength": 2,
         "headwords": [
           {
             "index": 0,
@@ -6137,20 +5809,15 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": [
-              "masu stem"
-            ]
-          }
+        "inflections": [
+          "masu stem"
         ],
         "score": 1,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 0,
-        "maxOriginalTextLength": 2,
+        "maxTransformedTextLength": 2,
         "headwords": [
           {
             "index": 0,
@@ -6315,18 +5982,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 1,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 0,
-        "maxOriginalTextLength": 3,
+        "maxTransformedTextLength": 3,
         "headwords": [
           {
             "index": 0,
@@ -6443,18 +6105,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 10,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 4,
+        "maxTransformedTextLength": 4,
         "headwords": [
           {
             "index": 0,
@@ -6505,18 +6162,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 10,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 4,
+        "maxTransformedTextLength": 4,
         "headwords": [
           {
             "index": 0,
@@ -6567,18 +6219,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 1,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 4,
+        "maxTransformedTextLength": 4,
         "headwords": [
           {
             "index": 0,
@@ -6629,18 +6276,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 1,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 4,
+        "maxTransformedTextLength": 4,
         "headwords": [
           {
             "index": 0,
@@ -6691,20 +6333,15 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": [
-              "masu stem"
-            ]
-          }
+        "inflections": [
+          "masu stem"
         ],
         "score": 10,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 2,
+        "maxTransformedTextLength": 2,
         "headwords": [
           {
             "index": 0,
@@ -6755,20 +6392,15 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": [
-              "masu stem"
-            ]
-          }
+        "inflections": [
+          "masu stem"
         ],
         "score": 10,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 2,
+        "maxTransformedTextLength": 2,
         "headwords": [
           {
             "index": 0,
@@ -6819,20 +6451,15 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": [
-              "masu stem"
-            ]
-          }
+        "inflections": [
+          "masu stem"
         ],
         "score": 1,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 2,
+        "maxTransformedTextLength": 2,
         "headwords": [
           {
             "index": 0,
@@ -6883,20 +6510,15 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": [
-              "masu stem"
-            ]
-          }
+        "inflections": [
+          "masu stem"
         ],
         "score": 1,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 2,
+        "maxTransformedTextLength": 2,
         "headwords": [
           {
             "index": 0,
@@ -6947,18 +6569,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 1,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 1,
+        "maxTransformedTextLength": 1,
         "headwords": [
           {
             "index": 0,
@@ -7009,18 +6626,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 1,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 1,
+        "maxTransformedTextLength": 1,
         "headwords": [
           {
             "index": 0,
@@ -7077,18 +6689,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 10,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 4,
+        "maxTransformedTextLength": 4,
         "headwords": [
           {
             "index": 0,
@@ -7319,18 +6926,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 10,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 4,
+        "maxTransformedTextLength": 4,
         "headwords": [
           {
             "index": 0,
@@ -7561,20 +7163,15 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": [
-              "masu stem"
-            ]
-          }
+        "inflections": [
+          "masu stem"
         ],
         "score": 10,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 2,
+        "maxTransformedTextLength": 2,
         "headwords": [
           {
             "index": 0,
@@ -7781,20 +7378,15 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": [
-              "masu stem"
-            ]
-          }
+        "inflections": [
+          "masu stem"
         ],
         "score": 10,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 2,
+        "maxTransformedTextLength": 2,
         "headwords": [
           {
             "index": 0,
@@ -8001,18 +7593,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 1,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 1,
+        "maxTransformedTextLength": 1,
         "headwords": [
           {
             "index": 0,
@@ -8169,18 +7756,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 1,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 1,
+        "maxTransformedTextLength": 1,
         "headwords": [
           {
             "index": 0,
@@ -8356,18 +7938,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 10,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 2,
-        "maxOriginalTextLength": 4,
+        "maxTransformedTextLength": 4,
         "headwords": [
           {
             "index": 0,
@@ -8816,20 +8393,15 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": [
-              "masu stem"
-            ]
-          }
+        "inflections": [
+          "masu stem"
         ],
         "score": 10,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 2,
-        "maxOriginalTextLength": 2,
+        "maxTransformedTextLength": 2,
         "headwords": [
           {
             "index": 0,
@@ -9231,18 +8803,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 1,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 1,
+        "maxTransformedTextLength": 1,
         "headwords": [
           {
             "index": 0,
@@ -9399,18 +8966,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 1,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 1,
+        "maxTransformedTextLength": 1,
         "headwords": [
           {
             "index": 0,
@@ -9586,24 +9148,17 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": [
-              "-te",
-              "progressive or perfect",
-              "polite",
-              "negative",
-              "past"
-            ]
-          }
+        "inflections": [
+          "-te",
+          "progressive or perfect",
+          "polite past negative"
         ],
         "score": 10,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 12,
+        "maxTransformedTextLength": 12,
         "headwords": [
           {
             "index": 0,
@@ -9786,24 +9341,17 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": [
-              "-te",
-              "progressive or perfect",
-              "polite",
-              "negative",
-              "past"
-            ]
-          }
+        "inflections": [
+          "-te",
+          "progressive or perfect",
+          "polite past negative"
         ],
         "score": 10,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 12,
+        "maxTransformedTextLength": 12,
         "headwords": [
           {
             "index": 0,
@@ -9986,24 +9534,17 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": [
-              "-te",
-              "progressive or perfect",
-              "polite",
-              "negative",
-              "past"
-            ]
-          }
+        "inflections": [
+          "-te",
+          "progressive or perfect",
+          "polite past negative"
         ],
         "score": 1,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 12,
+        "maxTransformedTextLength": 12,
         "headwords": [
           {
             "index": 0,
@@ -10186,24 +9727,17 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": [
-              "-te",
-              "progressive or perfect",
-              "polite",
-              "negative",
-              "past"
-            ]
-          }
+        "inflections": [
+          "-te",
+          "progressive or perfect",
+          "polite past negative"
         ],
         "score": 1,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 12,
+        "maxTransformedTextLength": 12,
         "headwords": [
           {
             "index": 0,
@@ -10386,20 +9920,15 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": [
-              "masu stem"
-            ]
-          }
+        "inflections": [
+          "masu stem"
         ],
         "score": 10,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 2,
+        "maxTransformedTextLength": 2,
         "headwords": [
           {
             "index": 0,
@@ -10558,20 +10087,15 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": [
-              "masu stem"
-            ]
-          }
+        "inflections": [
+          "masu stem"
         ],
         "score": 10,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 2,
+        "maxTransformedTextLength": 2,
         "headwords": [
           {
             "index": 0,
@@ -10730,20 +10254,15 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": [
-              "masu stem"
-            ]
-          }
+        "inflections": [
+          "masu stem"
         ],
         "score": 1,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 2,
+        "maxTransformedTextLength": 2,
         "headwords": [
           {
             "index": 0,
@@ -10902,20 +10421,15 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": [
-              "masu stem"
-            ]
-          }
+        "inflections": [
+          "masu stem"
         ],
         "score": 1,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 2,
+        "maxTransformedTextLength": 2,
         "headwords": [
           {
             "index": 0,
@@ -11074,18 +10588,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 1,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 1,
+        "maxTransformedTextLength": 1,
         "headwords": [
           {
             "index": 0,
@@ -11242,18 +10751,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 1,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 1,
+        "maxTransformedTextLength": 1,
         "headwords": [
           {
             "index": 0,
@@ -11429,18 +10933,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 10,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 10,
+        "maxTransformedTextLength": 4,
         "headwords": [
           {
             "index": 0,
@@ -11623,18 +11122,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 10,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 10,
+        "maxTransformedTextLength": 4,
         "headwords": [
           {
             "index": 0,
@@ -11817,18 +11311,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 1,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 10,
+        "maxTransformedTextLength": 4,
         "headwords": [
           {
             "index": 0,
@@ -12011,18 +11500,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 1,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 10,
+        "maxTransformedTextLength": 4,
         "headwords": [
           {
             "index": 0,
@@ -12205,20 +11689,15 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": [
-              "masu stem"
-            ]
-          }
+        "inflections": [
+          "masu stem"
         ],
         "score": 10,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 5,
+        "maxTransformedTextLength": 2,
         "headwords": [
           {
             "index": 0,
@@ -12377,20 +11856,15 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": [
-              "masu stem"
-            ]
-          }
+        "inflections": [
+          "masu stem"
         ],
         "score": 10,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 5,
+        "maxTransformedTextLength": 2,
         "headwords": [
           {
             "index": 0,
@@ -12549,20 +12023,15 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": [
-              "masu stem"
-            ]
-          }
+        "inflections": [
+          "masu stem"
         ],
         "score": 1,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 5,
+        "maxTransformedTextLength": 2,
         "headwords": [
           {
             "index": 0,
@@ -12721,20 +12190,15 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": [
-              "masu stem"
-            ]
-          }
+        "inflections": [
+          "masu stem"
         ],
         "score": 1,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 5,
+        "maxTransformedTextLength": 2,
         "headwords": [
           {
             "index": 0,
@@ -12893,18 +12357,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 1,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 4,
+        "maxTransformedTextLength": 1,
         "headwords": [
           {
             "index": 0,
@@ -12912,7 +12371,7 @@
             "reading": "だ",
             "sources": [
               {
-                "originalText": "打(う)",
+                "originalText": "打",
                 "transformedText": "打",
                 "deinflectedText": "打",
                 "matchType": "exact",
@@ -13061,18 +12520,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 1,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 4,
+        "maxTransformedTextLength": 1,
         "headwords": [
           {
             "index": 0,
@@ -13080,7 +12534,7 @@
             "reading": "ダース",
             "sources": [
               {
-                "originalText": "打(う)",
+                "originalText": "打",
                 "transformedText": "打",
                 "deinflectedText": "打",
                 "matchType": "exact",
@@ -13248,18 +12702,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 10,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 12,
+        "maxTransformedTextLength": 4,
         "headwords": [
           {
             "index": 0,
@@ -13442,18 +12891,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 10,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 12,
+        "maxTransformedTextLength": 4,
         "headwords": [
           {
             "index": 0,
@@ -13636,18 +13080,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 1,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 12,
+        "maxTransformedTextLength": 4,
         "headwords": [
           {
             "index": 0,
@@ -13830,18 +13269,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 1,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 12,
+        "maxTransformedTextLength": 4,
         "headwords": [
           {
             "index": 0,
@@ -14024,20 +13458,15 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": [
-              "masu stem"
-            ]
-          }
+        "inflections": [
+          "masu stem"
         ],
         "score": 10,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 6,
+        "maxTransformedTextLength": 2,
         "headwords": [
           {
             "index": 0,
@@ -14196,20 +13625,15 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": [
-              "masu stem"
-            ]
-          }
+        "inflections": [
+          "masu stem"
         ],
         "score": 10,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 6,
+        "maxTransformedTextLength": 2,
         "headwords": [
           {
             "index": 0,
@@ -14368,20 +13792,15 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": [
-              "masu stem"
-            ]
-          }
+        "inflections": [
+          "masu stem"
         ],
         "score": 1,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 6,
+        "maxTransformedTextLength": 2,
         "headwords": [
           {
             "index": 0,
@@ -14540,20 +13959,15 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": [
-              "masu stem"
-            ]
-          }
+        "inflections": [
+          "masu stem"
         ],
         "score": 1,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 6,
+        "maxTransformedTextLength": 2,
         "headwords": [
           {
             "index": 0,
@@ -14712,18 +14126,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 1,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 3,
+        "maxTransformedTextLength": 1,
         "headwords": [
           {
             "index": 0,
@@ -14880,18 +14289,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 1,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 3,
+        "maxTransformedTextLength": 1,
         "headwords": [
           {
             "index": 0,
@@ -15067,20 +14471,15 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": [
-              "masu stem"
-            ]
-          }
+        "inflections": [
+          "masu stem"
         ],
         "score": 100,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 0,
-        "maxOriginalTextLength": 4,
+        "maxTransformedTextLength": 2,
         "headwords": [
           {
             "index": 0,
@@ -15177,18 +14576,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 90,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 0,
-        "maxOriginalTextLength": 5,
+        "maxTransformedTextLength": 3,
         "headwords": [
           {
             "index": 0,
@@ -15285,21 +14679,15 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": [
-              "polite",
-              "past"
-            ]
-          }
+        "inflections": [
+          "polite past"
         ],
         "score": 100,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 0,
-        "maxOriginalTextLength": 7,
+        "maxTransformedTextLength": 5,
         "headwords": [
           {
             "index": 0,
@@ -15396,18 +14784,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 10,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 0,
-        "maxOriginalTextLength": 4,
+        "maxTransformedTextLength": 4,
         "headwords": [
           {
             "index": 0,
@@ -15856,20 +15239,15 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": [
-              "masu stem"
-            ]
-          }
+        "inflections": [
+          "masu stem"
         ],
         "score": 10,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 0,
-        "maxOriginalTextLength": 2,
+        "maxTransformedTextLength": 2,
         "headwords": [
           {
             "index": 0,
@@ -16277,18 +15655,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 1,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 3,
+        "maxTransformedTextLength": 3,
         "headwords": [
           {
             "index": 0,
@@ -16431,18 +15804,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 1,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 2,
+        "maxTransformedTextLength": 2,
         "headwords": [
           {
             "index": 0,
@@ -16531,18 +15899,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 1,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 2,
+        "maxTransformedTextLength": 2,
         "headwords": [
           {
             "index": 0,
@@ -16631,18 +15994,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 1,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 2,
+        "maxTransformedTextLength": 2,
         "headwords": [
           {
             "index": 0,
@@ -16731,18 +16089,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 1,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 4,
+        "maxTransformedTextLength": 4,
         "headwords": [
           {
             "index": 0,
@@ -16831,18 +16184,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 1,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 2,
+        "maxTransformedTextLength": 2,
         "headwords": [
           {
             "index": 0,
@@ -16948,18 +16296,13 @@
       {
         "type": "term",
         "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
+        "inflections": [],
         "score": 35,
         "frequencyOrder": 0,
         "dictionaryIndex": 0,
         "dictionaryPriority": 0,
         "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 2,
+        "maxTransformedTextLength": 2,
         "headwords": [
           {
             "index": 0,
@@ -17049,1554 +16392,6 @@
                 "type": "structured-content",
                 "content": "kouzou definition 3 (構造)"
               }
-            ]
-          }
-        ],
-        "pronunciations": [],
-        "frequencies": []
-      }
-    ]
-  },
-  {
-    "name": "Test dictionary deinflection",
-    "originalTextLength": 5,
-    "dictionaryEntries": [
-      {
-        "type": "term",
-        "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "both",
-            "inflectionRules": [
-              "past"
-            ]
-          },
-          {
-            "source": "algorithm",
-            "inflectionRules": [
-              "past",
-              "kansai-ben"
-            ]
-          }
-        ],
-        "score": 1,
-        "frequencyOrder": 0,
-        "dictionaryIndex": 0,
-        "dictionaryPriority": 0,
-        "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 5,
-        "headwords": [
-          {
-            "index": 0,
-            "term": "のたまう",
-            "reading": "のたまう",
-            "sources": [
-              {
-                "originalText": "のたもうた",
-                "transformedText": "のたもうた",
-                "deinflectedText": "のたまう",
-                "matchType": "exact",
-                "matchSource": "term",
-                "isPrimary": true
-              }
-            ],
-            "tags": [],
-            "wordClasses": [
-              "v5"
-            ]
-          }
-        ],
-        "definitions": [
-          {
-            "index": 0,
-            "headwordIndices": [
-              0
-            ],
-            "dictionary": "Test Dictionary 2",
-            "dictionaryIndex": 0,
-            "dictionaryPriority": 0,
-            "id": 23,
-            "score": 1,
-            "frequencyOrder": 0,
-            "sequences": [
-              15
-            ],
-            "isPrimary": true,
-            "tags": [
-              {
-                "name": "v5",
-                "category": "default",
-                "order": 0,
-                "score": 0,
-                "content": [],
-                "dictionaries": [
-                  "Test Dictionary 2"
-                ],
-                "redundant": false
-              }
-            ],
-            "entries": [
-              "notamau definition"
-            ]
-          }
-        ],
-        "pronunciations": [],
-        "frequencies": []
-      }
-    ]
-  },
-  {
-    "name": "Test text preprocessors - convertNumericCharacters",
-    "originalTextLength": 2,
-    "dictionaryEntries": [
-      {
-        "type": "term",
-        "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
-        "score": 1,
-        "frequencyOrder": 0,
-        "dictionaryIndex": 0,
-        "dictionaryPriority": 0,
-        "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 2,
-        "headwords": [
-          {
-            "index": 0,
-            "term": "３９",
-            "reading": "さんきゅう",
-            "sources": [
-              {
-                "originalText": "39",
-                "transformedText": "３９",
-                "deinflectedText": "３９",
-                "matchType": "exact",
-                "matchSource": "term",
-                "isPrimary": true
-              }
-            ],
-            "tags": [],
-            "wordClasses": []
-          }
-        ],
-        "definitions": [
-          {
-            "index": 0,
-            "headwordIndices": [
-              0
-            ],
-            "dictionary": "Test Dictionary 2",
-            "dictionaryIndex": 0,
-            "dictionaryPriority": 0,
-            "id": 25,
-            "score": 1,
-            "frequencyOrder": 0,
-            "sequences": [
-              17
-            ],
-            "isPrimary": true,
-            "tags": [],
-            "entries": [
-              "sankyuu definition"
-            ]
-          }
-        ],
-        "pronunciations": [],
-        "frequencies": []
-      }
-    ]
-  },
-  {
-    "name": "Test text preprocessors - convertAlphabeticCharacters",
-    "originalTextLength": 4,
-    "dictionaryEntries": [
-      {
-        "type": "term",
-        "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
-        "score": 10,
-        "frequencyOrder": 0,
-        "dictionaryIndex": 0,
-        "dictionaryPriority": 0,
-        "sourceTermExactMatchCount": 0,
-        "maxOriginalTextLength": 4,
-        "headwords": [
-          {
-            "index": 0,
-            "term": "打つ",
-            "reading": "うつ",
-            "sources": [
-              {
-                "originalText": "utsu",
-                "transformedText": "うつ",
-                "deinflectedText": "うつ",
-                "matchType": "exact",
-                "matchSource": "reading",
-                "isPrimary": true
-              }
-            ],
-            "tags": [
-              {
-                "name": "E1",
-                "category": "default",
-                "order": 0,
-                "score": 0,
-                "content": [
-                  "example tag 1"
-                ],
-                "dictionaries": [
-                  "Test Dictionary 2"
-                ],
-                "redundant": false
-              },
-              {
-                "name": "P",
-                "category": "popular",
-                "order": 0,
-                "score": 0,
-                "content": [
-                  "popular term"
-                ],
-                "dictionaries": [
-                  "Test Dictionary 2"
-                ],
-                "redundant": false
-              }
-            ],
-            "wordClasses": [
-              "v5"
-            ]
-          }
-        ],
-        "definitions": [
-          {
-            "index": 0,
-            "headwordIndices": [
-              0
-            ],
-            "dictionary": "Test Dictionary 2",
-            "dictionaryIndex": 0,
-            "dictionaryPriority": 0,
-            "id": 3,
-            "score": 10,
-            "frequencyOrder": 0,
-            "sequences": [
-              3
-            ],
-            "isPrimary": true,
-            "tags": [
-              {
-                "name": "vt",
-                "category": "partOfSpeech",
-                "order": 0,
-                "score": 0,
-                "content": [
-                  "transitive verb"
-                ],
-                "dictionaries": [
-                  "Test Dictionary 2"
-                ],
-                "redundant": false
-              }
-            ],
-            "entries": [
-              "utsu definition 1",
-              "utsu definition 2"
-            ]
-          }
-        ],
-        "pronunciations": [],
-        "frequencies": [
-          {
-            "index": 0,
-            "headwordIndex": 0,
-            "dictionary": "Test Dictionary 2",
-            "dictionaryIndex": 0,
-            "dictionaryPriority": 0,
-            "hasReading": false,
-            "frequency": 2,
-            "displayValue": null,
-            "displayValueParsed": false
-          },
-          {
-            "index": 1,
-            "headwordIndex": 0,
-            "dictionary": "Test Dictionary 2",
-            "dictionaryIndex": 0,
-            "dictionaryPriority": 0,
-            "hasReading": false,
-            "frequency": 6,
-            "displayValue": null,
-            "displayValueParsed": false
-          },
-          {
-            "index": 2,
-            "headwordIndex": 0,
-            "dictionary": "Test Dictionary 2",
-            "dictionaryIndex": 0,
-            "dictionaryPriority": 0,
-            "hasReading": true,
-            "frequency": 10,
-            "displayValue": null,
-            "displayValueParsed": false
-          },
-          {
-            "index": 3,
-            "headwordIndex": 0,
-            "dictionary": "Test Dictionary 2",
-            "dictionaryIndex": 0,
-            "dictionaryPriority": 0,
-            "hasReading": true,
-            "frequency": 0,
-            "displayValue": "sixteen",
-            "displayValueParsed": true
-          },
-          {
-            "index": 4,
-            "headwordIndex": 0,
-            "dictionary": "Test Dictionary 2",
-            "dictionaryIndex": 0,
-            "dictionaryPriority": 0,
-            "hasReading": true,
-            "frequency": 22,
-            "displayValue": "twenty-two (22)",
-            "displayValueParsed": true
-          },
-          {
-            "index": 5,
-            "headwordIndex": 0,
-            "dictionary": "Test Dictionary 2",
-            "dictionaryIndex": 0,
-            "dictionaryPriority": 0,
-            "hasReading": true,
-            "frequency": 28,
-            "displayValue": null,
-            "displayValueParsed": false
-          }
-        ]
-      },
-      {
-        "type": "term",
-        "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
-        "score": 1,
-        "frequencyOrder": 0,
-        "dictionaryIndex": 0,
-        "dictionaryPriority": 0,
-        "sourceTermExactMatchCount": 0,
-        "maxOriginalTextLength": 4,
-        "headwords": [
-          {
-            "index": 0,
-            "term": "打つ",
-            "reading": "うつ",
-            "sources": [
-              {
-                "originalText": "utsu",
-                "transformedText": "うつ",
-                "deinflectedText": "うつ",
-                "matchType": "exact",
-                "matchSource": "reading",
-                "isPrimary": true
-              }
-            ],
-            "tags": [
-              {
-                "name": "E2",
-                "category": "default",
-                "order": 0,
-                "score": 0,
-                "content": [
-                  "example tag 2"
-                ],
-                "dictionaries": [
-                  "Test Dictionary 2"
-                ],
-                "redundant": false
-              },
-              {
-                "name": "P",
-                "category": "popular",
-                "order": 0,
-                "score": 0,
-                "content": [
-                  "popular term"
-                ],
-                "dictionaries": [
-                  "Test Dictionary 2"
-                ],
-                "redundant": false
-              }
-            ],
-            "wordClasses": [
-              "v5"
-            ]
-          }
-        ],
-        "definitions": [
-          {
-            "index": 0,
-            "headwordIndices": [
-              0
-            ],
-            "dictionary": "Test Dictionary 2",
-            "dictionaryIndex": 0,
-            "dictionaryPriority": 0,
-            "id": 4,
-            "score": 1,
-            "frequencyOrder": 0,
-            "sequences": [
-              3
-            ],
-            "isPrimary": true,
-            "tags": [
-              {
-                "name": "vt",
-                "category": "partOfSpeech",
-                "order": 0,
-                "score": 0,
-                "content": [
-                  "transitive verb"
-                ],
-                "dictionaries": [
-                  "Test Dictionary 2"
-                ],
-                "redundant": false
-              }
-            ],
-            "entries": [
-              "utsu definition 3",
-              "utsu definition 4"
-            ]
-          }
-        ],
-        "pronunciations": [],
-        "frequencies": [
-          {
-            "index": 0,
-            "headwordIndex": 0,
-            "dictionary": "Test Dictionary 2",
-            "dictionaryIndex": 0,
-            "dictionaryPriority": 0,
-            "hasReading": false,
-            "frequency": 2,
-            "displayValue": null,
-            "displayValueParsed": false
-          },
-          {
-            "index": 1,
-            "headwordIndex": 0,
-            "dictionary": "Test Dictionary 2",
-            "dictionaryIndex": 0,
-            "dictionaryPriority": 0,
-            "hasReading": false,
-            "frequency": 6,
-            "displayValue": null,
-            "displayValueParsed": false
-          },
-          {
-            "index": 2,
-            "headwordIndex": 0,
-            "dictionary": "Test Dictionary 2",
-            "dictionaryIndex": 0,
-            "dictionaryPriority": 0,
-            "hasReading": true,
-            "frequency": 10,
-            "displayValue": null,
-            "displayValueParsed": false
-          },
-          {
-            "index": 3,
-            "headwordIndex": 0,
-            "dictionary": "Test Dictionary 2",
-            "dictionaryIndex": 0,
-            "dictionaryPriority": 0,
-            "hasReading": true,
-            "frequency": 0,
-            "displayValue": "sixteen",
-            "displayValueParsed": true
-          },
-          {
-            "index": 4,
-            "headwordIndex": 0,
-            "dictionary": "Test Dictionary 2",
-            "dictionaryIndex": 0,
-            "dictionaryPriority": 0,
-            "hasReading": true,
-            "frequency": 22,
-            "displayValue": "twenty-two (22)",
-            "displayValueParsed": true
-          },
-          {
-            "index": 5,
-            "headwordIndex": 0,
-            "dictionary": "Test Dictionary 2",
-            "dictionaryIndex": 0,
-            "dictionaryPriority": 0,
-            "hasReading": true,
-            "frequency": 28,
-            "displayValue": null,
-            "displayValueParsed": false
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "name": "Test text preprocessors - convertKatakanaToHiragana",
-    "originalTextLength": 2,
-    "dictionaryEntries": [
-      {
-        "type": "term",
-        "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
-        "score": 10,
-        "frequencyOrder": 0,
-        "dictionaryIndex": 0,
-        "dictionaryPriority": 0,
-        "sourceTermExactMatchCount": 0,
-        "maxOriginalTextLength": 2,
-        "headwords": [
-          {
-            "index": 0,
-            "term": "打つ",
-            "reading": "うつ",
-            "sources": [
-              {
-                "originalText": "ウツ",
-                "transformedText": "うつ",
-                "deinflectedText": "うつ",
-                "matchType": "exact",
-                "matchSource": "reading",
-                "isPrimary": true
-              }
-            ],
-            "tags": [
-              {
-                "name": "E1",
-                "category": "default",
-                "order": 0,
-                "score": 0,
-                "content": [
-                  "example tag 1"
-                ],
-                "dictionaries": [
-                  "Test Dictionary 2"
-                ],
-                "redundant": false
-              },
-              {
-                "name": "P",
-                "category": "popular",
-                "order": 0,
-                "score": 0,
-                "content": [
-                  "popular term"
-                ],
-                "dictionaries": [
-                  "Test Dictionary 2"
-                ],
-                "redundant": false
-              }
-            ],
-            "wordClasses": [
-              "v5"
-            ]
-          }
-        ],
-        "definitions": [
-          {
-            "index": 0,
-            "headwordIndices": [
-              0
-            ],
-            "dictionary": "Test Dictionary 2",
-            "dictionaryIndex": 0,
-            "dictionaryPriority": 0,
-            "id": 3,
-            "score": 10,
-            "frequencyOrder": 0,
-            "sequences": [
-              3
-            ],
-            "isPrimary": true,
-            "tags": [
-              {
-                "name": "vt",
-                "category": "partOfSpeech",
-                "order": 0,
-                "score": 0,
-                "content": [
-                  "transitive verb"
-                ],
-                "dictionaries": [
-                  "Test Dictionary 2"
-                ],
-                "redundant": false
-              }
-            ],
-            "entries": [
-              "utsu definition 1",
-              "utsu definition 2"
-            ]
-          }
-        ],
-        "pronunciations": [],
-        "frequencies": [
-          {
-            "index": 0,
-            "headwordIndex": 0,
-            "dictionary": "Test Dictionary 2",
-            "dictionaryIndex": 0,
-            "dictionaryPriority": 0,
-            "hasReading": false,
-            "frequency": 2,
-            "displayValue": null,
-            "displayValueParsed": false
-          },
-          {
-            "index": 1,
-            "headwordIndex": 0,
-            "dictionary": "Test Dictionary 2",
-            "dictionaryIndex": 0,
-            "dictionaryPriority": 0,
-            "hasReading": false,
-            "frequency": 6,
-            "displayValue": null,
-            "displayValueParsed": false
-          },
-          {
-            "index": 2,
-            "headwordIndex": 0,
-            "dictionary": "Test Dictionary 2",
-            "dictionaryIndex": 0,
-            "dictionaryPriority": 0,
-            "hasReading": true,
-            "frequency": 10,
-            "displayValue": null,
-            "displayValueParsed": false
-          },
-          {
-            "index": 3,
-            "headwordIndex": 0,
-            "dictionary": "Test Dictionary 2",
-            "dictionaryIndex": 0,
-            "dictionaryPriority": 0,
-            "hasReading": true,
-            "frequency": 0,
-            "displayValue": "sixteen",
-            "displayValueParsed": true
-          },
-          {
-            "index": 4,
-            "headwordIndex": 0,
-            "dictionary": "Test Dictionary 2",
-            "dictionaryIndex": 0,
-            "dictionaryPriority": 0,
-            "hasReading": true,
-            "frequency": 22,
-            "displayValue": "twenty-two (22)",
-            "displayValueParsed": true
-          },
-          {
-            "index": 5,
-            "headwordIndex": 0,
-            "dictionary": "Test Dictionary 2",
-            "dictionaryIndex": 0,
-            "dictionaryPriority": 0,
-            "hasReading": true,
-            "frequency": 28,
-            "displayValue": null,
-            "displayValueParsed": false
-          }
-        ]
-      },
-      {
-        "type": "term",
-        "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
-        "score": 1,
-        "frequencyOrder": 0,
-        "dictionaryIndex": 0,
-        "dictionaryPriority": 0,
-        "sourceTermExactMatchCount": 0,
-        "maxOriginalTextLength": 2,
-        "headwords": [
-          {
-            "index": 0,
-            "term": "打つ",
-            "reading": "うつ",
-            "sources": [
-              {
-                "originalText": "ウツ",
-                "transformedText": "うつ",
-                "deinflectedText": "うつ",
-                "matchType": "exact",
-                "matchSource": "reading",
-                "isPrimary": true
-              }
-            ],
-            "tags": [
-              {
-                "name": "E2",
-                "category": "default",
-                "order": 0,
-                "score": 0,
-                "content": [
-                  "example tag 2"
-                ],
-                "dictionaries": [
-                  "Test Dictionary 2"
-                ],
-                "redundant": false
-              },
-              {
-                "name": "P",
-                "category": "popular",
-                "order": 0,
-                "score": 0,
-                "content": [
-                  "popular term"
-                ],
-                "dictionaries": [
-                  "Test Dictionary 2"
-                ],
-                "redundant": false
-              }
-            ],
-            "wordClasses": [
-              "v5"
-            ]
-          }
-        ],
-        "definitions": [
-          {
-            "index": 0,
-            "headwordIndices": [
-              0
-            ],
-            "dictionary": "Test Dictionary 2",
-            "dictionaryIndex": 0,
-            "dictionaryPriority": 0,
-            "id": 4,
-            "score": 1,
-            "frequencyOrder": 0,
-            "sequences": [
-              3
-            ],
-            "isPrimary": true,
-            "tags": [
-              {
-                "name": "vt",
-                "category": "partOfSpeech",
-                "order": 0,
-                "score": 0,
-                "content": [
-                  "transitive verb"
-                ],
-                "dictionaries": [
-                  "Test Dictionary 2"
-                ],
-                "redundant": false
-              }
-            ],
-            "entries": [
-              "utsu definition 3",
-              "utsu definition 4"
-            ]
-          }
-        ],
-        "pronunciations": [],
-        "frequencies": [
-          {
-            "index": 0,
-            "headwordIndex": 0,
-            "dictionary": "Test Dictionary 2",
-            "dictionaryIndex": 0,
-            "dictionaryPriority": 0,
-            "hasReading": false,
-            "frequency": 2,
-            "displayValue": null,
-            "displayValueParsed": false
-          },
-          {
-            "index": 1,
-            "headwordIndex": 0,
-            "dictionary": "Test Dictionary 2",
-            "dictionaryIndex": 0,
-            "dictionaryPriority": 0,
-            "hasReading": false,
-            "frequency": 6,
-            "displayValue": null,
-            "displayValueParsed": false
-          },
-          {
-            "index": 2,
-            "headwordIndex": 0,
-            "dictionary": "Test Dictionary 2",
-            "dictionaryIndex": 0,
-            "dictionaryPriority": 0,
-            "hasReading": true,
-            "frequency": 10,
-            "displayValue": null,
-            "displayValueParsed": false
-          },
-          {
-            "index": 3,
-            "headwordIndex": 0,
-            "dictionary": "Test Dictionary 2",
-            "dictionaryIndex": 0,
-            "dictionaryPriority": 0,
-            "hasReading": true,
-            "frequency": 0,
-            "displayValue": "sixteen",
-            "displayValueParsed": true
-          },
-          {
-            "index": 4,
-            "headwordIndex": 0,
-            "dictionary": "Test Dictionary 2",
-            "dictionaryIndex": 0,
-            "dictionaryPriority": 0,
-            "hasReading": true,
-            "frequency": 22,
-            "displayValue": "twenty-two (22)",
-            "displayValueParsed": true
-          },
-          {
-            "index": 5,
-            "headwordIndex": 0,
-            "dictionary": "Test Dictionary 2",
-            "dictionaryIndex": 0,
-            "dictionaryPriority": 0,
-            "hasReading": true,
-            "frequency": 28,
-            "displayValue": null,
-            "displayValueParsed": false
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "name": "Test text preprocessors - convertHiraganaToKatakana",
-    "originalTextLength": 4,
-    "dictionaryEntries": [
-      {
-        "type": "term",
-        "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
-        "score": 1,
-        "frequencyOrder": 0,
-        "dictionaryIndex": 0,
-        "dictionaryPriority": 0,
-        "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 4,
-        "headwords": [
-          {
-            "index": 0,
-            "term": "テキスト",
-            "reading": "テキスト",
-            "sources": [
-              {
-                "originalText": "てきすと",
-                "transformedText": "テキスト",
-                "deinflectedText": "テキスト",
-                "matchType": "exact",
-                "matchSource": "term",
-                "isPrimary": true
-              }
-            ],
-            "tags": [
-              {
-                "name": "E1",
-                "category": "default",
-                "order": 0,
-                "score": 0,
-                "content": [
-                  "example tag 1"
-                ],
-                "dictionaries": [
-                  "Test Dictionary 2"
-                ],
-                "redundant": false
-              },
-              {
-                "name": "P",
-                "category": "popular",
-                "order": 0,
-                "score": 0,
-                "content": [
-                  "popular term"
-                ],
-                "dictionaries": [
-                  "Test Dictionary 2"
-                ],
-                "redundant": false
-              }
-            ],
-            "wordClasses": [
-              "n"
-            ]
-          }
-        ],
-        "definitions": [
-          {
-            "index": 0,
-            "headwordIndices": [
-              0
-            ],
-            "dictionary": "Test Dictionary 2",
-            "dictionaryIndex": 0,
-            "dictionaryPriority": 0,
-            "id": 14,
-            "score": 1,
-            "frequencyOrder": 0,
-            "sequences": [
-              8
-            ],
-            "isPrimary": true,
-            "tags": [
-              {
-                "name": "n",
-                "category": "partOfSpeech",
-                "order": 0,
-                "score": 0,
-                "content": [
-                  "noun"
-                ],
-                "dictionaries": [
-                  "Test Dictionary 2"
-                ],
-                "redundant": false
-              }
-            ],
-            "entries": [
-              "text definition 1",
-              "text definition 2"
-            ]
-          }
-        ],
-        "pronunciations": [],
-        "frequencies": []
-      }
-    ]
-  },
-  {
-    "name": "Test text preprocessors - convertHalfWidthCharacters, convertKatakanaToHiragana",
-    "originalTextLength": 2,
-    "dictionaryEntries": [
-      {
-        "type": "term",
-        "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
-        "score": 10,
-        "frequencyOrder": 0,
-        "dictionaryIndex": 0,
-        "dictionaryPriority": 0,
-        "sourceTermExactMatchCount": 0,
-        "maxOriginalTextLength": 2,
-        "headwords": [
-          {
-            "index": 0,
-            "term": "打つ",
-            "reading": "うつ",
-            "sources": [
-              {
-                "originalText": "ｳﾂ",
-                "transformedText": "うつ",
-                "deinflectedText": "うつ",
-                "matchType": "exact",
-                "matchSource": "reading",
-                "isPrimary": true
-              }
-            ],
-            "tags": [
-              {
-                "name": "E1",
-                "category": "default",
-                "order": 0,
-                "score": 0,
-                "content": [
-                  "example tag 1"
-                ],
-                "dictionaries": [
-                  "Test Dictionary 2"
-                ],
-                "redundant": false
-              },
-              {
-                "name": "P",
-                "category": "popular",
-                "order": 0,
-                "score": 0,
-                "content": [
-                  "popular term"
-                ],
-                "dictionaries": [
-                  "Test Dictionary 2"
-                ],
-                "redundant": false
-              }
-            ],
-            "wordClasses": [
-              "v5"
-            ]
-          }
-        ],
-        "definitions": [
-          {
-            "index": 0,
-            "headwordIndices": [
-              0
-            ],
-            "dictionary": "Test Dictionary 2",
-            "dictionaryIndex": 0,
-            "dictionaryPriority": 0,
-            "id": 3,
-            "score": 10,
-            "frequencyOrder": 0,
-            "sequences": [
-              3
-            ],
-            "isPrimary": true,
-            "tags": [
-              {
-                "name": "vt",
-                "category": "partOfSpeech",
-                "order": 0,
-                "score": 0,
-                "content": [
-                  "transitive verb"
-                ],
-                "dictionaries": [
-                  "Test Dictionary 2"
-                ],
-                "redundant": false
-              }
-            ],
-            "entries": [
-              "utsu definition 1",
-              "utsu definition 2"
-            ]
-          }
-        ],
-        "pronunciations": [],
-        "frequencies": [
-          {
-            "index": 0,
-            "headwordIndex": 0,
-            "dictionary": "Test Dictionary 2",
-            "dictionaryIndex": 0,
-            "dictionaryPriority": 0,
-            "hasReading": false,
-            "frequency": 2,
-            "displayValue": null,
-            "displayValueParsed": false
-          },
-          {
-            "index": 1,
-            "headwordIndex": 0,
-            "dictionary": "Test Dictionary 2",
-            "dictionaryIndex": 0,
-            "dictionaryPriority": 0,
-            "hasReading": false,
-            "frequency": 6,
-            "displayValue": null,
-            "displayValueParsed": false
-          },
-          {
-            "index": 2,
-            "headwordIndex": 0,
-            "dictionary": "Test Dictionary 2",
-            "dictionaryIndex": 0,
-            "dictionaryPriority": 0,
-            "hasReading": true,
-            "frequency": 10,
-            "displayValue": null,
-            "displayValueParsed": false
-          },
-          {
-            "index": 3,
-            "headwordIndex": 0,
-            "dictionary": "Test Dictionary 2",
-            "dictionaryIndex": 0,
-            "dictionaryPriority": 0,
-            "hasReading": true,
-            "frequency": 0,
-            "displayValue": "sixteen",
-            "displayValueParsed": true
-          },
-          {
-            "index": 4,
-            "headwordIndex": 0,
-            "dictionary": "Test Dictionary 2",
-            "dictionaryIndex": 0,
-            "dictionaryPriority": 0,
-            "hasReading": true,
-            "frequency": 22,
-            "displayValue": "twenty-two (22)",
-            "displayValueParsed": true
-          },
-          {
-            "index": 5,
-            "headwordIndex": 0,
-            "dictionary": "Test Dictionary 2",
-            "dictionaryIndex": 0,
-            "dictionaryPriority": 0,
-            "hasReading": true,
-            "frequency": 28,
-            "displayValue": null,
-            "displayValueParsed": false
-          }
-        ]
-      },
-      {
-        "type": "term",
-        "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
-        "score": 1,
-        "frequencyOrder": 0,
-        "dictionaryIndex": 0,
-        "dictionaryPriority": 0,
-        "sourceTermExactMatchCount": 0,
-        "maxOriginalTextLength": 2,
-        "headwords": [
-          {
-            "index": 0,
-            "term": "打つ",
-            "reading": "うつ",
-            "sources": [
-              {
-                "originalText": "ｳﾂ",
-                "transformedText": "うつ",
-                "deinflectedText": "うつ",
-                "matchType": "exact",
-                "matchSource": "reading",
-                "isPrimary": true
-              }
-            ],
-            "tags": [
-              {
-                "name": "E2",
-                "category": "default",
-                "order": 0,
-                "score": 0,
-                "content": [
-                  "example tag 2"
-                ],
-                "dictionaries": [
-                  "Test Dictionary 2"
-                ],
-                "redundant": false
-              },
-              {
-                "name": "P",
-                "category": "popular",
-                "order": 0,
-                "score": 0,
-                "content": [
-                  "popular term"
-                ],
-                "dictionaries": [
-                  "Test Dictionary 2"
-                ],
-                "redundant": false
-              }
-            ],
-            "wordClasses": [
-              "v5"
-            ]
-          }
-        ],
-        "definitions": [
-          {
-            "index": 0,
-            "headwordIndices": [
-              0
-            ],
-            "dictionary": "Test Dictionary 2",
-            "dictionaryIndex": 0,
-            "dictionaryPriority": 0,
-            "id": 4,
-            "score": 1,
-            "frequencyOrder": 0,
-            "sequences": [
-              3
-            ],
-            "isPrimary": true,
-            "tags": [
-              {
-                "name": "vt",
-                "category": "partOfSpeech",
-                "order": 0,
-                "score": 0,
-                "content": [
-                  "transitive verb"
-                ],
-                "dictionaries": [
-                  "Test Dictionary 2"
-                ],
-                "redundant": false
-              }
-            ],
-            "entries": [
-              "utsu definition 3",
-              "utsu definition 4"
-            ]
-          }
-        ],
-        "pronunciations": [],
-        "frequencies": [
-          {
-            "index": 0,
-            "headwordIndex": 0,
-            "dictionary": "Test Dictionary 2",
-            "dictionaryIndex": 0,
-            "dictionaryPriority": 0,
-            "hasReading": false,
-            "frequency": 2,
-            "displayValue": null,
-            "displayValueParsed": false
-          },
-          {
-            "index": 1,
-            "headwordIndex": 0,
-            "dictionary": "Test Dictionary 2",
-            "dictionaryIndex": 0,
-            "dictionaryPriority": 0,
-            "hasReading": false,
-            "frequency": 6,
-            "displayValue": null,
-            "displayValueParsed": false
-          },
-          {
-            "index": 2,
-            "headwordIndex": 0,
-            "dictionary": "Test Dictionary 2",
-            "dictionaryIndex": 0,
-            "dictionaryPriority": 0,
-            "hasReading": true,
-            "frequency": 10,
-            "displayValue": null,
-            "displayValueParsed": false
-          },
-          {
-            "index": 3,
-            "headwordIndex": 0,
-            "dictionary": "Test Dictionary 2",
-            "dictionaryIndex": 0,
-            "dictionaryPriority": 0,
-            "hasReading": true,
-            "frequency": 0,
-            "displayValue": "sixteen",
-            "displayValueParsed": true
-          },
-          {
-            "index": 4,
-            "headwordIndex": 0,
-            "dictionary": "Test Dictionary 2",
-            "dictionaryIndex": 0,
-            "dictionaryPriority": 0,
-            "hasReading": true,
-            "frequency": 22,
-            "displayValue": "twenty-two (22)",
-            "displayValueParsed": true
-          },
-          {
-            "index": 5,
-            "headwordIndex": 0,
-            "dictionary": "Test Dictionary 2",
-            "dictionaryIndex": 0,
-            "dictionaryPriority": 0,
-            "hasReading": true,
-            "frequency": 28,
-            "displayValue": null,
-            "displayValueParsed": false
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "name": "Test text preprocessors - collapseEmphaticSequences",
-    "originalTextLength": 7,
-    "dictionaryEntries": [
-      {
-        "type": "term",
-        "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          },
-          {
-            "source": "algorithm",
-            "inflectionRules": [
-              "adv",
-              "kansai-ben"
-            ]
-          }
-        ],
-        "score": 1,
-        "frequencyOrder": 0,
-        "dictionaryIndex": 0,
-        "dictionaryPriority": 0,
-        "sourceTermExactMatchCount": 0,
-        "maxOriginalTextLength": 7,
-        "headwords": [
-          {
-            "index": 0,
-            "term": "凄い",
-            "reading": "すごい",
-            "sources": [
-              {
-                "originalText": "すっっごーーい",
-                "transformedText": "すごい",
-                "deinflectedText": "すごい",
-                "matchType": "exact",
-                "matchSource": "reading",
-                "isPrimary": true
-              }
-            ],
-            "tags": [],
-            "wordClasses": [
-              "adj-i"
-            ]
-          }
-        ],
-        "definitions": [
-          {
-            "index": 0,
-            "headwordIndices": [
-              0
-            ],
-            "dictionary": "Test Dictionary 2",
-            "dictionaryIndex": 0,
-            "dictionaryPriority": 0,
-            "id": 26,
-            "score": 1,
-            "frequencyOrder": 0,
-            "sequences": [
-              18
-            ],
-            "isPrimary": true,
-            "tags": [
-              {
-                "name": "adj-i",
-                "category": "default",
-                "order": 0,
-                "score": 0,
-                "content": [],
-                "dictionaries": [
-                  "Test Dictionary 2"
-                ],
-                "redundant": false
-              }
-            ],
-            "entries": [
-              "sugoi definition"
-            ]
-          }
-        ],
-        "pronunciations": [],
-        "frequencies": []
-      }
-    ]
-  },
-  {
-    "name": "Test text preprocessors - capitalizeFirstLetter",
-    "originalTextLength": 7,
-    "dictionaryEntries": [
-      {
-        "type": "term",
-        "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
-        "score": 1,
-        "frequencyOrder": 0,
-        "dictionaryIndex": 0,
-        "dictionaryPriority": 0,
-        "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 7,
-        "headwords": [
-          {
-            "index": 0,
-            "term": "English",
-            "reading": "English",
-            "sources": [
-              {
-                "originalText": "english",
-                "transformedText": "English",
-                "deinflectedText": "English",
-                "matchType": "exact",
-                "matchSource": "term",
-                "isPrimary": true
-              }
-            ],
-            "tags": [],
-            "wordClasses": [
-              "n"
-            ]
-          }
-        ],
-        "definitions": [
-          {
-            "index": 0,
-            "headwordIndices": [
-              0
-            ],
-            "dictionary": "Test Dictionary 2",
-            "dictionaryIndex": 0,
-            "dictionaryPriority": 0,
-            "id": 27,
-            "score": 1,
-            "frequencyOrder": 0,
-            "sequences": [
-              19
-            ],
-            "isPrimary": true,
-            "tags": [
-              {
-                "name": "n",
-                "category": "partOfSpeech",
-                "order": 0,
-                "score": 0,
-                "content": [
-                  "noun"
-                ],
-                "dictionaries": [
-                  "Test Dictionary 2"
-                ],
-                "redundant": false
-              }
-            ],
-            "entries": [
-              "English definition"
-            ]
-          }
-        ],
-        "pronunciations": [],
-        "frequencies": []
-      }
-    ]
-  },
-  {
-    "name": "Test text preprocessors - decapitalize",
-    "originalTextLength": 8,
-    "dictionaryEntries": [
-      {
-        "type": "term",
-        "isPrimary": true,
-        "inflectionRuleChainCandidates": [
-          {
-            "source": "algorithm",
-            "inflectionRules": []
-          }
-        ],
-        "score": 1,
-        "frequencyOrder": 0,
-        "dictionaryIndex": 0,
-        "dictionaryPriority": 0,
-        "sourceTermExactMatchCount": 1,
-        "maxOriginalTextLength": 8,
-        "headwords": [
-          {
-            "index": 0,
-            "term": "language",
-            "reading": "language",
-            "sources": [
-              {
-                "originalText": "LANGUAGE",
-                "transformedText": "language",
-                "deinflectedText": "language",
-                "matchType": "exact",
-                "matchSource": "term",
-                "isPrimary": true
-              }
-            ],
-            "tags": [],
-            "wordClasses": [
-              "n"
-            ]
-          }
-        ],
-        "definitions": [
-          {
-            "index": 0,
-            "headwordIndices": [
-              0
-            ],
-            "dictionary": "Test Dictionary 2",
-            "dictionaryIndex": 0,
-            "dictionaryPriority": 0,
-            "id": 28,
-            "score": 1,
-            "frequencyOrder": 0,
-            "sequences": [
-              20
-            ],
-            "isPrimary": true,
-            "tags": [
-              {
-                "name": "n",
-                "category": "partOfSpeech",
-                "order": 0,
-                "score": 0,
-                "content": [
-                  "noun"
-                ],
-                "dictionaries": [
-                  "Test Dictionary 2"
-                ],
-                "redundant": false
-              }
-            ],
-            "entries": [
-              "language definition"
             ]
           }
         ],

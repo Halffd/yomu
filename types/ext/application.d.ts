@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,10 +15,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import type {TokenString, EventNames, EventArgument as BaseEventArgument} from './core';
+import type {TokenString} from './core';
 import type {SearchMode} from './display';
 import type {FrameEndpointReadyDetails, FrameEndpointConnectedDetails} from './frame-client';
 import type {DatabaseUpdateType, DatabaseUpdateCause} from './backend';
+import type {EventNames, EventArgument as BaseEventArgument} from './core';
 import type {
     ApiMap as BaseApiMap,
     ApiHandler as BaseApiHandler,
@@ -41,8 +42,12 @@ export type ApiSurface = {
     searchDisplayControllerUpdateSearchQuery: {
         params: {
             text: string;
-            animate: boolean;
+            animate?: boolean;
         };
+        return: void;
+    };
+    applicationReady: {
+        params: void;
         return: void;
     };
     applicationIsReady: {
@@ -81,7 +86,7 @@ export type ApiSurface = {
     };
     frontendRequestReadyBroadcast: {
         params: {
-            frameId: number | null;
+            frameId: number;
         };
         return: void;
     };
@@ -101,7 +106,7 @@ export type ApiSurface = {
     };
     frontendReady: {
         params: {
-            frameId: number | null;
+            frameId: number;
         };
         return: void;
     };

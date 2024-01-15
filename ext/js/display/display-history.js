@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2020-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,19 +16,16 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {EventDispatcher} from '../core/event-dispatcher.js';
-import {isObjectNotArray} from '../core/object-utilities.js';
-import {generateId} from '../core/utilities.js';
+import {EventDispatcher, generateId, isObject} from '../core.js';
 
 /**
  * @augments EventDispatcher<import('display-history').Events>
  */
 export class DisplayHistory extends EventDispatcher {
     /**
-     * @param {boolean} clearable
-     * @param {boolean} useBrowserHistory
+     * @param {{clearable?: boolean, useBrowserHistory?: boolean}} details
      */
-    constructor(clearable, useBrowserHistory) {
+    constructor({clearable = true, useBrowserHistory = false}) {
         super();
         /** @type {boolean} */
         this._clearable = clearable;
@@ -37,17 +34,10 @@ export class DisplayHistory extends EventDispatcher {
         /** @type {Map<string, import('display-history').Entry>} */
         this._historyMap = new Map();
 
-        /** @type {unknown} */
         const historyState = history.state;
-        const {id, state} = (
-            isObjectNotArray(historyState) ?
-            historyState :
-            {id: null, state: null}
-        );
-        /** @type {?import('display-history').EntryState} */
-        const stateObject = isObjectNotArray(state) ? state : null;
+        const {id, state} = isObject(historyState) ? historyState : {id: null, state: null};
         /** @type {import('display-history').Entry} */
-        this._current = this._createHistoryEntry(id, location.href, stateObject, null, null);
+        this._current = this._createHistoryEntry(id, location.href, state, null, null);
     }
 
     /** @type {?import('display-history').EntryState} */
@@ -189,10 +179,9 @@ export class DisplayHistory extends EventDispatcher {
 
     /** */
     _updateStateFromHistory() {
-        /** @type {unknown} */
         let state = history.state;
         let id = null;
-        if (isObjectNotArray(state)) {
+        if (isObject(state)) {
             id = state.id;
             if (typeof id === 'string') {
                 const entry = this._historyMap.get(id);
@@ -210,7 +199,7 @@ export class DisplayHistory extends EventDispatcher {
 
         // Fallback
         this._current.id = (typeof id === 'string' ? id : this._generateId());
-        this._current.state = /** @type {import('display-history').EntryState} */ (state);
+        this._current.state = state;
         this._current.content = null;
         this._clear();
     }

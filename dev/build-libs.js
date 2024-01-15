@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2020-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -64,7 +64,6 @@ export async function buildLibs() {
     const schemaFileNames = fs.readdirSync(schemaDir);
     const schemas = schemaFileNames.map((schemaFileName) => {
         /** @type {import('ajv').AnySchema} */
-        // eslint-disable-next-line sonarjs/prefer-immediate-return
         const result = parseJson(fs.readFileSync(path.join(schemaDir, schemaFileName), {encoding: 'utf8'}));
         return result;
     });

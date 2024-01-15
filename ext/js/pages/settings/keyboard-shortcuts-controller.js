@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2021-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,10 +16,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {EventListenerCollection} from '../../core/event-listener-collection.js';
-import {convertElementValueToNumber, normalizeModifierKey} from '../../dom/document-util.js';
+import {EventListenerCollection} from '../../core.js';
+import {DocumentUtil} from '../../dom/document-util.js';
 import {querySelectorNotNull} from '../../dom/query-selector.js';
 import {ObjectPropertyAccessor} from '../../general/object-property-accessor.js';
+import {yomitan} from '../../yomitan.js';
 import {KeyboardMouseInputField} from './keyboard-mouse-input-field.js';
 
 export class KeyboardShortcutController {
@@ -45,7 +46,7 @@ export class KeyboardShortcutController {
         this._stringComparer = new Intl.Collator('en-US'); // Invariant locale
         /** @type {HTMLElement} */
         this._scrollContainer = querySelectorNotNull(document, '#keyboard-shortcuts-modal .modal-body');
-        /* eslint-disable @stylistic/no-multi-spaces */
+        /* eslint-disable no-multi-spaces */
         /** @type {Map<string, import('keyboard-shortcut-controller').ActionDetails>} */
         this._actionDetails = new Map([
             ['',                                 {scopes: new Set()}],
@@ -59,12 +60,10 @@ export class KeyboardShortcutController {
             ['previousEntryDifferentDictionary', {scopes: new Set(['popup', 'search'])}],
             ['historyBackward',                  {scopes: new Set(['popup', 'search'])}],
             ['historyForward',                   {scopes: new Set(['popup', 'search'])}],
-            ['profilePrevious',                  {scopes: new Set(['popup', 'search'])}],
-            ['profileNext',                      {scopes: new Set(['popup', 'search'])}],
             ['addNoteKanji',                     {scopes: new Set(['popup', 'search'])}],
             ['addNoteTermKanji',                 {scopes: new Set(['popup', 'search'])}],
             ['addNoteTermKana',                  {scopes: new Set(['popup', 'search'])}],
-            ['viewNotes',                        {scopes: new Set(['popup', 'search'])}],
+            ['viewNote',                         {scopes: new Set(['popup', 'search'])}],
             ['playAudio',                        {scopes: new Set(['popup', 'search'])}],
             ['playAudioFromSource',              {scopes: new Set(['popup', 'search']), argument: {template: 'hotkey-argument-audio-source', default: 'jpod101'}}],
             ['copyHostSelection',                {scopes: new Set(['popup'])}],
@@ -72,7 +71,7 @@ export class KeyboardShortcutController {
             ['scanTextAtCaret',                  {scopes: new Set(['web'])}],
             ['toggleOption',                     {scopes: new Set(['popup', 'search']), argument: {template: 'hotkey-argument-setting-path', default: ''}}]
         ]);
-        /* eslint-enable @stylistic/no-multi-spaces */
+        /* eslint-enable no-multi-spaces */
     }
 
     /** @type {import('./settings-controller.js').SettingsController} */
@@ -82,7 +81,7 @@ export class KeyboardShortcutController {
 
     /** */
     async prepare() {
-        const {platform: {os}} = await this._settingsController.application.api.getEnvironmentInfo();
+        const {platform: {os}} = await yomitan.api.getEnvironmentInfo();
         this._os = os;
 
         this._addButton.addEventListener('click', this._onAddClick.bind(this));
@@ -185,7 +184,7 @@ export class KeyboardShortcutController {
         const listContainer = /** @type {HTMLElement} */ (this._listContainer);
         listContainer.appendChild(fragment);
         listContainer.hidden = (hotkeys.length === 0);
-        /** @type {HTMLElement} */ (this._emptyIndicator).hidden = (hotkeys.length > 0);
+        /** @type {HTMLElement} */ (this._emptyIndicator).hidden = (hotkeys.length !== 0);
     }
 
     /**
@@ -193,7 +192,7 @@ export class KeyboardShortcutController {
      */
     _onAddClick(e) {
         e.preventDefault();
-        void this._addNewEntry();
+        this._addNewEntry();
     }
 
     /**
@@ -201,7 +200,7 @@ export class KeyboardShortcutController {
      */
     _onResetClick(e) {
         e.preventDefault();
-        void this._reset();
+        this._reset();
     }
 
     /** */
@@ -352,16 +351,16 @@ class KeyboardShortcutHotkeyEntry {
     _onMenuClose(e) {
         switch (e.detail.action) {
             case 'delete':
-                void this._delete();
+                this._delete();
                 break;
             case 'clearInputs':
                 /** @type {KeyboardMouseInputField} */ (this._inputField).clearInputs();
                 break;
             case 'resetInput':
-                void this._resetInput();
+                this._resetInput();
                 break;
             case 'resetArgument':
-                void this._resetArgument();
+                this._resetArgument();
                 break;
         }
     }
@@ -402,11 +401,11 @@ class KeyboardShortcutHotkeyEntry {
         /** @type {import('input').ModifierKey[]} */
         const modifiers2 = [];
         for (const modifier of modifiers) {
-            const modifier2 = normalizeModifierKey(modifier);
+            const modifier2 = DocumentUtil.normalizeModifierKey(modifier);
             if (modifier2 === null) { continue; }
             modifiers2.push(modifier2);
         }
-        void this._setKeyAndModifiers(key, modifiers2);
+        this._setKeyAndModifiers(key, modifiers2);
     }
 
     /**
@@ -416,7 +415,7 @@ class KeyboardShortcutHotkeyEntry {
         const node = /** @type {HTMLInputElement} */ (e.currentTarget);
         const scope = this._normalizeScope(node.dataset.scope);
         if (scope === null) { return; }
-        void this._setScopeEnabled(scope, node.checked);
+        this._setScopeEnabled(scope, node.checked);
     }
 
     /**
@@ -425,7 +424,7 @@ class KeyboardShortcutHotkeyEntry {
     _onActionSelectChange(e) {
         const node = /** @type {HTMLSelectElement} */ (e.currentTarget);
         const value = node.value;
-        void this._setAction(value);
+        this._setAction(value);
     }
 
     /**
@@ -437,15 +436,15 @@ class KeyboardShortcutHotkeyEntry {
         let value = this._getArgumentInputValue(node);
         switch (template) {
             case 'hotkey-argument-move-offset':
-                value = `${convertElementValueToNumber(value, node)}`;
+                value = `${DocumentUtil.convertElementValueToNumber(value, node)}`;
                 break;
         }
-        void this._setArgument(value);
+        this._setArgument(value);
     }
 
     /** */
     async _delete() {
-        void this._parent.deleteEntry(this._index);
+        this._parent.deleteEntry(this._index);
     }
 
     /**
@@ -609,7 +608,7 @@ class KeyboardShortcutHotkeyEntry {
             this._setArgumentInputValue(node, value);
         }
 
-        void this._updateArgumentInputValidity();
+        this._updateArgumentInputValidity();
 
         await this._modifyProfileSettings([{
             action: 'set',
@@ -704,7 +703,7 @@ class KeyboardShortcutHotkeyEntry {
             if (inputNode !== null) {
                 this._setArgumentInputValue(inputNode, argument);
                 this._argumentInput = inputNode;
-                void this._updateArgumentInputValidity();
+                this._updateArgumentInputValidity();
                 this._argumentEventListeners.addEventListener(inputNode, 'change', this._onArgumentValueChange.bind(this, template), false);
             }
             if (this._argumentContainer !== null) {

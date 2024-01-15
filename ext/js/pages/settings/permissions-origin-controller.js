@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2021-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,9 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {EventListenerCollection} from '../../core/event-listener-collection.js';
-import {toError} from '../../core/to-error.js';
-import {getAllPermissions, setPermissionsGranted} from '../../data/permissions-util.js';
+import {EventListenerCollection} from '../../core.js';
 import {querySelectorNotNull} from '../../dom/query-selector.js';
 
 export class PermissionsOriginController {
@@ -114,19 +112,19 @@ export class PermissionsOriginController {
 
         const {origin} = node.dataset;
         if (typeof origin !== 'string') { return; }
-        void this._setOriginPermissionEnabled(origin, value);
+        this._setOriginPermissionEnabled(origin, value);
     }
 
     /**
      * @param {string} origin
      */
     _onOriginMenuClose(origin) {
-        void this._setOriginPermissionEnabled(origin, false);
+        this._setOriginPermissionEnabled(origin, false);
     }
 
     /** */
     _onAddButtonClick() {
-        void this._addOrigin();
+        this._addOrigin();
     }
 
     /** */
@@ -141,7 +139,7 @@ export class PermissionsOriginController {
 
     /** */
     async _updatePermissions() {
-        const permissions = await getAllPermissions();
+        const permissions = await this._settingsController.permissionsUtil.getAllPermissions();
         this._onPermissionsChanged({permissions});
     }
 
@@ -153,11 +151,11 @@ export class PermissionsOriginController {
     async _setOriginPermissionEnabled(origin, enabled) {
         let added = false;
         try {
-            added = await setPermissionsGranted({origins: [origin]}, enabled);
+            added = await this._settingsController.permissionsUtil.setPermissionsGranted({origins: [origin]}, enabled);
         } catch (e) {
             const errorContainer = /** @type {HTMLElement} */ (this._errorContainer);
             errorContainer.hidden = false;
-            errorContainer.textContent = toError(e).message;
+            errorContainer.textContent = e instanceof Error ? e.message : `${e}`;
         }
         if (!added) { return false; }
         await this._updatePermissions();

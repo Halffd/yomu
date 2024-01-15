@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2020-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,8 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {isObjectNotArray} from '../core/object-utilities.js';
-import {deferPromise, generateId} from '../core/utilities.js';
+import {deferPromise, generateId, isObject} from '../core.js';
 
 export class FrameClient {
     constructor() {
@@ -83,7 +82,6 @@ export class FrameClient {
      */
     _connectInternal(frame, targetOrigin, hostFrameId, setupFrame, timeout) {
         return new Promise((resolve, reject) => {
-            /** @type {Map<string, string>} */
             const tokenMap = new Map();
             /** @type {?import('core').Timeout} */
             let timer = null;
@@ -114,7 +112,7 @@ export class FrameClient {
 
             /** @type {import('extension').ChromeRuntimeOnMessageCallback<import('application').ApiMessageAny>} */
             const onMessage = (message) => {
-                void onMessageInner(message);
+                onMessageInner(message);
                 return false;
             };
 
@@ -123,9 +121,9 @@ export class FrameClient {
              */
             const onMessageInner = async (message) => {
                 try {
-                    if (!isObjectNotArray(message)) { return; }
+                    if (!isObject(message)) { return; }
                     const {action, params} = message;
-                    if (!isObjectNotArray(params)) { return; }
+                    if (!isObject(params)) { return; }
                     await frameLoadedPromise;
                     if (timer === null) { return; } // Done
 

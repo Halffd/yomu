@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2016-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,8 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {toError} from '../core/to-error.js';
-import {convertMultipleRectZoomCoordinates, convertRectZoomCoordinates, getElementWritingMode, getNodesInRange, offsetDOMRects} from './document-util.js';
+import {DocumentUtil} from './document-util.js';
 import {DOMTextScanner} from './dom-text-scanner.js';
 
 /**
@@ -170,7 +169,7 @@ export class TextSourceRange {
      */
     getRects() {
         if (this._isImposterDisconnected()) { return this._getCachedRects(); }
-        return convertMultipleRectZoomCoordinates(this._range.getClientRects(), this._range.startContainer);
+        return DocumentUtil.convertMultipleRectZoomCoordinates(this._range.getClientRects(), this._range.startContainer);
     }
 
     /**
@@ -181,7 +180,7 @@ export class TextSourceRange {
     getWritingMode() {
         let node = this._isImposterDisconnected() ? this._imposterSourceElement : this._range.startContainer;
         if (node !== null && node.nodeType !== Node.ELEMENT_NODE) { node = node.parentElement; }
-        return getElementWritingMode(/** @type {?Element} */ (node));
+        return DocumentUtil.getElementWritingMode(/** @type {?Element} */ (node));
     }
 
     /**
@@ -229,7 +228,7 @@ export class TextSourceRange {
             try {
                 return this._range.compareBoundaryPoints(Range.START_TO_START, other.range) === 0;
             } catch (e) {
-                if (toError(e).name === 'WrongDocumentError') {
+                if (e instanceof Error && e.name === 'WrongDocumentError') {
                     // This can happen with shadow DOMs if the ranges are in different documents.
                     return false;
                 }
@@ -243,7 +242,7 @@ export class TextSourceRange {
      * @returns {Node[]} The nodes in the range.
      */
     getNodesInRange() {
-        return getNodesInRange(this._range);
+        return DocumentUtil.getNodesInRange(this._range);
     }
 
     /**
@@ -263,8 +262,8 @@ export class TextSourceRange {
      * @returns {TextSourceRange} A new instance of the class corresponding to the range.
      */
     static createFromImposter(range, imposterElement, imposterSourceElement) {
-        const cachedRects = convertMultipleRectZoomCoordinates(range.getClientRects(), range.startContainer);
-        const cachedSourceRect = convertRectZoomCoordinates(imposterSourceElement.getBoundingClientRect(), imposterSourceElement);
+        const cachedRects = DocumentUtil.convertMultipleRectZoomCoordinates(range.getClientRects(), range.startContainer);
+        const cachedSourceRect = DocumentUtil.convertRectZoomCoordinates(imposterSourceElement.getBoundingClientRect(), imposterSourceElement);
         return new TextSourceRange(range, range.startOffset, range.toString(), imposterElement, imposterSourceElement, cachedRects, cachedSourceRect);
     }
 
@@ -289,8 +288,8 @@ export class TextSourceRange {
         ) {
             throw new Error('Cached rects not valid for this instance');
         }
-        const sourceRect = convertRectZoomCoordinates(this._imposterSourceElement.getBoundingClientRect(), this._imposterSourceElement);
-        return offsetDOMRects(
+        const sourceRect = DocumentUtil.convertRectZoomCoordinates(this._imposterSourceElement.getBoundingClientRect(), this._imposterSourceElement);
+        return DocumentUtil.offsetDOMRects(
             this._cachedRects,
             sourceRect.left - this._cachedSourceRect.left,
             sourceRect.top - this._cachedSourceRect.top

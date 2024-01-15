@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,6 +33,6 @@ export type NormalizedOptionsContext1 = Settings.OptionsContext1 & {
 
 export type NormalizedOptionsContext2 = Settings.OptionsContext2;
 
-export type NormalizedOptionsContext3 = Settings.OptionsContext3;
+export type NormalizedOptionsContext3 = Settings.OptionsContext2;
 
 export type NormalizedOptionsContext = NormalizedOptionsContext1 | NormalizedOptionsContext2 | NormalizedOptionsContext3;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,14 +18,12 @@
 /**
  * Schema validation error type.
  */
-export class DataError extends Error {
+class DataError extends Error {
     /**
      * @param {string} message
      */
     constructor(message) {
         super(message);
-        /** @type {string} */
-        this.name = 'DataError';
         /** @type {unknown} */
         this._data = void 0;
     }
@@ -34,3 +32,7 @@ export class DataError extends Error {
     get data() { return this._data; }
     set data(value) { this._data = value; }
 }
+
+module.exports = {
+    DataError
+};

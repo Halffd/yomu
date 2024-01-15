@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2020-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {readCodePointsBackward, readCodePointsForward} from '../data/string-util.js';
+import {StringUtil} from '../data/sandbox/string-util.js';
 
 /**
  * A class used to scan text in a document.
@@ -172,7 +172,7 @@ export class DOMTextScanner {
         if (resetOffset) { this._offset = 0; }
 
         while (this._offset < nodeValueLength) {
-            const char = readCodePointsForward(nodeValue, this._offset, 1);
+            const char = StringUtil.readCodePointsForward(nodeValue, this._offset, 1);
             this._offset += char.length;
             const charAttributes = DOMTextScanner.getCharacterAttributes(char, preserveNewlines, preserveWhitespace);
             if (this._checkCharacterForward(char, charAttributes)) { break; }
@@ -201,7 +201,7 @@ export class DOMTextScanner {
         if (resetOffset) { this._offset = nodeValueLength; }
 
         while (this._offset > 0) {
-            const char = readCodePointsBackward(nodeValue, this._offset - 1, 1);
+            const char = StringUtil.readCodePointsBackward(nodeValue, this._offset - 1, 1);
             this._offset -= char.length;
             const charAttributes = DOMTextScanner.getCharacterAttributes(char, preserveNewlines, preserveWhitespace);
             if (this._checkCharacterBackward(char, charAttributes)) { break; }
@@ -472,7 +472,6 @@ export class DOMTextScanner {
                 return preserveNewlines ? 3 : 1;
             case 0x200b: // Zero-width space
             case 0x200c: // Zero-width non-joiner
-            case 0x00ad: // Soft hyphen
                 return 0;
             default: // Other
                 return 2;
@@ -488,8 +487,8 @@ export class DOMTextScanner {
     static isStyleVisible(style) {
         return !(
             style.visibility === 'hidden' ||
-            Number.parseFloat(style.opacity) <= 0 ||
-            Number.parseFloat(style.fontSize) <= 0 ||
+            parseFloat(style.opacity) <= 0 ||
+            parseFloat(style.fontSize) <= 0 ||
             (
                 !DOMTextScanner.isStyleSelectable(style) &&
                 (
@@ -551,10 +550,10 @@ export class DOMTextScanner {
             case 'block':
             case 'flex':
             case 'grid':
-            case 'list': // Also includes: list-item
-            case 'table': // Also includes: table, table-*
+            case 'list': // list-item
+            case 'table': // table, table-*
                 return true;
-            case 'ruby': // Also includes: ruby-*
+            case 'ruby': // ruby-*
                 return (pos >= 0);
             default:
                 return false;

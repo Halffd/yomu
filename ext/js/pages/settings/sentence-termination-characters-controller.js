@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2021-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {EventListenerCollection} from '../../core/event-listener-collection.js';
+import {EventListenerCollection} from '../../core.js';
 import {querySelectorNotNull} from '../../dom/query-selector.js';
 
 export class SentenceTerminationCharactersController {
@@ -125,9 +125,8 @@ export class SentenceTerminationCharactersController {
             entry.prepare();
         }
 
-        const empty = terminationCharacters.length === 0;
-        /** @type {HTMLElement} */ (this._listTable).hidden = empty;
-        /** @type {HTMLElement} */ (this._emptyIndicator).hidden = !empty;
+        /** @type {HTMLElement} */ (this._listTable).hidden = (terminationCharacters.length === 0);
+        /** @type {HTMLElement} */ (this._emptyIndicator).hidden = (terminationCharacters.length !== 0);
     }
 
     /**
@@ -135,7 +134,7 @@ export class SentenceTerminationCharactersController {
      */
     _onAddClick(e) {
         e.preventDefault();
-        void this._addNewEntry();
+        this._addNewEntry();
     }
 
     /**
@@ -143,7 +142,7 @@ export class SentenceTerminationCharactersController {
      */
     _onResetClick(e) {
         e.preventDefault();
-        void this._reset();
+        this._reset();
     }
 
     /** */
@@ -258,7 +257,7 @@ class SentenceTerminationCharacterEntry {
      */
     _onTypeSelectChange(e) {
         const element = /** @type {HTMLSelectElement} */ (e.currentTarget);
-        void this._setHasCharacter2(element.value === 'quote');
+        this._setHasCharacter2(element.value === 'quote');
     }
 
     /**
@@ -272,7 +271,7 @@ class SentenceTerminationCharacterEntry {
         }
 
         const value = node.value.substring(0, 1);
-        void this._setCharacterValue(node, characterNumber, value);
+        this._setCharacterValue(node, characterNumber, value);
     }
 
     /**
@@ -281,14 +280,14 @@ class SentenceTerminationCharacterEntry {
     _onMenuClose(e) {
         switch (e.detail.action) {
             case 'delete':
-                void this._delete();
+                this._delete();
                 break;
         }
     }
 
     /** */
     async _delete() {
-        void this._parent.deleteEntry(this._index);
+        this._parent.deleteEntry(this._index);
     }
 
     /**

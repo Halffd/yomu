@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,18 +17,19 @@
 
 import type {PopupFactory} from '../../ext/js/app/popup-factory';
 import type {HotkeyHandler} from '../../ext/js/input/hotkey-handler';
-import type {Application} from '../../ext/js/application';
 
 /** Details about how to set up the instance. */
 export type ConstructorDetails = {
-    /** The main application instance. */
-    application: Application;
     /** The type of page, one of 'web', 'popup', or 'search'. */
     pageType: PageType;
     /** A PopupFactory instance to use for generating popups. */
     popupFactory: PopupFactory;
     /** The nesting depth value of the popup. */
     depth: number;
+    /** The tab ID of the host tab. */
+    tabId: number | undefined;
+    /** The frame ID of the host frame. */
+    frameId: number;
     /** The popup ID of the parent popup if one exists, otherwise null. */
     parentPopupId: string | null;
     /** The frame ID of the parent popup if one exists, otherwise null. */
@@ -36,11 +37,11 @@ export type ConstructorDetails = {
     /** Whether or not proxy popups should be used. */
     useProxyPopup: boolean;
     /** Whether or not window popups can be used. */
-    canUseWindowPopup: boolean;
+    canUseWindowPopup?: boolean;
     /** Whether or not popups can be hosted in the root frame. */
     allowRootFramePopupProxy: boolean;
     /** Whether popups can create child popups or not. */
-    childrenSupported: boolean;
+    childrenSupported?: boolean;
     /** A HotkeyHandler instance. */
     hotkeyHandler: HotkeyHandler;
 };

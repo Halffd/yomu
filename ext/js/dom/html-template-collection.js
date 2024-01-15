@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2020-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,8 +16,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {fetchText} from '../core/fetch-utilities.js';
-
 export class HtmlTemplateCollection {
     constructor() {
         /** @type {Map<string, HTMLTemplateElement>} */
@@ -25,23 +23,17 @@ export class HtmlTemplateCollection {
     }
 
     /**
-     * @param {string[]} urls
-     */
-    async loadFromFiles(urls) {
-        const htmlRawArray = await Promise.all(urls.map((url) => fetchText(url)));
-        const domParser = new DOMParser();
-        for (const htmlRaw of htmlRawArray) {
-            const templatesDocument = domParser.parseFromString(htmlRaw, 'text/html');
-            this.load(templatesDocument);
-        }
-    }
-
-    /**
-     * @param {Document} source
+     * @param {string|Document} source
      */
     load(source) {
+        const sourceNode = (
+            typeof source === 'string' ?
+            new DOMParser().parseFromString(source, 'text/html') :
+            source
+        );
+
         const pattern = /^([\w\W]+)-template$/;
-        for (const template of source.querySelectorAll('template')) {
+        for (const template of sourceNode.querySelectorAll('template')) {
             const match = pattern.exec(template.id);
             if (match === null) { continue; }
             this._prepareTemplate(template);
@@ -56,7 +48,9 @@ export class HtmlTemplateCollection {
      * @throws {Error}
      */
     instantiate(name) {
-        const {firstElementChild} = this.getTemplateContent(name);
+        const template = this._templates.get(name);
+        if (typeof template === 'undefined') { throw new Error(`Failed to find template: ${name}`); }
+        const {firstElementChild} = template.content;
         if (firstElementChild === null) { throw new Error(`Failed to find template content element: ${name}`); }
         return /** @type {T} */ (document.importNode(firstElementChild, true));
     }
@@ -64,20 +58,13 @@ export class HtmlTemplateCollection {
     /**
      * @param {string} name
      * @returns {DocumentFragment}
-     */
-    instantiateFragment(name) {
-        return document.importNode(this.getTemplateContent(name), true);
-    }
-
-    /**
-     * @param {string} name
-     * @returns {DocumentFragment}
      * @throws {Error}
      */
-    getTemplateContent(name) {
+    instantiateFragment(name) {
         const template = this._templates.get(name);
         if (typeof template === 'undefined') { throw new Error(`Failed to find template: ${name}`); }
-        return template.content;
+        const {content} = template;
+        return document.importNode(content, true);
     }
 
     /**

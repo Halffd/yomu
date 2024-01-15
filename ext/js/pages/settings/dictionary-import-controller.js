@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2020-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,11 +16,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {log} from '../../core.js';
 import {ExtensionError} from '../../core/extension-error.js';
-import {log} from '../../core/log.js';
-import {toError} from '../../core/to-error.js';
 import {DictionaryWorker} from '../../dictionary/dictionary-worker.js';
 import {querySelectorNotNull} from '../../dom/query-selector.js';
+import {yomitan} from '../../yomitan.js';
 import {DictionaryController} from './dictionary-controller.js';
 
 export class DictionaryImportController {
@@ -64,7 +64,7 @@ export class DictionaryImportController {
     }
 
     /** */
-    prepare() {
+    async prepare() {
         this._purgeConfirmModal = this._modalController.getModal('dictionary-confirm-delete-all');
 
         this._purgeButton.addEventListener('click', this._onPurgeButtonClick.bind(this), false);
@@ -94,7 +94,7 @@ export class DictionaryImportController {
     _onPurgeConfirmButtonClick(e) {
         e.preventDefault();
         /** @type {import('./modal.js').Modal} */ (this._purgeConfirmModal).setVisible(false);
-        void this._purgeDatabase();
+        this._purgeDatabase();
     }
 
     /**
@@ -106,7 +106,7 @@ export class DictionaryImportController {
         if (files === null) { return; }
         const files2 = [...files];
         node.value = '';
-        void this._importDictionaries(files2);
+        this._importDictionaries(files2);
     }
 
     /** */
@@ -119,14 +119,14 @@ export class DictionaryImportController {
             this._setModifying(true);
             this._hideErrors();
 
-            await this._settingsController.application.api.purgeDatabase();
+            await yomitan.api.purgeDatabase();
             const errors = await this._clearDictionarySettings();
 
             if (errors.length > 0) {
                 this._showErrors(errors);
             }
         } catch (error) {
-            this._showErrors([toError(error)]);
+            this._showErrors([error instanceof Error ? error : new Error(`${error}`)]);
         } finally {
             prevention.end();
             this._setModifying(false);
@@ -149,8 +149,6 @@ export class DictionaryImportController {
 
         const prevention = this._preventPageExit();
 
-        /** @type {Error[]} */
-        let errors = [];
         try {
             this._setModifying(true);
             this._hideErrors();
@@ -174,7 +172,7 @@ export class DictionaryImportController {
                     for (const label of infoLabels) { label.textContent = labelText; }
                 }
 
-                const percent = count > 0 ? (index / count * 100) : 0;
+                const percent = count > 0 ? (index / count * 100.0) : 0.0;
                 const cssString = `${percent}%`;
                 const statusString = `${Math.floor(percent).toFixed(0)}%`;
                 for (const progressBar of progressBars) { progressBar.style.width = cssString; }
@@ -198,12 +196,12 @@ export class DictionaryImportController {
                     count: 0
                 });
                 if (statusFooter !== null) { statusFooter.setTaskActive(progressSelector, true); }
-                errors = [...errors, ...(await this._importDictionary(files[i], importDetails, onProgress) ?? [])];
+
+                await this._importDictionary(files[i], importDetails, onProgress);
             }
-        } catch (error) {
-            errors.push(toError(error));
+        } catch (err) {
+            this._showErrors([err instanceof Error ? err : new Error(`${err}`)]);
         } finally {
-            this._showErrors(errors);
             prevention.end();
             for (const progress of progressContainers) { progress.hidden = true; }
             if (statusFooter !== null) { statusFooter.setTaskActive(progressSelector, false); }
@@ -233,16 +231,11 @@ export class DictionaryImportController {
      * @param {File} file
      * @param {import('dictionary-importer').ImportDetails} importDetails
      * @param {import('dictionary-worker').ImportProgressCallback} onProgress
-     * @returns {Promise<Error[] | undefined>}
      */
     async _importDictionary(file, importDetails, onProgress) {
         const archiveContent = await this._readFile(file);
         const {result, errors} = await new DictionaryWorker().importDictionary(archiveContent, importDetails, onProgress);
-        if (!result) {
-            return errors;
-        }
-
-        void this._settingsController.application.api.triggerDatabaseUpdated('dictionary', 'import');
+        yomitan.api.triggerDatabaseUpdated('dictionary', 'import');
         const errors2 = await this._addDictionarySettings(result.sequenced, result.title);
 
         if (errors.length > 0) {
@@ -259,14 +252,12 @@ export class DictionaryImportController {
      */
     async _addDictionarySettings(sequenced, title) {
         const optionsFull = await this._settingsController.getOptionsFull();
-        const profileIndex = this._settingsController.profileIndex;
         /** @type {import('settings-modifications').Modification[]} */
         const targets = [];
         const profileCount = optionsFull.profiles.length;
         for (let i = 0; i < profileCount; ++i) {
             const {options} = optionsFull.profiles[i];
-            const enabled = profileIndex === i;
-            const value = DictionaryController.createDefaultDictionarySettings(title, enabled);
+            const value = DictionaryController.createDefaultDictionarySettings(title, true);
             const path1 = `profiles[${i}].options.dictionaries`;
             targets.push({action: 'push', path: path1, items: [value]});
 
@@ -306,7 +297,6 @@ export class DictionaryImportController {
      * @param {Error[]} errors
      */
     _showErrors(errors) {
-        /** @type {Map<string, number>} */
         const uniqueErrors = new Map();
         for (const error of errors) {
             log.error(error);
@@ -408,6 +398,6 @@ export class DictionaryImportController {
 
     /** */
     _triggerStorageChanged() {
-        this._settingsController.application.triggerStorageChanged();
+        yomitan.triggerStorageChanged();
     }
 }

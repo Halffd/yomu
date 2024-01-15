@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,9 +16,7 @@
  */
 
 import type * as DictionaryDatabase from './dictionary-database';
-import type * as Dictionary from './dictionary';
 import type * as Translation from './translation';
-import type * as Language from './language';
 
 export type TextDeinflectionOptions = [
     textReplacements: Translation.FindTermsTextReplacement[] | null,
@@ -40,27 +38,28 @@ export type TextDeinflectionOptionsArrays = [
     emphatic: [collapseEmphatic: boolean, collapseEmphaticFull: boolean][],
 ];
 
+export enum DeinflectionRuleFlags {
+    None = 0x0,
+    VerbIchidan = 0b00000001,
+    VerbGodan = 0b00000010,
+    VerbSuru = 0b00000100,
+    VerbKuru = 0b00001000,
+    VerbZuru = 0b00010000,
+    AdjectiveI = 0b00100000,
+    IruEndingIntermediate = 0b01000000,
+}
+
+export type Deinflection = {
+    term: string;
+    rules: DeinflectionRuleFlags;
+    reasons: string[];
+};
+
 export type DatabaseDeinflection = {
     originalText: string;
     transformedText: string;
     deinflectedText: string;
-    conditions: number;
-    inflectionRuleChainCandidates: Dictionary.InflectionRuleChainCandidate[];
+    rules: DeinflectionRuleFlags;
+    reasons: string[];
     databaseEntries: DictionaryDatabase.TermEntry[];
 };
-
-export type TextProcessorOptionsSpace = Map<string, Language.TextProcessorOptions<unknown>>;
-
-export type TextProcessorMap = Map<
-    string,
-    {
-        textPreprocessors: Language.TextProcessorWithId<unknown>[];
-        preprocessorOptionsSpace: TextProcessorOptionsSpace;
-        textPostprocessors: Language.TextProcessorWithId<unknown>[];
-        postprocessorOptionsSpace: TextProcessorOptionsSpace;
-    }
->;
-
-export type TextProcessorVariant = Map<string, unknown>;
-
-export type TextCache = Map<string, Map<string, Map<unknown, string>>>;

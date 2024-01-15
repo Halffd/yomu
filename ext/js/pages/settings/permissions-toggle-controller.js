@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2020-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,7 +16,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {getAllPermissions, hasPermissions, setPermissionsGranted} from '../../data/permissions-util.js';
 import {ObjectPropertyAccessor} from '../../general/object-property-accessor.js';
 
 export class PermissionsToggleController {
@@ -69,7 +68,7 @@ export class PermissionsToggleController {
             }
             toggle.checked = !!value;
         }
-        void this._updateValidity();
+        this._updateValidity();
     }
 
     /**
@@ -86,11 +85,11 @@ export class PermissionsToggleController {
             toggle.checked = valuePre;
             const permissions = this._getRequiredPermissions(toggle);
             try {
-                value = await setPermissionsGranted({permissions}, value);
+                value = await this._settingsController.permissionsUtil.setPermissionsGranted({permissions}, value);
             } catch (error) {
                 value = valuePre;
                 try {
-                    value = await hasPermissions({permissions});
+                    value = await this._settingsController.permissionsUtil.hasPermissions({permissions});
                 } catch (error2) {
                     // NOP
                 }
@@ -112,13 +111,13 @@ export class PermissionsToggleController {
         const permissionsSet = new Set(typeof permissions2 !== 'undefined' ? permissions2 : []);
         for (const toggle of /** @type {NodeListOf<HTMLInputElement>} */ (this._toggles)) {
             const {permissionsSetting} = toggle.dataset;
-            const hasPermissions2 = this._hasAll(permissionsSet, this._getRequiredPermissions(toggle));
+            const hasPermissions = this._hasAll(permissionsSet, this._getRequiredPermissions(toggle));
 
             if (typeof permissionsSetting === 'string') {
-                const valid = !toggle.checked || hasPermissions2;
+                const valid = !toggle.checked || hasPermissions;
                 this._setToggleValid(toggle, valid);
             } else {
-                toggle.checked = hasPermissions2;
+                toggle.checked = hasPermissions;
             }
         }
     }
@@ -135,7 +134,7 @@ export class PermissionsToggleController {
 
     /** */
     async _updateValidity() {
-        const permissions = await getAllPermissions();
+        const permissions = await this._settingsController.permissionsUtil.getAllPermissions();
         this._onPermissionsChanged({permissions});
     }
 

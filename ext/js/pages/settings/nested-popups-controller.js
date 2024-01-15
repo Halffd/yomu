@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2020-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {convertElementValueToNumber} from '../../dom/document-util.js';
+import {DocumentUtil} from '../../dom/document-util.js';
 import {querySelectorNotNull} from '../../dom/query-selector.js';
 
 export class NestedPopupsController {
@@ -63,7 +63,7 @@ export class NestedPopupsController {
         const node = /** @type {HTMLInputElement} */ (e.currentTarget);
         const value = node.checked;
         if (value && this._popupNestingMaxDepth > 0) { return; }
-        void this._setPopupNestingMaxDepth(value ? 1 : 0);
+        this._setPopupNestingMaxDepth(value ? 1 : 0);
     }
 
     /**
@@ -71,8 +71,8 @@ export class NestedPopupsController {
      */
     _onNestedPopupsCountChange(e) {
         const node = /** @type {HTMLInputElement} */ (e.currentTarget);
-        const value = Math.max(1, convertElementValueToNumber(node.value, node));
-        void this._setPopupNestingMaxDepth(value);
+        const value = Math.max(1, DocumentUtil.convertElementValueToNumber(node.value, node));
+        this._setPopupNestingMaxDepth(value);
     }
 
     /**

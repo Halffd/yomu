@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2021-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,9 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {EventListenerCollection} from '../../core/event-listener-collection.js';
-import {toError} from '../../core/to-error.js';
-import {getAllPermissions, setPermissionsGranted} from '../../data/permissions-util.js';
+import {EventListenerCollection} from '../../core.js';
 
 export class RecommendedPermissionsController {
     /**
@@ -73,12 +71,12 @@ export class RecommendedPermissionsController {
 
         const {origin} = node.dataset;
         if (typeof origin !== 'string') { return; }
-        void this._setOriginPermissionEnabled(origin, value);
+        this._setOriginPermissionEnabled(origin, value);
     }
 
     /** */
     async _updatePermissions() {
-        const permissions = await getAllPermissions();
+        const permissions = await this._settingsController.permissionsUtil.getAllPermissions();
         this._onPermissionsChanged({permissions});
     }
 
@@ -90,11 +88,11 @@ export class RecommendedPermissionsController {
     async _setOriginPermissionEnabled(origin, enabled) {
         let added = false;
         try {
-            added = await setPermissionsGranted({origins: [origin]}, enabled);
+            added = await this._settingsController.permissionsUtil.setPermissionsGranted({origins: [origin]}, enabled);
         } catch (e) {
             if (this._errorContainer !== null) {
                 this._errorContainer.hidden = false;
-                this._errorContainer.textContent = toError(e).message;
+                this._errorContainer.textContent = e instanceof Error ? e.message : `${e}`;
             }
         }
         if (!added) { return false; }

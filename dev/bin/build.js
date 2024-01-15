@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2020-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -23,10 +23,10 @@ import JSZip from 'jszip';
 import {fileURLToPath} from 'node:url';
 import path from 'path';
 import readline from 'readline';
-import {parseArgs} from 'util';
 import {buildLibs} from '../build-libs.js';
 import {ManifestUtil} from '../manifest-util.js';
-import {getAllFiles} from '../util.js';
+import {getAllFiles, testMain} from '../util.js';
+import {parseArgs} from 'util';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -195,10 +195,12 @@ async function build(buildDir, extDir, manifestUtil, variantNames, manifestPath,
                 await createZip(extDir, excludeFiles, fullFileName, sevenZipExes, onUpdate, dryRun);
             }
 
-            if (!dryRun && Array.isArray(fileCopies)) {
-                for (const fileName2 of fileCopies) {
-                    const fileName2Safe = path.basename(fileName2);
-                    fs.copyFileSync(fullFileName, path.join(buildDir, fileName2Safe));
+            if (!dryRun) {
+                if (Array.isArray(fileCopies)) {
+                    for (const fileName2 of fileCopies) {
+                        const fileName2Safe = path.basename(fileName2);
+                        fs.copyFileSync(fullFileName, path.join(buildDir, fileName2Safe));
+                    }
                 }
             }
         }
@@ -217,8 +219,10 @@ function ensureFilesExist(directory, files) {
     }
 }
 
-/** */
-export async function main() {
+/**
+ * @param {string[]} argv
+ */
+export async function main(argv) {
     /** @type {import('util').ParseArgsConfig['options']} */
     const parseArgsConfigOptions = {
         all: {
@@ -246,8 +250,7 @@ export async function main() {
         }
     };
 
-    const argv = process.argv.slice(2);
-    const {values: args, positionals: targets} = parseArgs({args: argv, options: parseArgsConfigOptions, allowPositionals: true});
+    const {values: args} = parseArgs({args: argv, options: parseArgsConfigOptions});
 
     const dryRun = /** @type {boolean} */ (args.dryRun);
     const dryRunBuildZip = /** @type {boolean} */ (args.dryRunBuildZip);
@@ -264,8 +267,7 @@ export async function main() {
         await buildLibs();
         const variantNames = /** @type {string[]} */ ((
             argv.length === 0 || args.all ?
-            manifestUtil.getVariants().filter(({buildable}) => buildable !== false).map(({name}) => name) :
-            targets
+            manifestUtil.getVariants().filter(({buildable}) => buildable !== false).map(({name}) => name) : []
         ));
         await build(buildDir, extDir, manifestUtil, variantNames, manifestPath, dryRun, dryRunBuildZip, yomitanVersion);
     } finally {
@@ -279,4 +281,4 @@ export async function main() {
     }
 }
 
-await main();
+testMain(main, process.argv.slice(2));

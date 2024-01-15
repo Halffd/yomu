@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2019-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {clone} from '../core/utilities.js';
+import {clone} from '../core.js';
 import {CacheMap} from '../general/cache-map.js';
 
 export class JsonSchemaError extends Error {
@@ -27,8 +27,6 @@ export class JsonSchemaError extends Error {
      */
     constructor(message, valueStack, schemaStack) {
         super(message);
-        /** @type {string} */
-        this.name = 'JsonSchemaError';
         /** @type {import('ext/json-schema').ValueStackItem[]} */
         this._valueStack = valueStack;
         /** @type {import('ext/json-schema').SchemaStackItem[]} */
@@ -373,16 +371,18 @@ export class JsonSchema {
             return {schema, stack: [{schema, path: null}]};
         }
         const {prefixItems} = schema;
-        if (typeof prefixItems !== 'undefined' && index >= 0 && index < prefixItems.length) {
-            const itemSchema = prefixItems[index];
-            if (typeof itemSchema !== 'undefined') {
-                return {
-                    schema: itemSchema,
-                    stack: [
-                        {schema: prefixItems, path: 'prefixItems'},
-                        {schema: itemSchema, path: index}
-                    ]
-                };
+        if (typeof prefixItems !== 'undefined') {
+            if (index >= 0 && index < prefixItems.length) {
+                const itemSchema = prefixItems[index];
+                if (typeof itemSchema !== 'undefined') {
+                    return {
+                        schema: itemSchema,
+                        stack: [
+                            {schema: prefixItems, path: 'prefixItems'},
+                            {schema: itemSchema, path: index}
+                        ]
+                    };
+                }
             }
         }
         const {items} = schema;
@@ -805,7 +805,7 @@ export class JsonSchema {
         const {type: schemaType, const: schemaConst, enum: schemaEnum} = schema;
         const type = this._getValueType(value);
         if (!this._isValueTypeAny(value, type, schemaType)) {
-            throw this._createError(`Value type ${type} does not match schema type ${Array.isArray(schemaType) ? schemaType.join(',') : schemaType}`);
+            throw this._createError(`Value type ${type} does not match schema type ${schemaType}`);
         }
 
         if (typeof schemaConst !== 'undefined' && !this._valuesAreEqual(value, schemaConst)) {
@@ -1263,7 +1263,7 @@ class JsonSchemaProxyHandler {
     /**
      * @param {import('ext/json-schema').ValueObjectOrArray} target
      * @param {string|number|symbol} property
-     * @param {unknown} value
+     * @param {import('core').SafeAny} value
      * @returns {boolean}
      * @throws {Error}
      */

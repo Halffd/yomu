@@ -4,9 +4,7 @@
         "name": "Yomitan",
         "version": "$YOMITAN_VERSION",
         "description": "Japanese dictionary with Anki integration",
-        "author": {
-            "email": "themoeway@googlegroups.com"
-        },
+        "author": "TheMoeWay",
         "icons": {
             "16": "images/icon16.png",
             "19": "images/icon19.png",
@@ -181,13 +179,6 @@
             "fileName": "yomitan-firefox.zip",
             "modifications": [
                 {
-                    "action": "set",
-                    "path": [
-                        "author"
-                    ],
-                    "value": "TheMoeWay"
-                },
-                {
                     "action": "delete",
                     "path": [
                         "background",
@@ -321,13 +312,6 @@
         {
             "name": "safari",
             "modifications": [
-                {
-                    "action": "set",
-                    "path": [
-                        "author"
-                    ],
-                    "value": "TheMoeWay"
-                },
                 {
                     "action": "remove",
                     "path": [

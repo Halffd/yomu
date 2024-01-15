@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2016-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,8 +18,7 @@
 
 import {ExtensionError} from '../core/extension-error.js';
 import {parseJson} from '../core/json.js';
-import {isObjectNotArray} from '../core/object-utilities.js';
-import {getRootDeckName} from '../data/anki-util.js';
+import {AnkiUtil} from '../data/anki-util.js';
 
 /**
  * This class controls communication with Anki via the AnkiConnect plugin.
@@ -129,7 +128,6 @@ export class AnkiConnect {
         return result;
     }
 
-
     /**
      * @param {import('anki').Note[]} notes
      * @returns {Promise<boolean[]>}
@@ -200,14 +198,6 @@ export class AnkiConnect {
      */
     async guiBrowseNote(noteId) {
         return await this.guiBrowse(`nid:${noteId}`);
-    }
-
-    /**
-     * @param {import('anki').NoteId[]} noteIds
-     * @returns {Promise<import('anki').CardId[]>}
-     */
-    async guiBrowseNotes(noteIds) {
-        return await this.guiBrowse(`nid:${noteIds.join(',')}`);
     }
 
     /**
@@ -509,7 +499,7 @@ export class AnkiConnect {
                 query = `"deck:${this._escapeQuery(note.deckName)}" `;
                 break;
             case 'deck-root':
-                query = `"deck:${this._escapeQuery(getRootDeckName(note.deckName))}" `;
+                query = `"deck:${this._escapeQuery(AnkiUtil.getRootDeckName(note.deckName))}" `;
                 break;
         }
         query += this._fieldsToQuery(note.fields);
@@ -607,15 +597,15 @@ export class AnkiConnect {
             if (typeof modelName !== 'string') {
                 throw this._createError(`Unexpected result type at index ${i}, field modelName: expected string, received ${this._getTypeName(modelName)}`, result);
             }
-            if (!isObjectNotArray(fields)) {
-                throw this._createError(`Unexpected result type at index ${i}, field fields: expected object, received ${this._getTypeName(fields)}`, result);
+            if (typeof fields !== 'object' || fields === null) {
+                throw this._createError(`Unexpected result type at index ${i}, field fields: expected string, received ${this._getTypeName(fields)}`, result);
             }
             const tags2 = /** @type {string[]} */ (this._normalizeArray(tags, -1, 'string', ', field tags'));
             const cards2 = /** @type {number[]} */ (this._normalizeArray(cards, -1, 'number', ', field cards'));
             /** @type {{[key: string]: import('anki').NoteFieldInfo}} */
             const fields2 = {};
             for (const [key, fieldInfo] of Object.entries(fields)) {
-                if (!isObjectNotArray(fieldInfo)) { continue; }
+                if (typeof fieldInfo !== 'object' || fieldInfo === null) { continue; }
                 const {value, order} = fieldInfo;
                 if (typeof value !== 'string' || typeof order !== 'number') { continue; }
                 fields2[key] = {value, order};

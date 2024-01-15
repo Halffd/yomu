@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2020-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -17,7 +17,7 @@
  */
 
 import {TaskAccumulator} from '../general/task-accumulator.js';
-import {convertElementValueToNumber} from './document-util.js';
+import {DocumentUtil} from './document-util.js';
 import {SelectorObserver} from './selector-observer.js';
 
 /**
@@ -25,14 +25,9 @@ import {SelectorObserver} from './selector-observer.js';
  */
 export class DOMDataBinder {
     /**
-     * @param {string} selector
-     * @param {import('dom-data-binder').CreateElementMetadataCallback<T>} createElementMetadata
-     * @param {import('dom-data-binder').CompareElementMetadataCallback<T>} compareElementMetadata
-     * @param {import('dom-data-binder').GetValuesCallback<T>} getValues
-     * @param {import('dom-data-binder').SetValuesCallback<T>} setValues
-     * @param {import('dom-data-binder').OnErrorCallback<T>|null} [onError]
+     * @param {import('dom-data-binder').ConstructorDetails<T>} details
      */
-    constructor(selector, createElementMetadata, compareElementMetadata, getValues, setValues, onError = null) {
+    constructor({selector, createElementMetadata, compareElementMetadata, getValues, setValues, onError = null}) {
         /** @type {string} */
         this._selector = selector;
         /** @type {import('dom-data-binder').CreateElementMetadataCallback<T>} */
@@ -50,14 +45,14 @@ export class DOMDataBinder {
         /** @type {TaskAccumulator<import('dom-data-binder').ElementObserver<T>, import('dom-data-binder').AssignTaskValue>} */
         this._assignTasks = new TaskAccumulator(this._onBulkAssign.bind(this));
         /** @type {SelectorObserver<import('dom-data-binder').ElementObserver<T>>} */
-        this._selectorObserver = new SelectorObserver({
+        this._selectorObserver = /** @type {SelectorObserver<import('dom-data-binder').ElementObserver<T>>} */ (new SelectorObserver({
             selector,
             ignoreSelector: null,
             onAdded: this._createObserver.bind(this),
             onRemoved: this._removeObserver.bind(this),
             onChildrenUpdated: this._onObserverChildrenUpdated.bind(this),
             isStale: this._isObserverStale.bind(this)
-        });
+        }));
     }
 
     /**
@@ -138,7 +133,7 @@ export class DOMDataBinder {
         const value = this._getElementValue(observer.element);
         observer.value = value;
         observer.hasValue = true;
-        void this._assignTasks.enqueue(observer, {value});
+        this._assignTasks.enqueue(observer, {value});
     }
 
     /**
@@ -187,7 +182,7 @@ export class DOMDataBinder {
 
         element.addEventListener('change', observer.onChange, false);
 
-        void this._updateTasks.enqueue(observer, {all: false});
+        this._updateTasks.enqueue(observer, {all: false});
 
         return observer;
     }
@@ -269,7 +264,7 @@ export class DOMDataBinder {
             case 'text':
                 return `${/** @type {HTMLInputElement} */ (element).value}`;
             case 'number':
-                return convertElementValueToNumber(/** @type {HTMLInputElement} */ (element).value, /** @type {HTMLInputElement} */ (element));
+                return DocumentUtil.convertElementValueToNumber(/** @type {HTMLInputElement} */ (element).value, /** @type {HTMLInputElement} */ (element));
             case 'textarea':
                 return /** @type {HTMLTextAreaElement} */ (element).value;
             case 'select':

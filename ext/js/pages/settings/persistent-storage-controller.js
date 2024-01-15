@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2021-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,23 +16,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {isObjectNotArray} from '../../core/object-utilities.js';
+import {isObject} from '../../core.js';
 import {querySelectorNotNull} from '../../dom/query-selector.js';
+import {yomitan} from '../../yomitan.js';
 
 export class PersistentStorageController {
-    /**
-     * @param {import('../../application.js').Application} application
-     */
-    constructor(application) {
-        /** @type {import('../../application.js').Application} */
-        this._application = application;
+    constructor() {
         /** @type {HTMLInputElement} */
         this._persistentStorageCheckbox = querySelectorNotNull(document, '#storage-persistent-checkbox');
-    }
-
-    /** @type {import('../../application.js').Application} */
-    get application() {
-        return this._application;
     }
 
     /** */
@@ -70,7 +61,7 @@ export class PersistentStorageController {
         const node = /** @type {HTMLInputElement} */ (e.currentTarget);
         if (node.checked) {
             node.checked = false;
-            void this._attemptPersistStorage();
+            this._attemptPersistStorage();
         } else {
             node.checked = true;
         }
@@ -91,14 +82,14 @@ export class PersistentStorageController {
         const node = document.querySelector('#storage-persistent-fail-warning');
         if (node !== null) { node.hidden = isStoragePeristent; }
 
-        this._application.triggerStorageChanged();
+        yomitan.triggerStorageChanged();
     }
 
     /**
      * @returns {boolean}
      */
     _isPersistentStorageSupported() {
-        return isObjectNotArray(navigator.storage) && typeof navigator.storage.persist === 'function';
+        return isObject(navigator.storage) && typeof navigator.storage.persist === 'function';
     }
 
     /**

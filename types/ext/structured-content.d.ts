@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,8 +41,6 @@ export type ImageAppearance = 'auto' | 'monochrome';
 
 export type Image = DictionaryData.TermImage & {
     verticalAlign: VerticalAlign;
-    border: string;
-    borderRadius: string;
     sizeUnits: SizeUnits;
 };
 
@@ -55,7 +53,6 @@ export type StructuredContentStyle = {
     fontWeight?: FontWeight;
     fontSize?: string;
     color?: string;
-    background?: string;
     backgroundColor?: string;
     textDecorationLine?: TextDecorationLineOrNone | TextDecorationLine[];
     textDecorationStyle?: TextDecorationStyle;
@@ -64,11 +61,8 @@ export type StructuredContentStyle = {
     borderStyle?: string;
     borderRadius?: string;
     borderWidth?: string;
-    clipPath?: string;
     verticalAlign?: VerticalAlign;
     textAlign?: TextAlign;
-    textEmphasis?: string;
-    textShadow?: string;
     margin?: string;
     marginTop?: number | string;
     marginLeft?: number | string;
@@ -122,7 +116,7 @@ export type TableElement = {
 };
 
 export type StyledElement = {
-    tag: 'span' | 'div' | 'ol' | 'ul' | 'li' | 'details' | 'summary';
+    tag: 'span' | 'div' | 'ol' | 'ul' | 'li';
     content?: Content;
     data?: Data;
     style?: StructuredContentStyle;
@@ -147,7 +141,7 @@ export type ImageElementBase = {
      */
     width?: number;
     /**
-     * Preferred height of the image.
+     * Preferred width of the image.
      */
     height?: number;
     /**
@@ -156,7 +150,7 @@ export type ImageElementBase = {
      */
     preferredWidth?: number;
     /**
-     * Preferred height of the image.
+     * Preferred width of the image.
      * This is only used in the internal database.
      */
     preferredHeight?: number;
@@ -208,14 +202,6 @@ export type ImageElement = ImageElementBase & {
      * The vertical alignment of the image.
      */
     verticalAlign?: VerticalAlign;
-    /**
-     * Shorthand for border width, style, and color.
-     */
-    border?: string;
-    /**
-     * Roundness of the corners of the image's outer border edge.
-     */
-    borderRadius?: string;
     /**
      * The units for the width and height.
      */

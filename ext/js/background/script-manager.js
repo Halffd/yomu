@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2021-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -60,7 +60,16 @@ export function injectStylesheet(type, content, tabId, frameId, allFrames) {
  * @returns {Promise<boolean>} `true` if a script is registered, `false` otherwise.
  */
 export async function isContentScriptRegistered(id) {
-    const scripts = await getRegisteredContentScripts([id]);
+    const scripts = await new Promise((resolve, reject) => {
+        chrome.scripting.getRegisteredContentScripts({ids: [id]}, (result) => {
+            const e = chrome.runtime.lastError;
+            if (e) {
+                reject(new Error(e.message));
+            } else {
+                resolve(result);
+            }
+        });
+    });
     for (const script of scripts) {
         if (script.id === id) {
             return true;
@@ -145,21 +154,4 @@ function createContentScriptRegistrationOptions(details, id) {
         options.world = world;
     }
     return options;
-}
-
-/**
- * @param {string[]} ids
- * @returns {Promise<chrome.scripting.RegisteredContentScript[]>}
- */
-function getRegisteredContentScripts(ids) {
-    return new Promise((resolve, reject) => {
-        chrome.scripting.getRegisteredContentScripts({ids}, (result) => {
-            const e = chrome.runtime.lastError;
-            if (e) {
-                reject(new Error(e.message));
-            } else {
-                resolve(result);
-            }
-        });
-    });
 }

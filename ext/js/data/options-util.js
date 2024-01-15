@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2016-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,18 +16,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {fetchJson, fetchText} from '../core/fetch-utilities.js';
-import {parseJson} from '../core/json.js';
-import {isObjectNotArray} from '../core/object-utilities.js';
-import {escapeRegExp} from '../core/utilities.js';
+import {escapeRegExp, isObject} from '../core.js';
+import {parseJson, readResponseJson} from '../core/json.js';
 import {TemplatePatcher} from '../templates/template-patcher.js';
 import {JsonSchema} from './json-schema.js';
-
-// Some type safety rules are disabled for this file since it deals with upgrading an older format
-// of the options object to a newer format. SafeAny is used for much of this, since every single
-// legacy format does not contain type definitions.
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 
 export class OptionsUtil {
     constructor() {
@@ -40,7 +32,7 @@ export class OptionsUtil {
     /** */
     async prepare() {
         /** @type {import('ext/json-schema').Schema} */
-        const schema = await fetchJson('/data/schemas/options-schema.json');
+        const schema = await this._fetchJson('/data/schemas/options-schema.json');
         this._optionsSchema = new JsonSchema(schema);
     }
 
@@ -53,8 +45,7 @@ export class OptionsUtil {
         // Invalid options
         let options = /** @type {{[key: string]: unknown}} */ (
             typeof optionsInput === 'object' && optionsInput !== null && !Array.isArray(optionsInput) ?
-            optionsInput :
-            {}
+            optionsInput : {}
         );
 
         // Check for legacy options
@@ -72,7 +63,7 @@ export class OptionsUtil {
         // Remove invalid profiles
         const profiles = /** @type {unknown[]} */ (options.profiles);
         for (let i = profiles.length - 1; i >= 0; --i) {
-            if (!isObjectNotArray(profiles[i])) {
+            if (!isObject(profiles[i])) {
                 profiles.splice(i, 1);
             }
         }
@@ -126,9 +117,6 @@ export class OptionsUtil {
                     }
                 });
             });
-            if (typeof optionsStr !== 'string') {
-                throw new Error('Invalid value for options');
-            }
             options = parseJson(optionsStr);
         } catch (e) {
             // NOP
@@ -450,7 +438,7 @@ export class OptionsUtil {
             if (fieldTemplates === null) { continue; }
 
             if (patch === null) {
-                const content = await fetchText(modificationsUrl);
+                const content = await this._fetchText(modificationsUrl);
                 if (this._templatePatcher === null) {
                     this._templatePatcher = new TemplatePatcher();
                 }
@@ -459,6 +447,45 @@ export class OptionsUtil {
 
             profileOptions.anki.fieldTemplates = /** @type {TemplatePatcher} */ (this._templatePatcher).applyPatch(fieldTemplates, patch);
         }
+    }
+
+    /**
+     * @param {string} url
+     * @returns {Promise<Response>}
+     */
+    async _fetchGeneric(url) {
+        url = chrome.runtime.getURL(url);
+        const response = await fetch(url, {
+            method: 'GET',
+            mode: 'no-cors',
+            cache: 'default',
+            credentials: 'omit',
+            redirect: 'follow',
+            referrerPolicy: 'no-referrer'
+        });
+        if (!response.ok) {
+            throw new Error(`Failed to fetch ${url}: ${response.status}`);
+        }
+        return response;
+    }
+
+    /**
+     * @param {string} url
+     * @returns {Promise<string>}
+     */
+    async _fetchText(url) {
+        const response = await this._fetchGeneric(url);
+        return await response.text();
+    }
+
+    /**
+     * @template [T=unknown]
+     * @param {string} url
+     * @returns {Promise<T>}
+     */
+    async _fetchJson(url) {
+        const response = await this._fetchGeneric(url);
+        return await readResponseJson(response);
     }
 
     /**
@@ -506,7 +533,6 @@ export class OptionsUtil {
      * @returns {import('options-util').UpdateFunction[]}
      */
     _getVersionUpdates(targetVersion) {
-        /* eslint-disable @typescript-eslint/unbound-method */
         const result = [
             this._updateVersion1,
             this._updateVersion2,
@@ -530,20 +556,8 @@ export class OptionsUtil {
             this._updateVersion20,
             this._updateVersion21,
             this._updateVersion22,
-            this._updateVersion23,
-            this._updateVersion24,
-            this._updateVersion25,
-            this._updateVersion26,
-            this._updateVersion27,
-            this._updateVersion28,
-            this._updateVersion29,
-            this._updateVersion30,
-            this._updateVersion31,
-            this._updateVersion32,
-            this._updateVersion33,
-            this._updateVersion34
+            this._updateVersion23
         ];
-        /* eslint-enable @typescript-eslint/unbound-method */
         if (typeof targetVersion === 'number' && targetVersion < result.length) {
             result.splice(targetVersion);
         }
@@ -611,7 +625,7 @@ export class OptionsUtil {
             showAdvanced: false,
             searchTerms: true,
             searchKanji: true,
-            scanOnTouchMove: false,
+            scanOnTouchMove: true,
             scanOnPenHover: true,
             scanOnPenPress: true,
             scanOnPenRelease: false,
@@ -710,7 +724,7 @@ export class OptionsUtil {
         const rawPattern1 = '{{~#if definitionTags~}}<i>({{#each definitionTags}}{{name}}{{#unless @last}}, {{/unless}}{{/each}})</i> {{/if~}}';
         const pattern1 = new RegExp(`((\r?\n)?[ \t]*)${escapeRegExp(rawPattern1)}`, 'g');
         const replacement1 = (
-        // eslint-disable-next-line @stylistic/indent
+        // eslint-disable-next-line indent
 `{{~#scope~}}
     {{~#set "any" false}}{{/set~}}
     {{~#if definitionTags~}}{{#each definitionTags~}}
@@ -794,7 +808,7 @@ export class OptionsUtil {
             };
             delete profile.options.anki.sentenceExt;
             profile.options.general.popupActionBarLocation = 'top';
-            /* eslint-disable @stylistic/no-multi-spaces */
+            /* eslint-disable no-multi-spaces */
             profile.options.inputs = {
                 hotkeys: [
                     {action: 'close',             key: 'Escape',    modifiers: [],       scopes: ['popup'], enabled: true},
@@ -815,7 +829,7 @@ export class OptionsUtil {
                     {action: 'copyHostSelection', key: 'KeyC',      modifiers: ['ctrl'], scopes: ['popup'], enabled: true}
                 ]
             };
-            /* eslint-enable @stylistic/no-multi-spaces */
+            /* eslint-enable no-multi-spaces */
             profile.options.anki.suspendNewCards = false;
             profile.options.popupWindow = {
                 width: profile.options.general.popupWidth,
@@ -1112,10 +1126,10 @@ export class OptionsUtil {
             }
         }
 
-        if (customTemplates && isObjectNotArray(chrome.storage)) {
-            void chrome.storage.session.set({needsCustomTemplatesWarning: true});
+        if (customTemplates && isObject(chrome.storage)) {
+            chrome.storage.session.set({'needsCustomTemplatesWarning': true});
             await this._createTab(chrome.runtime.getURL('/welcome.html'));
-            void chrome.storage.session.set({openedWelcomePage: true});
+            chrome.storage.session.set({'openedWelcomePage': true});
         }
     }
 
@@ -1135,148 +1149,11 @@ export class OptionsUtil {
      */
     _updateVersion23(options) {
         for (const {options: profileOptions} of options.profiles) {
-            if (Array.isArray(profileOptions.dictionaries)) {
-                for (const dictionary of profileOptions.dictionaries) {
-                    dictionary.partsOfSpeechFilter = true;
-                }
+            for (const dictionary of profileOptions.dictionaries) {
+                dictionary.partsOfSpeechFilter = true;
             }
         }
     }
-
-    /**
-     * - Added dictionaries[].useDeinflections.
-     * @type {import('options-util').UpdateFunction}
-     */
-    async _updateVersion24(options) {
-        await this._applyAnkiFieldTemplatesPatch(options, '/data/templates/anki-field-templates-upgrade-v24.handlebars');
-
-        for (const {options: profileOptions} of options.profiles) {
-            if (Array.isArray(profileOptions.dictionaries)) {
-                for (const dictionary of profileOptions.dictionaries) {
-                    dictionary.useDeinflections = true;
-                }
-            }
-        }
-    }
-
-    /**
-     * - Change 'viewNote' action to 'viewNotes'.
-     * @type {import('options-util').UpdateFunction}
-     */
-    async _updateVersion25(options) {
-        for (const profile of options.profiles) {
-            if ('inputs' in profile.options && 'hotkeys' in profile.options.inputs) {
-                for (const hotkey of profile.options.inputs.hotkeys) {
-                    if (hotkey.action === 'viewNote') {
-                        hotkey.action = 'viewNotes';
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * - Added general.language.
-     * - Modularized text preprocessors.
-     * @type {import('options-util').UpdateFunction}
-     */
-    _updateVersion26(options) {
-        const textPreprocessors = [
-            'convertHalfWidthCharacters',
-            'convertNumericCharacters',
-            'convertAlphabeticCharacters',
-            'convertHiraganaToKatakana',
-            'convertKatakanaToHiragana',
-            'collapseEmphaticSequences'
-        ];
-
-        for (const {options: profileOptions} of options.profiles) {
-            profileOptions.general.language = 'ja';
-
-            for (const preprocessor of textPreprocessors) {
-                delete profileOptions.translation[preprocessor];
-            }
-        }
-    }
-
-    /**
-     * - Updated handlebars.
-     * @type {import('options-util').UpdateFunction}
-     */
-    async _updateVersion27(options) {
-        await this._applyAnkiFieldTemplatesPatch(options, '/data/templates/anki-field-templates-upgrade-v27.handlebars');
-    }
-
-    /**
-     *  - Removed whitespace in URL handlebars template.
-     *  @type {import('options-util').UpdateFunction}
-     */
-    async _updateVersion28(options) {
-        await this._applyAnkiFieldTemplatesPatch(options, '/data/templates/anki-field-templates-upgrade-v28.handlebars');
-    }
-
-    /**
-     *  - Added new handlebar for different pitch accent graph style.
-     *  @type {import('options-util').UpdateFunction}
-     */
-    async _updateVersion29(options) {
-        await this._applyAnkiFieldTemplatesPatch(options, '/data/templates/anki-field-templates-upgrade-v29.handlebars');
-    }
-
-    /**
-     *  - Added scanning.inputs[].options.scanOnTouchTap.
-     *  - Set touch settings to be more sensible.
-     *  @type {import('options-util').UpdateFunction}
-     */
-    async _updateVersion30(options) {
-        for (const profile of options.profiles) {
-            for (const input of profile.options.scanning.inputs) {
-                input.options.scanOnTouchTap = true;
-                input.options.scanOnTouchPress = false;
-                input.options.scanOnTouchRelease = false;
-            }
-        }
-    }
-
-    /**
-     *  - Added anki.duplicateBehavior
-     *  @type {import('options-util').UpdateFunction}
-     */
-    _updateVersion31(options) {
-        for (const {options: profileOptions} of options.profiles) {
-            profileOptions.anki.duplicateBehavior = 'new';
-        }
-    }
-
-    /**
-     *  - Added profilePrevious and profileNext to hotkeys.
-     *  @type {import('options-util').UpdateFunction}
-     */
-    async _updateVersion32(options) {
-        for (const profile of options.profiles) {
-            profile.options.inputs.hotkeys.push(
-                {action: 'profilePrevious', key: 'Minus', modifiers: ['alt'], scopes: ['popup', 'search'], enabled: true},
-                {action: 'profileNext', key: 'Equal', modifiers: ['alt'], scopes: ['popup', 'search'], enabled: true}
-            );
-        }
-    }
-
-    /**
-     * - Updated handlebars to fix escaping when using `definition.cloze` or text-based `getMedia`.
-     * @type {import('options-util').UpdateFunction}
-     */
-    async _updateVersion33(options) {
-        await this._applyAnkiFieldTemplatesPatch(options, '/data/templates/anki-field-templates-upgrade-v33.handlebars');
-    }
-
-    /**
-     *  - Added dynamic handlebars for single dictionaries.
-     *  @type {import('options-util').UpdateFunction}
-     */
-    async _updateVersion34(options) {
-        await this._applyAnkiFieldTemplatesPatch(options, '/data/templates/anki-field-templates-upgrade-v34.handlebars');
-    }
-
 
     /**
      * @param {string} url
@@ -1295,6 +1172,3 @@ export class OptionsUtil {
         });
     }
 }
-
-/* eslint-enable @typescript-eslint/no-unsafe-assignment */
-/* eslint-enable @typescript-eslint/no-unsafe-argument */

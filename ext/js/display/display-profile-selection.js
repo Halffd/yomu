@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2020-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,10 +16,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {EventListenerCollection} from '../core/event-listener-collection.js';
-import {generateId} from '../core/utilities.js';
+import {EventListenerCollection, generateId} from '../core.js';
 import {PanelElement} from '../dom/panel-element.js';
 import {querySelectorNotNull} from '../dom/query-selector.js';
+import {yomitan} from '../yomitan.js';
 
 export class DisplayProfileSelection {
     /**
@@ -29,13 +29,16 @@ export class DisplayProfileSelection {
         /** @type {import('./display.js').Display} */
         this._display = display;
         /** @type {HTMLElement} */
-        this._profileList = querySelectorNotNull(document, '#profile-list');
+        this._profielList = querySelectorNotNull(document, '#profile-list');
         /** @type {HTMLButtonElement} */
         this._profileButton = querySelectorNotNull(document, '#profile-button');
         /** @type {HTMLElement} */
         const profilePanelElement = querySelectorNotNull(document, '#profile-panel');
         /** @type {PanelElement} */
-        this._profilePanel = new PanelElement(profilePanelElement, 375); // Milliseconds; includes buffer
+        this._profilePanel = new PanelElement({
+            node: profilePanelElement,
+            closingAnimationDuration: 375 // Milliseconds; includes buffer
+        });
         /** @type {boolean} */
         this._profileListNeedsUpdate = false;
         /** @type {EventListenerCollection} */
@@ -46,7 +49,7 @@ export class DisplayProfileSelection {
 
     /** */
     async prepare() {
-        this._display.application.on('optionsUpdated', this._onOptionsUpdated.bind(this));
+        yomitan.on('optionsUpdated', this._onOptionsUpdated.bind(this));
         this._profileButton.addEventListener('click', this._onProfileButtonClick.bind(this), false);
         this._profileListNeedsUpdate = true;
     }
@@ -60,7 +63,7 @@ export class DisplayProfileSelection {
         if (source === this._source) { return; }
         this._profileListNeedsUpdate = true;
         if (this._profilePanel.isVisible()) {
-            void this._updateProfileList();
+            this._updateProfileList();
         }
     }
 
@@ -81,14 +84,14 @@ export class DisplayProfileSelection {
         this._profileButton.classList.toggle('sidebar-button-highlight', visible);
         document.documentElement.dataset.profilePanelVisible = `${visible}`;
         if (visible && this._profileListNeedsUpdate) {
-            void this._updateProfileList();
+            this._updateProfileList();
         }
     }
 
     /** */
     async _updateProfileList() {
         this._profileListNeedsUpdate = false;
-        const options = await this._display.application.api.optionsGetFull();
+        const options = await yomitan.api.optionsGetFull();
 
         this._eventListeners.removeAllEventListeners();
         const displayGenerator = this._display.displayGenerator;
@@ -107,8 +110,8 @@ export class DisplayProfileSelection {
             fragment.appendChild(entry);
             this._eventListeners.addEventListener(radio, 'change', this._onProfileRadioChange.bind(this, i), false);
         }
-        this._profileList.textContent = '';
-        this._profileList.appendChild(fragment);
+        this._profielList.textContent = '';
+        this._profielList.appendChild(fragment);
     }
 
     /**
@@ -118,7 +121,7 @@ export class DisplayProfileSelection {
     _onProfileRadioChange(index, e) {
         const element = /** @type {HTMLInputElement} */ (e.currentTarget);
         if (element.checked) {
-            void this._setProfileCurrent(index);
+            this._setProfileCurrent(index);
         }
     }
 
@@ -134,7 +137,7 @@ export class DisplayProfileSelection {
             scope: 'global',
             optionsContext: null
         };
-        await this._display.application.api.modifySettings([modification], this._source);
+        await yomitan.api.modifySettings([modification], this._source);
         this._setProfilePanelVisible(false);
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2020-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,25 +16,18 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {EventDispatcher} from '../../core/event-dispatcher.js';
-import {EventListenerCollection} from '../../core/event-listener-collection.js';
-import {isObjectNotArray} from '../../core/object-utilities.js';
-import {generateId} from '../../core/utilities.js';
+import {EventDispatcher, EventListenerCollection, generateId, isObject} from '../../core.js';
 import {OptionsUtil} from '../../data/options-util.js';
-import {getAllPermissions} from '../../data/permissions-util.js';
+import {PermissionsUtil} from '../../data/permissions-util.js';
 import {HtmlTemplateCollection} from '../../dom/html-template-collection.js';
+import {yomitan} from '../../yomitan.js';
 
 /**
  * @augments EventDispatcher<import('settings-controller').Events>
  */
 export class SettingsController extends EventDispatcher {
-    /**
-     * @param {import('../../application.js').Application} application
-     */
-    constructor(application) {
+    constructor() {
         super();
-        /** @type {import('../../application.js').Application} */
-        this._application = application;
         /** @type {number} */
         this._profileIndex = 0;
         /** @type {string} */
@@ -45,11 +38,9 @@ export class SettingsController extends EventDispatcher {
         this._pageExitPreventionEventListeners = new EventListenerCollection();
         /** @type {HtmlTemplateCollection} */
         this._templates = new HtmlTemplateCollection();
-    }
-
-    /** @type {import('../../application.js').Application} */
-    get application() {
-        return this._application;
+        this._templates.load(document);
+        /** @type {PermissionsUtil} */
+        this._permissionsUtil = new PermissionsUtil();
     }
 
     /** @type {string} */
@@ -67,15 +58,14 @@ export class SettingsController extends EventDispatcher {
         this._setProfileIndex(value, true);
     }
 
-    /** @type {HtmlTemplateCollection} */
-    get templates() {
-        return this._templates;
+    /** @type {PermissionsUtil} */
+    get permissionsUtil() {
+        return this._permissionsUtil;
     }
 
     /** */
     async prepare() {
-        await this._templates.loadFromFiles(['/templates-settings.html']);
-        this._application.on('optionsUpdated', this._onOptionsUpdated.bind(this));
+        yomitan.on('optionsUpdated', this._onOptionsUpdated.bind(this));
         if (this._canObservePermissionsChanges()) {
             chrome.permissions.onAdded.addListener(this._onPermissionsChanged.bind(this));
             chrome.permissions.onRemoved.addListener(this._onPermissionsChanged.bind(this));
@@ -97,14 +87,14 @@ export class SettingsController extends EventDispatcher {
      */
     async getOptions() {
         const optionsContext = this.getOptionsContext();
-        return await this._application.api.optionsGet(optionsContext);
+        return await yomitan.api.optionsGet(optionsContext);
     }
 
     /**
      * @returns {Promise<import('settings').Options>}
      */
     async getOptionsFull() {
-        return await this._application.api.optionsGetFull();
+        return await yomitan.api.optionsGetFull();
     }
 
     /**
@@ -112,7 +102,7 @@ export class SettingsController extends EventDispatcher {
      */
     async setAllSettings(value) {
         const profileIndex = value.profileCurrent;
-        await this._application.api.setAllSettings(value, this._source);
+        await yomitan.api.setAllSettings(value, this._source);
         this._setProfileIndex(profileIndex, true);
     }
 
@@ -186,7 +176,7 @@ export class SettingsController extends EventDispatcher {
      * @returns {Promise<import('dictionary-importer').Summary[]>}
      */
     async getDictionaryInfo() {
-        return await this._application.api.getDictionaryInfo();
+        return await yomitan.api.getDictionaryInfo();
     }
 
     /**
@@ -201,7 +191,6 @@ export class SettingsController extends EventDispatcher {
      */
     preventPageExit() {
         /** @type {import('settings-controller').PageExitPrevention} */
-        // eslint-disable-next-line sonarjs/prefer-object-literal
         const obj = {};
         obj.end = this._endPreventPageExit.bind(this, obj);
         if (this._pageExitPreventionEventListeners.size === 0) {
@@ -233,7 +222,8 @@ export class SettingsController extends EventDispatcher {
     async getDefaultOptions() {
         const optionsUtil = new OptionsUtil();
         await optionsUtil.prepare();
-        return optionsUtil.getDefault();
+        const optionsFull = optionsUtil.getDefault();
+        return optionsFull;
     }
 
     // Private
@@ -245,7 +235,7 @@ export class SettingsController extends EventDispatcher {
     _setProfileIndex(value, canUpdateProfileIndex) {
         this._profileIndex = value;
         this.trigger('optionsContextChanged', {});
-        void this._onOptionsUpdatedInternal(canUpdateProfileIndex);
+        this._onOptionsUpdatedInternal(canUpdateProfileIndex);
     }
 
     /**
@@ -253,7 +243,7 @@ export class SettingsController extends EventDispatcher {
      */
     _onOptionsUpdated({source}) {
         if (source === this._source) { return; }
-        void this._onOptionsUpdatedInternal(true);
+        this._onOptionsUpdatedInternal(true);
     }
 
     /**
@@ -294,7 +284,7 @@ export class SettingsController extends EventDispatcher {
             this._modifyOptionsScope(target2);
             return target2;
         });
-        return await this._application.api.getSettings(targets2);
+        return await yomitan.api.getSettings(targets2);
     }
 
     /**
@@ -309,7 +299,7 @@ export class SettingsController extends EventDispatcher {
             this._modifyOptionsScope(target2);
             return target2;
         });
-        return await this._application.api.modifySettings(targets2, this._source);
+        return await yomitan.api.modifySettings(targets2, this._source);
     }
 
     /**
@@ -338,7 +328,7 @@ export class SettingsController extends EventDispatcher {
 
     /** */
     _onPermissionsChanged() {
-        void this._triggerPermissionsChanged();
+        this._triggerPermissionsChanged();
     }
 
     /** */
@@ -346,7 +336,7 @@ export class SettingsController extends EventDispatcher {
         const eventName = 'permissionsChanged';
         if (!this.hasListeners(eventName)) { return; }
 
-        const permissions = await getAllPermissions();
+        const permissions = await this._permissionsUtil.getAllPermissions();
         this.trigger(eventName, {permissions});
     }
 
@@ -354,6 +344,6 @@ export class SettingsController extends EventDispatcher {
      * @returns {boolean}
      */
     _canObservePermissionsChanges() {
-        return isObjectNotArray(chrome.permissions) && isObjectNotArray(chrome.permissions.onAdded) && isObjectNotArray(chrome.permissions.onRemoved);
+        return isObject(chrome.permissions) && isObject(chrome.permissions.onAdded) && isObject(chrome.permissions.onRemoved);
     }
 }

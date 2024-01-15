@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,6 +18,7 @@
 import type {Popup} from '../../ext/js/app/popup';
 import type {PopupProxy} from '../../ext/js/app/popup-proxy';
 import type {PopupWindow} from '../../ext/js/app/popup-window';
+import type {FrameOffsetForwarder} from '../../ext/js/comm/frame-offset-forwarder';
 import type * as DocumentUtil from './document-util';
 import type * as Settings from './settings';
 import type {EventNames, EventArgument as BaseEventArgument} from './core';
@@ -88,6 +89,37 @@ export type ValidSize = {
     width: number;
     height: number;
     valid: boolean;
+};
+
+export type PopupConstructorDetails = {
+    /** The ID of the popup. */
+    id: string;
+    /** The depth of the popup. */
+    depth: number;
+    /** The ID of the host frame. */
+    frameId: number;
+    /** Whether or not the popup is able to show child popups. */
+    childrenSupported: boolean;
+};
+
+export type PopupWindowConstructorDetails = {
+    /** The ID of the popup. */
+    id: string;
+    /** The depth of the popup. */
+    depth: number;
+    /** The ID of the host frame. */
+    frameId: number;
+};
+
+export type PopupProxyConstructorDetails = {
+    /** The ID of the popup. */
+    id: string;
+    /** The depth of the popup. */
+    depth: number;
+    /** The ID of the host frame. */
+    frameId: number;
+    /** A `FrameOffsetForwarder` instance which is used to determine frame positioning. */
+    frameOffsetForwarder: FrameOffsetForwarder | null;
 };
 
 export type Events = {

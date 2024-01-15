@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2021-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,9 +16,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {EventDispatcher} from '../core/event-dispatcher.js';
-import {EventListenerCollection} from '../core/event-listener-collection.js';
-import {getActiveModifiers, isInputElementFocused} from '../dom/document-util.js';
+import {EventDispatcher, EventListenerCollection} from '../core.js';
+import {DocumentUtil} from '../dom/document-util.js';
+import {yomitan} from '../yomitan.js';
 
 /**
  * Class which handles hotkey events and actions.
@@ -46,12 +46,11 @@ export class HotkeyHandler extends EventDispatcher {
 
     /**
      * Begins listening to key press events in order to detect hotkeys.
-     * @param {import('../comm/cross-frame-api.js').CrossFrameAPI} crossFrameApi
      */
-    prepare(crossFrameApi) {
+    prepare() {
         this._isPrepared = true;
         this._updateEventHandlers();
-        crossFrameApi.registerHandlers([
+        yomitan.crossFrame.registerHandlers([
             ['hotkeyHandlerForwardHotkey', this._onMessageForwardHotkey.bind(this)]
         ]);
     }
@@ -173,7 +172,7 @@ export class HotkeyHandler extends EventDispatcher {
     _onKeyDown(event) {
         const hotkeyInfo = this._hotkeys.get(event.code);
         if (typeof hotkeyInfo !== 'undefined') {
-            const eventModifiers = getActiveModifiers(event);
+            const eventModifiers = DocumentUtil.getActiveModifiers(event);
             if (this._invokeHandlers(eventModifiers, hotkeyInfo, event.key)) {
                 event.preventDefault();
                 return;
@@ -254,7 +253,7 @@ export class HotkeyHandler extends EventDispatcher {
      */
     _updateEventHandlers() {
         if (this._isPrepared && (this._hotkeys.size > 0 || this._hasEventListeners)) {
-            if (this._eventListeners.size > 0) { return; }
+            if (this._eventListeners.size !== 0) { return; }
             this._eventListeners.addEventListener(document, 'keydown', this._onKeyDown.bind(this), false);
         } else {
             this._eventListeners.removeAllEventListeners();
@@ -269,7 +268,7 @@ export class HotkeyHandler extends EventDispatcher {
     _isHotkeyPermitted(modifiers, key) {
         return !(
             (modifiers.length === 0 || (modifiers.length === 1 && modifiers[0] === 'shift')) &&
-            isInputElementFocused() &&
+            DocumentUtil.isInputElementFocused() &&
             this._isKeyCharacterInput(key)
         );
     }
@@ -279,6 +278,6 @@ export class HotkeyHandler extends EventDispatcher {
      * @returns {boolean}
      */
     _isKeyCharacterInput(key) {
-        return key.length === 1 || key === 'Process';
+        return key.length === 1;
     }
 }

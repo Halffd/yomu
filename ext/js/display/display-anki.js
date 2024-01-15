@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2021-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,23 +16,22 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {EventListenerCollection} from '../core/event-listener-collection.js';
-import {log} from '../core/log.js';
-import {toError} from '../core/to-error.js';
-import {deferPromise} from '../core/utilities.js';
+import {EventListenerCollection, deferPromise} from '../core.js';
 import {AnkiNoteBuilder} from '../data/anki-note-builder.js';
-import {getDynamicTemplates} from '../data/anki-template-util.js';
-import {invalidNoteId, isNoteDataValid} from '../data/anki-util.js';
+import {AnkiUtil} from '../data/anki-util.js';
 import {PopupMenu} from '../dom/popup-menu.js';
 import {querySelectorNotNull} from '../dom/query-selector.js';
 import {TemplateRendererProxy} from '../templates/template-renderer-proxy.js';
+import {yomitan} from '../yomitan.js';
+import {toError} from '../core/to-error.js';
 
 export class DisplayAnki {
     /**
      * @param {import('./display.js').Display} display
      * @param {import('./display-audio.js').DisplayAudio} displayAudio
+     * @param {import('../language/sandbox/japanese-util.js').JapaneseUtil} japaneseUtil
      */
-    constructor(display, displayAudio) {
+    constructor(display, displayAudio, japaneseUtil) {
         /** @type {import('./display.js').Display} */
         this._display = display;
         /** @type {import('./display-audio.js').DisplayAudio} */
@@ -42,7 +41,7 @@ export class DisplayAnki {
         /** @type {?string} */
         this._ankiFieldTemplatesDefault = null;
         /** @type {AnkiNoteBuilder} */
-        this._ankiNoteBuilder = new AnkiNoteBuilder(display.application.api, new TemplateRendererProxy());
+        this._ankiNoteBuilder = new AnkiNoteBuilder(japaneseUtil, new TemplateRendererProxy());
         /** @type {?import('./display-notification.js').DisplayNotification} */
         this._errorNotification = null;
         /** @type {?EventListenerCollection} */
@@ -75,8 +74,6 @@ export class DisplayAnki {
         this._duplicateScope = 'collection';
         /** @type {boolean} */
         this._duplicateScopeCheckAllModels = false;
-        /** @type {import('settings').AnkiDuplicateBehavior} */
-        this._duplicateBehavior = 'prevent';
         /** @type {import('settings').AnkiScreenshotFormat} */
         this._screenshotFormat = 'png';
         /** @type {number} */
@@ -103,24 +100,24 @@ export class DisplayAnki {
         /** @type {(event: MouseEvent) => void} */
         this._onNoteAddBind = this._onNoteAdd.bind(this);
         /** @type {(event: MouseEvent) => void} */
-        this._onViewNotesButtonClickBind = this._onViewNotesButtonClick.bind(this);
+        this._onViewNoteButtonClickBind = this._onViewNoteButtonClick.bind(this);
         /** @type {(event: MouseEvent) => void} */
-        this._onViewNotesButtonContextMenuBind = this._onViewNotesButtonContextMenu.bind(this);
+        this._onViewNoteButtonContextMenuBind = this._onViewNoteButtonContextMenu.bind(this);
         /** @type {(event: import('popup-menu').MenuCloseEvent) => void} */
-        this._onViewNotesButtonMenuCloseBind = this._onViewNotesButtonMenuClose.bind(this);
+        this._onViewNoteButtonMenuCloseBind = this._onViewNoteButtonMenuClose.bind(this);
     }
 
     /** */
     prepare() {
         this._noteContext = this._getNoteContext();
-        /* eslint-disable @stylistic/no-multi-spaces */
+        /* eslint-disable no-multi-spaces */
         this._display.hotkeyHandler.registerActions([
-            ['addNoteKanji',      () => { this._tryAddAnkiNoteForSelectedEntry('kanji'); }],
-            ['addNoteTermKanji',  () => { this._tryAddAnkiNoteForSelectedEntry('term-kanji'); }],
-            ['addNoteTermKana',   () => { this._tryAddAnkiNoteForSelectedEntry('term-kana'); }],
-            ['viewNotes',         this._viewNotesForSelectedEntry.bind(this)]
+            ['addNoteKanji', () => {this._tryAddAnkiNoteForSelectedEntry('kanji');}],
+            ['addNoteTermKanji', () => {this._tryAddAnkiNoteForSelectedEntry('term-kanji');}],
+            ['addNoteTermKana', () => {this._tryAddAnkiNoteForSelectedEntry('term-kana');}],
+            ['viewNote', this._viewNoteForSelectedEntry.bind(this)]
         ]);
-        /* eslint-enable @stylistic/no-multi-spaces */
+        /* eslint-enable no-multi-spaces */
         this._display.on('optionsUpdated', this._onOptionsUpdated.bind(this));
         this._display.on('contentClear', this._onContentClear.bind(this));
         this._display.on('contentUpdateStart', this._onContentUpdateStart.bind(this));
@@ -138,7 +135,7 @@ export class DisplayAnki {
         let ankiNoteData;
         let ankiNoteDataException;
         try {
-            if (this._noteContext === null) { throw new Error('Note context not initialized'); }
+            if (this._noteContext === null) {throw new Error('Note context not initialized');}
             ankiNoteData = await this._ankiNoteBuilder.getRenderingData({
                 dictionaryEntry,
                 mode: 'test',
@@ -163,7 +160,7 @@ export class DisplayAnki {
             try {
                 ({note: note, errors, requirements} = await this._createNote(dictionaryEntry, mode, []));
             } catch (e) {
-                errors = [toError(e)];
+                errors = [e instanceof Error ? e : new Error(`${e}`)];
             }
             /** @type {import('display-anki').AnkiNoteLogData} */
             const entry = {mode, note};
@@ -178,7 +175,7 @@ export class DisplayAnki {
 
         return {
             ankiNoteData,
-            ankiNoteDataException: toError(ankiNoteDataException),
+            ankiNoteDataException: ankiNoteDataException instanceof Error ? ankiNoteDataException : new Error(`${ankiNoteDataException}`),
             ankiNotes
         };
     }
@@ -195,7 +192,6 @@ export class DisplayAnki {
                 tags,
                 duplicateScope,
                 duplicateScopeCheckAllModels,
-                duplicateBehavior,
                 suspendNewCards,
                 checkForDuplicates,
                 displayTags,
@@ -216,7 +212,6 @@ export class DisplayAnki {
         this._displayTags = displayTags;
         this._duplicateScope = duplicateScope;
         this._duplicateScopeCheckAllModels = duplicateScopeCheckAllModels;
-        this._duplicateBehavior = duplicateBehavior;
         this._screenshotFormat = format;
         this._screenshotQuality = quality;
         this._scanLength = scanLength;
@@ -228,7 +223,7 @@ export class DisplayAnki {
         this._modeOptions.set('term-kanji', terms);
         this._modeOptions.set('term-kana', terms);
 
-        void this._updateAnkiFieldTemplates(options);
+        this._updateAnkiFieldTemplates(options);
     }
 
     /** */
@@ -255,15 +250,15 @@ export class DisplayAnki {
             eventListeners.addEventListener(node, 'click', this._onNoteAddBind);
         }
         for (const node of element.querySelectorAll('.action-button[data-action=view-note]')) {
-            eventListeners.addEventListener(node, 'click', this._onViewNotesButtonClickBind);
-            eventListeners.addEventListener(node, 'contextmenu', this._onViewNotesButtonContextMenuBind);
-            eventListeners.addEventListener(node, 'menuClose', this._onViewNotesButtonMenuCloseBind);
+            eventListeners.addEventListener(node, 'click', this._onViewNoteButtonClickBind);
+            eventListeners.addEventListener(node, 'contextmenu', this._onViewNoteButtonContextMenuBind);
+            eventListeners.addEventListener(node, 'menuClose', this._onViewNoteButtonMenuCloseBind);
         }
     }
 
     /** */
     _onContentUpdateComplete() {
-        void this._updateDictionaryEntryDetails();
+        this._updateDictionaryEntryDetails();
     }
 
     /**
@@ -280,9 +275,9 @@ export class DisplayAnki {
         e.preventDefault();
         const element = /** @type {HTMLElement} */ (e.currentTarget);
         const mode = this._getValidCreateMode(element.dataset.mode);
-        if (mode === null) { return; }
+        if (mode === null) {return;}
         const index = this._display.getElementDictionaryEntryIndex(element);
-        void this._addAnkiNote(index, mode);
+        this._addAnkiNote(index, mode);
     }
 
     /**
@@ -358,13 +353,13 @@ export class DisplayAnki {
         if (this._updateAdderButtonsPromise !== null) {
             await this._updateAdderButtonsPromise;
         }
-        if (this._updateDictionaryEntryDetailsToken !== token) { return; }
+        if (this._updateDictionaryEntryDetailsToken !== token) {return;}
 
         const {promise, resolve} = /** @type {import('core').DeferredPromiseDetails<void>} */ (deferPromise());
         try {
             this._updateAdderButtonsPromise = promise;
             const dictionaryEntryDetails = await this._getDictionaryEntryDetails(dictionaryEntries);
-            if (this._updateDictionaryEntryDetailsToken !== token) { return; }
+            if (this._updateDictionaryEntryDetailsToken !== token) {return;}
             this._dictionaryEntryDetails = dictionaryEntryDetails;
             this._updateAdderButtons(dictionaryEntryDetails);
         } finally {
@@ -376,84 +371,29 @@ export class DisplayAnki {
     }
 
     /**
-     * @param {HTMLButtonElement} button
-     */
-    _showDuplicateAddButton(button) {
-        const isKanjiAdd = button.dataset.mode === 'term-kanji';
-
-        const title = button.getAttribute('title');
-        if (title) {
-            button.setAttribute('title', title.replace(/Add (?!duplicate)/, 'Add duplicate '));
-        }
-
-        // eslint-disable-next-line no-underscore-dangle
-        const hotkeyLabel = this._display._hotkeyHelpController.getHotkeyLabel(button);
-
-        if (hotkeyLabel) {
-            if (hotkeyLabel === 'Add expression ({0})') {
-                // eslint-disable-next-line no-underscore-dangle
-                this._display._hotkeyHelpController.setHotkeyLabel(button, 'Add duplicate expression ({0})');
-            } else if (hotkeyLabel === 'Add reading ({0})') {
-                // eslint-disable-next-line no-underscore-dangle
-                this._display._hotkeyHelpController.setHotkeyLabel(button, 'Add duplicate reading ({0})');
-            }
-        }
-
-        const actionIcon = button.querySelector('.action-icon');
-        if (actionIcon instanceof HTMLElement) {
-            actionIcon.dataset.icon = isKanjiAdd ? 'add-duplicate-term-kanji' : 'add-duplicate-term-kana';
-        }
-    }
-
-    /**
      * @param {import('display-anki').DictionaryEntryDetails[]} dictionaryEntryDetails
      */
     _updateAdderButtons(dictionaryEntryDetails) {
         const displayTags = this._displayTags;
         for (let i = 0, ii = dictionaryEntryDetails.length; i < ii; ++i) {
-            /** @type {?Set<number>} */
             let allNoteIds = null;
             for (const {mode, canAdd, noteIds, noteInfos, ankiError} of dictionaryEntryDetails[i].modeMap.values()) {
                 const button = this._adderButtonFind(i, mode);
                 if (button !== null) {
                     button.disabled = !canAdd;
                     button.hidden = (ankiError !== null);
-                    if (ankiError && ankiError.message !== 'Anki not connected') {
-                        log.error(ankiError);
-                    }
-
-                    // If entry has noteIds, show the "add duplicate" button.
-                    if (Array.isArray(noteIds) && noteIds.length > 0) {
-                        this._updateButtonForDuplicate(button);
-                    }
                 }
 
                 if (Array.isArray(noteIds) && noteIds.length > 0) {
-                    if (allNoteIds === null) { allNoteIds = new Set(); }
-                    for (const noteId of noteIds) {
-                        if (noteId !== invalidNoteId) {
-                            allNoteIds.add(noteId);
-                        }
-                    }
+                    if (allNoteIds === null) {allNoteIds = new Set();}
+                    for (const noteId of noteIds) {allNoteIds.add(noteId);}
                 }
 
                 if (displayTags !== 'never' && Array.isArray(noteInfos)) {
                     this._setupTagsIndicator(i, noteInfos);
                 }
             }
-
             this._updateViewNoteButton(i, allNoteIds !== null ? [...allNoteIds] : [], false);
-        }
-    }
-
-    /**
-     * @param {HTMLButtonElement} button
-     */
-    _updateButtonForDuplicate(button) {
-        if (this._duplicateBehavior === 'prevent') {
-            button.disabled = true;
-        } else {
-            this._showDuplicateAddButton(button);
         }
     }
 
@@ -469,7 +409,7 @@ export class DisplayAnki {
 
         const displayTags = new Set();
         for (const item of noteInfos) {
-            if (item === null) { continue; }
+            if (item === null) {continue;}
             for (const tag of item.tags) {
                 displayTags.add(tag);
             }
@@ -504,77 +444,204 @@ export class DisplayAnki {
      */
     _tryAddAnkiNoteForSelectedEntry(mode) {
         const index = this._display.selectedIndex;
-        void this._addAnkiNote(index, mode);
+        this._addAnkiNote(index, mode);
     }
 
     /**
-     * @param {number} dictionaryEntryIndex
-     * @param {import('display-anki').CreateMode} mode
+     * Add an Anki note.
+     * @param {number | import('dictionary').DictionaryEntry} dictionaryEntryIndex The index of the dictionary entry.
+     * @param {import('display-anki').CreateMode} mode The create mode for the Anki note.
+     * @param {number} [dict=-1] Optional dictionary value (default: -1).
+     * @param {any[] | null} [req=null] Optional array of requirements or null (default: null).
+     * @param {{ st: string } | null} [o=null] Optional object with an 'st' property or null (default: null).
+     * @returns {Promise<void>} - A promise that resolves when the Anki note is added.
      */
-    async _addAnkiNote(dictionaryEntryIndex, mode) {
-        const dictionaryEntries = this._display.dictionaryEntries;
-        const dictionaryEntryDetails = this._dictionaryEntryDetails;
-        if (!(
-            dictionaryEntryDetails !== null &&
-            dictionaryEntryIndex >= 0 &&
-            dictionaryEntryIndex < dictionaryEntries.length &&
-            dictionaryEntryIndex < dictionaryEntryDetails.length
-        )) {
-            return;
-        }
-        const dictionaryEntry = dictionaryEntries[dictionaryEntryIndex];
-        const details = dictionaryEntryDetails[dictionaryEntryIndex].modeMap.get(mode);
-        if (typeof details === 'undefined') { return; }
+    async _addAnkiNote(dictionaryEntryIndex, mode, dict = -1, req = null, o = null) {
+        let dictionaryEntries;
+        let dictionaryEntryDetails;
+        let dictionaryEntry;
+        let details;
+        let requirements;
+        let button;
+        let allErrors = [];
+        let progressIndicatorVisible;
+        let overrideToken;
 
-        const {requirements} = details;
-
-        const button = this._adderButtonFind(dictionaryEntryIndex, mode);
-        if (button === null || button.disabled) { return; }
-
-        this._hideErrorNotification(true);
-
-        /** @type {Error[]} */
-        const allErrors = [];
-        const progressIndicatorVisible = this._display.progressIndicatorVisible;
-        const overrideToken = progressIndicatorVisible.setOverride(true);
         try {
-            const {note, errors, requirements: outputRequirements} = await this._createNote(dictionaryEntry, mode, requirements);
-            allErrors.push(...errors);
+            if (dict >= 0) {
+                // Handle the case when dict is greater than or equal to 0
+                dictionaryEntry = dictionaryEntryIndex;
+                requirements = req.requirements;
+            } else if (typeof dictionaryEntryIndex === 'number') {
+                dictionaryEntries = this._display.dictionaryEntries;
+                dictionaryEntryDetails = this._dictionaryEntryDetails;
+                if (!(
+                    dictionaryEntryDetails !== null &&
+                    dictionaryEntryIndex >= 0 &&
+                    dictionaryEntryIndex < dictionaryEntries.length &&
+                    dictionaryEntryIndex < dictionaryEntryDetails.length
+                )) {
+                    return;
+                }
+                dictionaryEntry = dictionaryEntries[dictionaryEntryIndex];
+                details = dictionaryEntryDetails[dictionaryEntryIndex].modeMap.get(mode);
+                if (typeof details === 'undefined') {return;}
 
-            const error = this._getAddNoteRequirementsError(requirements, outputRequirements);
-            if (error !== null) { allErrors.push(error); }
+                ({requirements} = details);
 
-            let noteId = null;
-            let addNoteOkay = false;
-            try {
-                noteId = await this._display.application.api.addAnkiNote(note);
-                addNoteOkay = true;
-            } catch (e) {
-                allErrors.length = 0;
-                allErrors.push(toError(e));
+                button = this._adderButtonFind(dictionaryEntryIndex, mode);
+                if (button === null || button.disabled) {return;}
+
+                this._hideErrorNotification(true);
+
+                /** @type {Error[]} */
+                allErrors = [];
+                progressIndicatorVisible = this._display.progressIndicatorVisible;
+                overrideToken = progressIndicatorVisible.setOverride(true);
             }
-
-            if (addNoteOkay) {
-                if (noteId === null) {
-                    allErrors.push(new Error('Note could not be added'));
-                } else {
-                    if (this._suspendNewCards) {
+        } catch (error) {
+            console.error(error);
+        }
+        try {
+            if (typeof dictionaryEntry === 'object' && requirements) {
+                const {note, errors, requirements: outputRequirements} = await this._createNote(dictionaryEntry, mode, requirements);
+                allErrors.push(...errors);
+                if (requirements) {
+                    const error = this._getAddNoteRequirementsError(requirements, outputRequirements);
+                    if (error !== null) {allErrors.push(error);}
+                }
+                let noteId = null;
+                let addNoteOkay = false;
+                try {
+                    try {
+                        const typ = dict >= 0 ? 'Search' : 'Popup';
+                        const [t1, t2, t3, t4] = ['aDict', `v0.1-${new Date().toISOString().slice(0, 7)}`, `in${typ}`, mode == 'term-kana' ? 'kanaMode' : 'termMode'];
+                        note.tags.push(t1, t2, t3, t4);
+                        //console.dir(note);
+                        const vrs = [note, [this, dict, dictionaryEntry, dictionaryEntries, dictionaryEntryDetails, dictionaryEntryIndex, details, requirements, mode, button, progressIndicatorVisible, overrideToken]];
+                        // vrs.push(JSON.stringify(vrs))
+                        //console.dir(vrs);
+                        // const x = this._display._container;
+                        // x.style.dmmmisplay = "none";
+                        // console.log(note.fields['Key']);
+                        let run = true;
+                        if (document.URL.includes('search.html') && document.URL.includes('chrome-extension')) {
+                            run = localStorage.getItem('run') === 'true' ? true : false ?? true;
+                        }
+                        // console.log(run, document.URL);
+                        if (dict < 0 && (!run || !(document.URL.includes('search.html') && document.URL.includes('chrome-extension')))) {
+                            try {
+                                note.fields.ExtraDefinitions += this.getText();
+                            } catch { }
+                            // this._display._copyText(note.fields['Key']);
+                        }
+                        if (o) {
+                            note.fields.Sentence = o.st;
+                        }
+                        if (aDict.prototype.mobile) {
+                            aDict.prototype._copyText(note.fields.Key)
+                        }
                         try {
-                            await this._display.application.api.suspendAnkiCardsForNote(noteId);
-                        } catch (e) {
-                            allErrors.push(toError(e));
+                            let df = await yomiKanjis.bind(this._display, note.fields.Key)()
+                            note.fields.ExtraDefinitions += df;
+                        } catch (ne) {
+                            console.error(ne);
+                        }
+                        // this._display._copyHostSelection()
+                    } catch (noe) {
+                        console.warn(noe);
+                    }
+                    try {
+                        if (o) {
+                            note.deckName = o.deck;
+                        }
+                        console.warn(o);
+                        noteId = await this._display.application.api.addAnkiNote(note);
+                        addNoteOkay = true;
+                    } catch (e) {
+                        console.error(e);
+                        allErrors.length = 0;
+                        allErrors.push(toError(e));
+                    }
+                    if (!noteId && !this.rep) {
+                        this.rep = true
+                        this._addAnkiNote(dictionaryEntryIndex, 'term-kana', dict, req);
+                        return;
+                    } else {
+                        this.rep = false
+                    }
+                    console.log(o);
+                    if (!o || o?.sound) {
+                        try {
+                            // const response = await fetch('sound.txt');
+                            // const text = await response.text();
+                            // const base64AudioData = text.trim(); // Assuming the Base64 string is the entire content of the file
+
+                            // Use the base64Data as needed
+                            // Convert the Base64 data to ArrayBuffer
+                            const binaryAudioData = window.atob(base64AudioData);
+                            const arrayBuffer = new ArrayBuffer(binaryAudioData.length);
+                            const view = new Uint8Array(arrayBuffer);
+                            for (let i = 0; i < binaryAudioData.length; i++) {
+                                view[i] = binaryAudioData.charCodeAt(i);
+                            }
+                            // Create an audio context
+                            const audioContext = new AudioContext();
+                            // Decode the audio data
+                            audioContext.decodeAudioData(arrayBuffer)
+                                .then((decodedData) => {
+                                    // Create an audio buffer source
+                                    const audioSource = audioContext.createBufferSource();
+                                    // Create a gain node
+                                    const gainNode = audioContext.createGain();
+                                    // Set the volume level (0.5 represents 50% volume)
+                                    gainNode.gain.value = 0.8;
+                                    // Connect the audio buffer source to the gain node
+                                    audioSource.connect(gainNode);
+                                    // Connect the gain node to the audio context destination
+                                    gainNode.connect(audioContext.destination);
+                                    // Set the audio buffer
+                                    audioSource.buffer = decodedData;
+                                    // Start playing the audio
+                                    audioSource.start();
+                                })
+                                .catch((error) => {
+                                    console.error('Error decoding audio data:', error);
+                                });
+                        } catch (error) {
+                            console.error('Error reading file:', error);
                         }
                     }
-                    // Now that this dictionary entry has a duplicate in Anki, show the "add duplicate" buttons.
-                    this._updateButtonForDuplicate(button);
+                } catch (e) {
+                    allErrors.length = 0;
+                    allErrors.push(e instanceof Error ? e : new Error(`${e}`));
+                }
 
-                    this._updateViewNoteButton(dictionaryEntryIndex, [noteId], true);
+                if (addNoteOkay) {
+                    if (noteId === null) {
+                        allErrors.push(new Error('Note could not be added'));
+                    } else {
+                        if (this._suspendNewCards) {
+                            try {
+                                await this._display.application.api.suspendAnkiCardsForNote(noteId);
+                            } catch (e) {
+                                allErrors.push(toError(e));
+                            }
+                        }
+                        // Now that this dictionary entry has a duplicate in Anki, show the "add duplicate" buttons.
+                        this._updateButtonForDuplicate(button);
+                        if (button && dict < 0) {button.disabled = true;}
+                        if (typeof dictionaryEntryIndex === 'number') {this._updateViewNoteButton(dictionaryEntryIndex, [noteId], true);}
+                    }
                 }
             }
         } catch (e) {
             allErrors.push(toError(e));
+            console.error(allErrors);
         } finally {
-            progressIndicatorVisible.clearOverride(overrideToken);
+            if (overrideToken && progressIndicatorVisible && dict < 0) {
+                progressIndicatorVisible.clearOverride(overrideToken);
+            }
         }
 
         if (allErrors.length > 0) {
@@ -590,7 +657,7 @@ export class DisplayAnki {
      * @returns {?DisplayAnkiError}
      */
     _getAddNoteRequirementsError(requirements, outputRequirements) {
-        if (outputRequirements.length === 0) { return null; }
+        if (outputRequirements.length === 0) {return null;}
 
         let count = 0;
         for (const requirement of outputRequirements) {
@@ -604,7 +671,7 @@ export class DisplayAnki {
                     break;
             }
         }
-        if (count === 0) { return null; }
+        if (count === 0) {return null;}
 
         const error = new DisplayAnkiError('The created card may not have some content');
         error.requirements = requirements;
@@ -617,7 +684,7 @@ export class DisplayAnki {
      * @param {(DocumentFragment|Node|Error)[]} [displayErrors]
      */
     _showErrorNotification(errors, displayErrors) {
-        if (typeof displayErrors === 'undefined') { displayErrors = errors; }
+        if (typeof displayErrors === 'undefined') {displayErrors = errors;}
 
         if (this._errorNotificationEventListeners !== null) {
             this._errorNotificationEventListeners.removeAllEventListeners();
@@ -631,8 +698,9 @@ export class DisplayAnki {
         const content = this._display.displayGenerator.createAnkiNoteErrorsNotificationContent(displayErrors);
         for (const node of content.querySelectorAll('.anki-note-error-log-link')) {
             /** @type {EventListenerCollection} */ (this._errorNotificationEventListeners).addEventListener(node, 'click', () => {
-                log.log({ankiNoteErrors: errors});
-            }, false);
+            // eslint-disable-next-line no-console
+            console.log({ankiNoteErrors: errors});
+        }, false);
         }
 
         this._errorNotification.setContent(content);
@@ -643,7 +711,7 @@ export class DisplayAnki {
      * @param {boolean} animate
      */
     _hideErrorNotification(animate) {
-        if (this._errorNotification === null) { return; }
+        if (this._errorNotification === null) {return;}
         this._errorNotification.close(animate);
         /** @type {EventListenerCollection} */ (this._errorNotificationEventListeners).removeAllEventListeners();
     }
@@ -660,23 +728,13 @@ export class DisplayAnki {
      * @returns {Promise<string>}
      */
     async _getAnkiFieldTemplates(options) {
-        const staticTemplates = await this._getStaticAnkiFieldTemplates(options);
-        const dynamicTemplates = getDynamicTemplates(options);
-        return staticTemplates + dynamicTemplates;
-    }
-
-    /**
-     * @param {import('settings').ProfileOptions} options
-     * @returns {Promise<string>}
-     */
-    async _getStaticAnkiFieldTemplates(options) {
         let templates = options.anki.fieldTemplates;
-        if (typeof templates === 'string') { return templates; }
+        if (typeof templates === 'string') {return templates;}
 
         templates = this._ankiFieldTemplatesDefault;
-        if (typeof templates === 'string') { return templates; }
+        if (typeof templates === 'string') {return templates;}
 
-        templates = await this._display.application.api.getDefaultAnkiFieldTemplates();
+        templates = await yomitan.api.getDefaultAnkiFieldTemplates();
         this._ankiFieldTemplatesDefault = templates;
         return templates;
     }
@@ -686,6 +744,7 @@ export class DisplayAnki {
      * @returns {Promise<import('display-anki').DictionaryEntryDetails[]>}
      */
     async _getDictionaryEntryDetails(dictionaryEntries) {
+        const forceCanAddValue = (this._checkForDuplicates ? null : true);
         const fetchAdditionalInfo = (this._displayTags !== 'never');
 
         const notePromises = [];
@@ -694,7 +753,7 @@ export class DisplayAnki {
             const dictionaryEntry = dictionaryEntries[i];
             const {type} = dictionaryEntry;
             const modes = this._dictionaryEntryTypeModeMap.get(type);
-            if (typeof modes === 'undefined') { continue; }
+            if (typeof modes === 'undefined') {continue;}
             for (const mode of modes) {
                 const notePromise = this._createNote(dictionaryEntry, mode, []);
                 notePromises.push(notePromise);
@@ -708,16 +767,17 @@ export class DisplayAnki {
         let infos;
         let ankiError = null;
         try {
-            if (!await this._display.application.api.isAnkiConnected()) {
-                throw new Error('Anki not connected');
+            if (forceCanAddValue !== null) {
+                if (!await yomitan.api.isAnkiConnected()) {
+                    throw new Error('Anki not connected');
+                }
+                infos = this._getAnkiNoteInfoForceValue(notes, forceCanAddValue);
+            } else {
+                infos = await yomitan.api.getAnkiNoteInfo(notes, fetchAdditionalInfo);
             }
-
-            infos = this._checkForDuplicates ?
-                await this._display.application.api.getAnkiNoteInfo(notes, fetchAdditionalInfo) :
-                this._getAnkiNoteInfoForceValue(notes, true);
         } catch (e) {
             infos = this._getAnkiNoteInfoForceValue(notes, false);
-            ankiError = toError(e);
+            ankiError = e instanceof Error ? e : new Error(`${e}`);
         }
 
         /** @type {import('display-anki').DictionaryEntryDetails[]} */
@@ -745,7 +805,7 @@ export class DisplayAnki {
     _getAnkiNoteInfoForceValue(notes, canAdd) {
         const results = [];
         for (const note of notes) {
-            const valid = isNoteDataValid(note);
+            const valid = AnkiUtil.isNoteDataValid(note);
             results.push({canAdd, valid, noteIds: null});
         }
         return results;
@@ -759,11 +819,11 @@ export class DisplayAnki {
      */
     async _createNote(dictionaryEntry, mode, requirements) {
         const context = this._noteContext;
-        if (context === null) { throw new Error('Note context not initialized'); }
+        if (context === null) {throw new Error('Note context not initialized');}
         const modeOptions = this._modeOptions.get(mode);
-        if (typeof modeOptions === 'undefined') { throw new Error(`Unsupported note type: ${mode}`); }
+        if (typeof modeOptions === 'undefined') {throw new Error(`Unsupported note type: ${mode}`);}
         const template = this._ankiFieldTemplates;
-        if (typeof template !== 'string') { throw new Error('Invalid template'); }
+        if (typeof template !== 'string') {throw new Error('Invalid template');}
         const {deck: deckName, model: modelName} = modeOptions;
         const fields = Object.entries(modeOptions.fields);
         const contentOrigin = this._display.getContentOrigin();
@@ -780,6 +840,7 @@ export class DisplayAnki {
             modelName,
             fields,
             tags: this._noteTags,
+            checkForDuplicates: this._checkForDuplicates,
             duplicateScope: this._duplicateScope,
             duplicateScopeCheckAllModels: this._duplicateScopeCheckAllModels,
             resultOutputMode: this._resultOutputMode,
@@ -826,7 +887,7 @@ export class DisplayAnki {
             text = fallback;
             offset = fallbackOffset;
         } else {
-            if (typeof offset !== 'number') { offset = 0; }
+            if (typeof offset !== 'number') {offset = 0;}
         }
         return {text, offset};
     }
@@ -836,7 +897,7 @@ export class DisplayAnki {
      * @returns {?import('anki-note-builder').AudioMediaOptions}
      */
     _getAnkiNoteMediaAudioDetails(details) {
-        if (details.type !== 'term') { return null; }
+        if (details.type !== 'term') {return null;}
         const {sources, preferredAudioIndex} = this._displayAudio.getAnkiNoteMediaAudioDetails(details.term, details.reading);
         return {sources, preferredAudioIndex, idleTimeout: this._audioDownloadIdleTimeout};
     }
@@ -846,34 +907,34 @@ export class DisplayAnki {
     /**
      * @param {MouseEvent} e
      */
-    _onViewNotesButtonClick(e) {
+    _onViewNoteButtonClick(e) {
         const element = /** @type {HTMLElement} */ (e.currentTarget);
         e.preventDefault();
         if (e.shiftKey) {
-            this._showViewNotesMenu(element);
+            this._showViewNoteMenu(element);
         } else {
-            void this._viewNotes(element);
+            this._viewNote(element);
         }
     }
 
     /**
      * @param {MouseEvent} e
      */
-    _onViewNotesButtonContextMenu(e) {
+    _onViewNoteButtonContextMenu(e) {
         const element = /** @type {HTMLElement} */ (e.currentTarget);
         e.preventDefault();
-        this._showViewNotesMenu(element);
+        this._showViewNoteMenu(element);
     }
 
     /**
      * @param {import('popup-menu').MenuCloseEvent} e
      */
-    _onViewNotesButtonMenuClose(e) {
+    _onViewNoteButtonMenuClose(e) {
         const {detail: {action, item}} = e;
         switch (action) {
-            case 'viewNotes':
+            case 'viewNote':
                 if (item !== null) {
-                    void this._viewNotes(item);
+                    this._viewNote(item);
                 }
                 break;
         }
@@ -886,7 +947,7 @@ export class DisplayAnki {
      */
     _updateViewNoteButton(index, noteIds, prepend) {
         const button = this._getViewNoteButton(index);
-        if (button === null) { return; }
+        if (button === null) {return;}
         /** @type {(number|string)[]} */
         let allNoteIds = noteIds;
         if (prepend) {
@@ -917,18 +978,18 @@ export class DisplayAnki {
     /**
      * @param {HTMLElement} node
      */
-    async _viewNotes(node) {
+    async _viewNote(node) {
         const noteIds = this._getNodeNoteIds(node);
-        if (noteIds.length === 0) { return; }
+        if (noteIds.length === 0) {return;}
         try {
-            await this._display.application.api.viewNotes(noteIds, this._noteGuiMode, false);
+            await yomitan.api.noteView(noteIds[0], this._noteGuiMode, false);
         } catch (e) {
             const displayErrors = (
-                toError(e).message === 'Mode not supported' ?
-                [this._display.displayGenerator.instantiateTemplateFragment('footer-notification-anki-view-note-error')] :
-                void 0
+                e instanceof Error && e.message === 'Mode not supported' ?
+                    [this._display.displayGenerator.instantiateTemplateFragment('footer-notification-anki-view-note-error')] :
+                    void 0
             );
-            this._showErrorNotification([toError(e)], displayErrors);
+            this._showErrorNotification([e instanceof Error ? e : new Error(`${e}`)], displayErrors);
             return;
         }
     }
@@ -936,9 +997,9 @@ export class DisplayAnki {
     /**
      * @param {HTMLElement} node
      */
-    _showViewNotesMenu(node) {
+    _showViewNoteMenu(node) {
         const noteIds = this._getNodeNoteIds(node);
-        if (noteIds.length === 0) { return; }
+        if (noteIds.length === 0) {return;}
 
         /** @type {HTMLElement} */
         const menuContainerNode = this._display.displayGenerator.instantiateTemplate('view-note-button-popup-menu');
@@ -952,7 +1013,7 @@ export class DisplayAnki {
             /** @type {Element} */
             const label = querySelectorNotNull(item, '.popup-menu-item-label');
             label.textContent = `Note ${i + 1}: ${noteId}`;
-            item.dataset.menuAction = 'viewNotes';
+            item.dataset.menuAction = 'viewNote';
             item.dataset.noteIds = `${noteId}`;
             menuBodyNode.appendChild(item);
         }
@@ -989,14 +1050,12 @@ export class DisplayAnki {
         return entry !== null ? entry.querySelector('.action-button[data-action=view-note]') : null;
     }
 
-    /**
-     * Shows notes for selected pop-up entry when "View Notes" hotkey is used.
-     */
-    _viewNotesForSelectedEntry() {
+    /** */
+    _viewNoteForSelectedEntry() {
         const index = this._display.selectedIndex;
         const button = this._getViewNoteButton(index);
         if (button !== null) {
-            void this._viewNotes(button);
+            this._viewNote(button);
         }
     }
 
@@ -1022,8 +1081,6 @@ class DisplayAnkiError extends Error {
      */
     constructor(message) {
         super(message);
-        /** @type {string} */
-        this.name = 'DisplayAnkiError';
         /** @type {?import('anki-note-builder').Requirement[]} */
         this._requirements = null;
         /** @type {?import('anki-note-builder').Requirement[]} */
@@ -1031,10 +1088,10 @@ class DisplayAnkiError extends Error {
     }
 
     /** @type {?import('anki-note-builder').Requirement[]} */
-    get requirements() { return this._requirements; }
-    set requirements(value) { this._requirements = value; }
+    get requirements() {return this._requirements;}
+    set requirements(value) {this._requirements = value;}
 
     /** @type {?import('anki-note-builder').Requirement[]} */
-    get outputRequirements() { return this._outputRequirements; }
-    set outputRequirements(value) { this._outputRequirements = value; }
+    get outputRequirements() {return this._outputRequirements;}
+    set outputRequirements(value) {this._outputRequirements = value;}
 }

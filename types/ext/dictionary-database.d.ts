@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,9 +36,7 @@ export type MediaDataArrayBufferContent = MediaDataBase<ArrayBuffer>;
 
 export type MediaDataStringContent = MediaDataBase<string>;
 
-type MediaType = ArrayBuffer | string;
-
-export type Media<T extends MediaType = ArrayBuffer> = {index: number} & MediaDataBase<T>;
+export type Media<T extends (ArrayBuffer | string) = ArrayBuffer> = {index: number} & MediaDataBase<T>;
 
 export type DatabaseTermEntry = {
     expression: string;
@@ -200,6 +198,7 @@ export type ObjectStoreName = (
     'media'
 );
 
+/* eslint-disable @stylistic/ts/indent */
 export type ObjectStoreData<T extends ObjectStoreName> = (
     T extends 'dictionaries' ? DictionaryImporter.Summary :
     T extends 'terms' ? DatabaseTermEntry :
@@ -210,6 +209,7 @@ export type ObjectStoreData<T extends ObjectStoreName> = (
     T extends 'media' ? MediaDataArrayBufferContent :
     never
 );
+/* eslint-enable @stylistic/ts/indent */
 
 export type DeleteDictionaryProgressData = {
     count: number;

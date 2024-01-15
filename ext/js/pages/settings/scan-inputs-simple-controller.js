@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2020-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,6 +18,7 @@
 
 import {querySelectorNotNull} from '../../dom/query-selector.js';
 import {HotkeyUtil} from '../../input/hotkey-util.js';
+import {yomitan} from '../../yomitan.js';
 import {ScanInputsController} from './scan-inputs-controller.js';
 
 export class ScanInputsSimpleController {
@@ -39,7 +40,7 @@ export class ScanInputsSimpleController {
 
     /** */
     async prepare() {
-        const {platform: {os}} = await this._settingsController.application.api.getEnvironmentInfo();
+        const {platform: {os}} = await yomitan.api.getEnvironmentInfo();
         this._hotkeyUtil.os = os;
 
         this._mainScanModifierKeyInputHasOther = false;
@@ -70,7 +71,7 @@ export class ScanInputsSimpleController {
      */
     _onScanInputsChanged({source}) {
         if (source === this) { return; }
-        void this.refresh();
+        this.refresh();
     }
 
     /**
@@ -112,7 +113,7 @@ export class ScanInputsSimpleController {
     onMiddleMouseButtonScanChange(e) {
         const element = /** @type {HTMLInputElement} */ (e.currentTarget);
         const middleMouseSupported = element.checked;
-        void this._setMiddleMouseSuppported(middleMouseSupported);
+        this._setMiddleMouseSuppported(middleMouseSupported);
     }
 
     /**
@@ -123,7 +124,7 @@ export class ScanInputsSimpleController {
         const mainScanKey = element.value;
         if (mainScanKey === 'other') { return; }
         const mainScanInputs = (mainScanKey === 'none' ? [] : [mainScanKey]);
-        void this._setMainScanInputs(mainScanInputs);
+        this._setMainScanInputs(mainScanInputs);
     }
 
     /**

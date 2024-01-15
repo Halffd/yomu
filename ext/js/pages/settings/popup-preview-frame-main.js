@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2019-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -17,19 +17,37 @@
  */
 
 import {PopupFactory} from '../../app/popup-factory.js';
-import {Application} from '../../application.js';
+import {log} from '../../core.js';
 import {HotkeyHandler} from '../../input/hotkey-handler.js';
+import {yomitan} from '../../yomitan.js';
 import {PopupPreviewFrame} from './popup-preview-frame.js';
 
-await Application.main(true, async (application) => {
-    const hotkeyHandler = new HotkeyHandler();
-    hotkeyHandler.prepare(application.crossFrame);
+/** Entry point. */
+async function main() {
+    try {
+        await yomitan.prepare();
 
-    const popupFactory = new PopupFactory(application);
-    popupFactory.prepare();
+        const {tabId, frameId} = await yomitan.api.frameInformationGet();
+        if (typeof tabId === 'undefined') {
+            throw new Error('Failed to get tabId');
+        }
+        if (typeof frameId === 'undefined') {
+            throw new Error('Failed to get frameId');
+        }
 
-    const preview = new PopupPreviewFrame(application, popupFactory, hotkeyHandler);
-    await preview.prepare();
+        const hotkeyHandler = new HotkeyHandler();
+        hotkeyHandler.prepare();
 
-    document.documentElement.dataset.loaded = 'true';
-});
+        const popupFactory = new PopupFactory(frameId);
+        popupFactory.prepare();
+
+        const preview = new PopupPreviewFrame(tabId, frameId, popupFactory, hotkeyHandler);
+        await preview.prepare();
+
+        document.documentElement.dataset.loaded = 'true';
+    } catch (e) {
+        log.error(e);
+    }
+}
+
+await main();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2021-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -253,13 +253,4 @@
     content: var(--compact-list-separator);
     display: inline;
     color: var(--text-color-light3);
-}
-.gloss-sc-details {
-    border-bottom: calc(1em / var(--font-size-no-units)) solid var(--medium-border-color);
-}
-.gloss-sc-summary {
-    list-style-position: outside;
-}
-.gloss-sc-details[open] .gloss-sc-summary {
-    border-bottom: calc(1em / var(--font-size-no-units)) solid var(--medium-border-color);
 }

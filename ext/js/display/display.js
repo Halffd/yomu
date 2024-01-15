@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2017-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,20 +18,15 @@
 
 import {ThemeController} from '../app/theme-controller.js';
 import {FrameEndpoint} from '../comm/frame-endpoint.js';
+import {DynamicProperty, EventDispatcher, EventListenerCollection, clone, deepEqual, log, promiseTimeout} from '../core.js';
 import {extendApiMap, invokeApiMapHandler} from '../core/api-map.js';
-import {DynamicProperty} from '../core/dynamic-property.js';
-import {EventDispatcher} from '../core/event-dispatcher.js';
-import {EventListenerCollection} from '../core/event-listener-collection.js';
 import {ExtensionError} from '../core/extension-error.js';
-import {log} from '../core/log.js';
-import {toError} from '../core/to-error.js';
-import {clone, deepEqual, promiseTimeout} from '../core/utilities.js';
 import {PopupMenu} from '../dom/popup-menu.js';
 import {querySelectorNotNull} from '../dom/query-selector.js';
 import {ScrollElement} from '../dom/scroll-element.js';
-import {TextSourceGenerator} from '../dom/text-source-generator.js';
 import {HotkeyHelpController} from '../input/hotkey-help-controller.js';
 import {TextScanner} from '../language/text-scanner.js';
+import {yomitan} from '../yomitan.js';
 import {DisplayContentManager} from './display-content-manager.js';
 import {DisplayGenerator} from './display-generator.js';
 import {DisplayHistory} from './display-history.js';
@@ -45,17 +40,23 @@ import {QueryParser} from './query-parser.js';
  */
 export class Display extends EventDispatcher {
     /**
-     * @param {import('../application.js').Application} application
+     * @param {number|undefined} tabId
+     * @param {number|undefined} frameId
      * @param {import('display').DisplayPageType} pageType
+     * @param {import('../language/sandbox/japanese-util.js').JapaneseUtil} japaneseUtil
      * @param {import('../dom/document-focus-controller.js').DocumentFocusController} documentFocusController
      * @param {import('../input/hotkey-handler.js').HotkeyHandler} hotkeyHandler
      */
-    constructor(application, pageType, documentFocusController, hotkeyHandler) {
+    constructor(tabId, frameId, pageType, japaneseUtil, documentFocusController, hotkeyHandler) {
         super();
-        /** @type {import('../application.js').Application} */
-        this._application = application;
+        /** @type {number|undefined} */
+        this._tabId = tabId;
+        /** @type {number|undefined} */
+        this._frameId = frameId;
         /** @type {import('display').DisplayPageType} */
         this._pageType = pageType;
+        /** @type {import('../language/sandbox/japanese-util.js').JapaneseUtil} */
+        this._japaneseUtil = japaneseUtil;
         /** @type {import('../dom/document-focus-controller.js').DocumentFocusController} */
         this._documentFocusController = documentFocusController;
         /** @type {import('../input/hotkey-handler.js').HotkeyHandler} */
@@ -83,13 +84,17 @@ export class Display extends EventDispatcher {
         /** @type {HotkeyHelpController} */
         this._hotkeyHelpController = new HotkeyHelpController();
         /** @type {DisplayGenerator} */
-        this._displayGenerator = new DisplayGenerator(this._contentManager, this._hotkeyHelpController);
+        this._displayGenerator = new DisplayGenerator({
+            japaneseUtil,
+            contentManager: this._contentManager,
+            hotkeyHelpController: this._hotkeyHelpController
+        });
         /** @type {import('display').DirectApiMap} */
         this._directApiMap = new Map();
         /** @type {import('api-map').ApiMap<import('display').WindowApiSurface>} */ // import('display').WindowApiMap
         this._windowApiMap = new Map();
         /** @type {DisplayHistory} */
-        this._history = new DisplayHistory(true, false);
+        this._history = new DisplayHistory({clearable: true, useBrowserHistory: false});
         /** @type {boolean} */
         this._historyChangeIgnore = false;
         /** @type {boolean} */
@@ -120,10 +125,11 @@ export class Display extends EventDispatcher {
         this._queryParserVisibleOverride = null;
         /** @type {HTMLElement} */
         this._queryParserContainer = querySelectorNotNull(document, '#query-parser-container');
-        /** @type {TextSourceGenerator} */
-        this._textSourceGenerator = new TextSourceGenerator();
         /** @type {QueryParser} */
-        this._queryParser = new QueryParser(application.api, this._textSourceGenerator, this._getSearchContext.bind(this));
+        this._queryParser = new QueryParser({
+            getSearchContext: this._getSearchContext.bind(this),
+            japaneseUtil
+        });
         /** @type {HTMLElement} */
         this._contentScrollElement = querySelectorNotNull(document, '#content-scroll');
         /** @type {HTMLElement} */
@@ -146,14 +152,14 @@ export class Display extends EventDispatcher {
         this._parentPopupId = null;
         /** @type {?number} */
         this._parentFrameId = null;
-        /** @type {?number} */
-        this._contentOriginTabId = application.tabId;
-        /** @type {?number} */
-        this._contentOriginFrameId = application.frameId;
+        /** @type {number|undefined} */
+        this._contentOriginTabId = tabId;
+        /** @type {number|undefined} */
+        this._contentOriginFrameId = frameId;
         /** @type {boolean} */
         this._childrenSupported = true;
         /** @type {?FrameEndpoint} */
-        this._frameEndpoint = (pageType === 'popup' ? new FrameEndpoint(this._application.api) : null);
+        this._frameEndpoint = (pageType === 'popup' ? new FrameEndpoint() : null);
         /** @type {?import('environment').Browser} */
         this._browser = null;
         /** @type {?HTMLTextAreaElement} */
@@ -187,7 +193,7 @@ export class Display extends EventDispatcher {
         /** @type {ThemeController} */
         this._themeController = new ThemeController(document.documentElement);
 
-        /* eslint-disable @stylistic/no-multi-spaces */
+        /* eslint-disable no-multi-spaces */
         this._hotkeyHandler.registerActions([
             ['close',             () => { this._onHotkeyClose(); }],
             ['nextEntry',         this._onHotkeyActionMoveRelative.bind(this, 1)],
@@ -196,8 +202,6 @@ export class Display extends EventDispatcher {
             ['firstEntry',        () => { this._focusEntry(0, 0, true); }],
             ['historyBackward',   () => { this._sourceTermView(); }],
             ['historyForward',    () => { this._nextTermView(); }],
-            ['profilePrevious',   async () => { await this._setProfile(-1); }],
-            ['profileNext',       async () => { await this._setProfile(1); }],
             ['copyHostSelection', () => this._copyHostSelection()],
             ['nextEntryDifferentDictionary',     () => { this._focusEntryWithDifferentDictionary(1, true); }],
             ['previousEntryDifferentDictionary', () => { this._focusEntryWithDifferentDictionary(-1, true); }]
@@ -213,12 +217,7 @@ export class Display extends EventDispatcher {
         this.registerWindowMessageHandlers([
             ['displayExtensionUnloaded', this._onMessageExtensionUnloaded.bind(this)]
         ]);
-        /* eslint-enable @stylistic/no-multi-spaces */
-    }
-
-    /** @type {import('../application.js').Application} */
-    get application() {
-        return this._application;
+        /* eslint-enable no-multi-spaces */
     }
 
     /** @type {DisplayGenerator} */
@@ -234,6 +233,11 @@ export class Display extends EventDispatcher {
     set queryParserVisible(value) {
         this._queryParserVisible = value;
         this._updateQueryParser();
+    }
+
+    /** @type {import('../language/sandbox/japanese-util.js').JapaneseUtil} */
+    get japaneseUtil() {
+        return this._japaneseUtil;
     }
 
     /** @type {number} */
@@ -304,7 +308,7 @@ export class Display extends EventDispatcher {
 
         // State setup
         const {documentElement} = document;
-        const {browser} = await this._application.api.getEnvironmentInfo();
+        const {browser} = await yomitan.api.getEnvironmentInfo();
         this._browser = browser;
 
         if (documentElement !== null) {
@@ -312,7 +316,7 @@ export class Display extends EventDispatcher {
         }
 
         // Prepare
-        await this._hotkeyHelpController.prepare(this._application.api);
+        await this._hotkeyHelpController.prepare();
         await this._displayGenerator.prepare();
         this._queryParser.prepare();
         this._history.prepare();
@@ -322,8 +326,8 @@ export class Display extends EventDispatcher {
         this._history.on('stateChanged', this._onStateChanged.bind(this));
         this._queryParser.on('searched', this._onQueryParserSearch.bind(this));
         this._progressIndicatorVisible.on('change', this._onProgressIndicatorVisibleChanged.bind(this));
-        this._application.on('extensionUnloaded', this._onExtensionUnloaded.bind(this));
-        this._application.crossFrame.registerHandlers([
+        yomitan.on('extensionUnloaded', this._onExtensionUnloaded.bind(this));
+        yomitan.crossFrame.registerHandlers([
             ['displayPopupMessage1', this._onDisplayPopupMessage1.bind(this)],
             ['displayPopupMessage2', this._onDisplayPopupMessage2.bind(this)]
         ]);
@@ -359,7 +363,7 @@ export class Display extends EventDispatcher {
 
     /** */
     initializeState() {
-        void this._onStateChanged();
+        this._onStateChanged();
         if (this._frameEndpoint !== null) {
             this._frameEndpoint.signal();
         }
@@ -381,7 +385,7 @@ export class Display extends EventDispatcher {
      * @param {Error} error
      */
     onError(error) {
-        if (this._application.webExtension.unloaded) { return; }
+        if (yomitan.isExtensionUnloaded) { return; }
         log.error(error);
     }
 
@@ -409,7 +413,7 @@ export class Display extends EventDispatcher {
 
     /** */
     async updateOptions() {
-        const options = await this._application.api.optionsGet(this.getOptionsContext());
+        const options = await yomitan.api.optionsGet(this.getOptionsContext());
         const {scanning: scanningOptions, sentenceParsing: sentenceParsingOptions} = options;
         this._options = options;
 
@@ -427,7 +431,6 @@ export class Display extends EventDispatcher {
             readingMode: options.parsing.readingMode,
             useInternalParser: options.parsing.enableScanningParser,
             useMecabParser: options.parsing.enableMecabParser,
-            language: options.general.language,
             scanning: {
                 inputs: scanningOptions.inputs,
                 deepContentScan: scanningOptions.deepDomScan,
@@ -444,7 +447,7 @@ export class Display extends EventDispatcher {
             }
         });
 
-        void this._updateNestedFrontend(options);
+        this._updateNestedFrontend(options);
         this._updateContentTextScanner(options);
 
         this.trigger('optionsUpdated', {options});
@@ -519,10 +522,10 @@ export class Display extends EventDispatcher {
     close() {
         switch (this._pageType) {
             case 'popup':
-                void this.invokeContentOrigin('frontendClosePopup', void 0);
+                this.invokeContentOrigin('frontendClosePopup', void 0);
                 break;
             case 'search':
-                void this._closeTab();
+                this._closeTab();
                 break;
         }
     }
@@ -578,13 +581,13 @@ export class Display extends EventDispatcher {
      * @returns {Promise<import('cross-frame-api').ApiReturn<TName>>}
      */
     async invokeContentOrigin(action, params) {
-        if (this._contentOriginTabId === this._application.tabId && this._contentOriginFrameId === this._application.frameId) {
+        if (this._contentOriginTabId === this._tabId && this._contentOriginFrameId === this._frameId) {
             throw new Error('Content origin is same page');
         }
-        if (this._contentOriginTabId === null || this._contentOriginFrameId === null) {
+        if (typeof this._contentOriginTabId !== 'number' || typeof this._contentOriginFrameId !== 'number') {
             throw new Error('No content origin is assigned');
         }
-        return await this._application.crossFrame.invokeTab(this._contentOriginTabId, this._contentOriginFrameId, action, params);
+        return await yomitan.crossFrame.invokeTab(this._contentOriginTabId, this._contentOriginFrameId, action, params);
     }
 
     /**
@@ -594,11 +597,10 @@ export class Display extends EventDispatcher {
      * @returns {Promise<import('cross-frame-api').ApiReturn<TName>>}
      */
     async invokeParentFrame(action, params) {
-        const {frameId} = this._application;
-        if (frameId === null || this._parentFrameId === null || this._parentFrameId === frameId) {
+        if (this._parentFrameId === null || this._parentFrameId === this._frameId) {
             throw new Error('Invalid parent frame');
         }
-        return await this._application.crossFrame.invoke(this._parentFrameId, action, params);
+        return await yomitan.crossFrame.invoke(this._parentFrameId, action, params);
     }
 
     /**
@@ -610,7 +612,7 @@ export class Display extends EventDispatcher {
         if (node === null) { return -1; }
         const {index} = node.dataset;
         if (typeof index !== 'string') { return -1; }
-        const indexNumber = Number.parseInt(index, 10);
+        const indexNumber = parseInt(index, 10);
         return Number.isFinite(indexNumber) ? indexNumber : -1;
     }
 
@@ -720,7 +722,8 @@ export class Display extends EventDispatcher {
 
     /** @type {import('display').WindowApiHandler<'displayExtensionUnloaded'>} */
     _onMessageExtensionUnloaded() {
-        this._application.webExtension.triggerUnloaded();
+        if (yomitan.isExtensionUnloaded) { return; }
+        yomitan.triggerExtensionUnloaded();
     }
 
     // Private
@@ -784,7 +787,7 @@ export class Display extends EventDispatcher {
                     break;
             }
         } catch (e) {
-            this.onError(toError(e));
+            this.onError(e instanceof Error ? e : new Error(`${e}`));
         }
     }
 
@@ -797,10 +800,8 @@ export class Display extends EventDispatcher {
         const historyMode = (
             eventType === 'click' ||
             !(typeof historyState === 'object' && historyState !== null) ||
-            historyState.cause !== 'queryParser' ?
-            'new' :
-            'overwrite'
-        );
+            historyState.cause !== 'queryParser'
+        ) ? 'new' : 'overwrite';
         /** @type {import('display').ContentDetails} */
         const details = {
             focus: false,
@@ -823,7 +824,6 @@ export class Display extends EventDispatcher {
     _onExtensionUnloaded() {
         const type = 'unloaded';
         if (this._contentType === type) { return; }
-        const {tabId, frameId} = this._application;
         /** @type {import('display').ContentDetails} */
         const details = {
             focus: false,
@@ -831,7 +831,10 @@ export class Display extends EventDispatcher {
             params: {type},
             state: {},
             content: {
-                contentOrigin: {tabId, frameId}
+                contentOrigin: {
+                    tabId: this._tabId,
+                    frameId: this._frameId
+                }
             }
         };
         this.setContent(details);
@@ -899,7 +902,7 @@ export class Display extends EventDispatcher {
             const element = /** @type {Element} */ (e.currentTarget);
             let query = element.textContent;
             if (query === null) { query = ''; }
-            const dictionaryEntries = await this._application.api.kanjiFind(query, optionsContext);
+            const dictionaryEntries = await yomitan.api.kanjiFind(query, optionsContext);
             /** @type {import('display').ContentDetails} */
             const details = {
                 focus: false,
@@ -919,7 +922,7 @@ export class Display extends EventDispatcher {
             };
             this.setContent(details);
         } catch (error) {
-            this.onError(toError(error));
+            this.onError(error instanceof Error ? error : new Error(`${error}`));
         }
     }
 
@@ -960,7 +963,7 @@ export class Display extends EventDispatcher {
     _onDebugLogClick(e) {
         const link = /** @type {HTMLElement} */ (e.currentTarget);
         const index = this.getElementDictionaryEntryIndex(link);
-        void this._logDictionaryEntryData(index);
+        this._logDictionaryEntryData(index);
     }
 
     /**
@@ -1009,7 +1012,7 @@ export class Display extends EventDispatcher {
         const node = /** @type {HTMLElement} */ (e.currentTarget);
         const {index} = node.dataset;
         if (typeof index !== 'string') { return; }
-        const indexNumber = Number.parseInt(index, 10);
+        const indexNumber = parseInt(index, 10);
         if (!Number.isFinite(indexNumber)) { return; }
         this._entrySetCurrent(indexNumber);
     }
@@ -1060,7 +1063,7 @@ export class Display extends EventDispatcher {
         const {action} = e.detail;
         switch (action) {
             case 'log-debug-info':
-                void this._logDictionaryEntryData(this.getElementDictionaryEntryIndex(node));
+                this._logDictionaryEntryData(this.getElementDictionaryEntryIndex(node));
                 break;
         }
     }
@@ -1135,7 +1138,8 @@ export class Display extends EventDispatcher {
      */
     async _findDictionaryEntries(isKanji, source, wildcardsEnabled, optionsContext) {
         if (isKanji) {
-            return await this._application.api.kanjiFind(source, optionsContext);
+            const dictionaryEntries = await yomitan.api.kanjiFind(source, optionsContext);
+            return dictionaryEntries;
         } else {
             /** @type {import('api').FindTermsDetails} */
             const findDetails = {};
@@ -1153,7 +1157,7 @@ export class Display extends EventDispatcher {
                 }
             }
 
-            const {dictionaryEntries} = await this._application.api.termsFind(source, findDetails, optionsContext);
+            const {dictionaryEntries} = await yomitan.api.termsFind(source, findDetails, optionsContext);
             return dictionaryEntries;
         }
     }
@@ -1211,7 +1215,7 @@ export class Display extends EventDispatcher {
         const {contentOrigin} = content;
         if (typeof contentOrigin === 'object' && contentOrigin !== null) {
             const {tabId, frameId} = contentOrigin;
-            if (tabId !== null && frameId !== null) {
+            if (typeof tabId === 'number' && typeof frameId === 'number') {
                 this._contentOriginTabId = tabId;
                 this._contentOriginFrameId = frameId;
                 contentOriginValid = true;
@@ -1341,7 +1345,7 @@ export class Display extends EventDispatcher {
         const visible = this._isQueryParserVisible();
         this._queryParserContainer.hidden = !visible || text.length === 0;
         if (visible && this._queryParser.text !== text) {
-            void this._setQueryParserText(text);
+            this._setQueryParserText(text);
         }
     }
 
@@ -1543,11 +1547,11 @@ export class Display extends EventDispatcher {
      * @returns {boolean}
      */
     _relativeTermView(next) {
-        return (
-            next ?
-            this._history.hasNext() && this._history.forward() :
-            this._history.hasPrevious() && this._history.back()
-        );
+        if (next) {
+            return this._history.hasNext() && this._history.forward();
+        } else {
+            return this._history.hasPrevious() && this._history.back();
+        }
     }
 
     /**
@@ -1638,7 +1642,7 @@ export class Display extends EventDispatcher {
 
     /** */
     _closePopups() {
-        this._application.triggerClosePopups();
+        yomitan.triggerClosePopups();
     }
 
     /**
@@ -1662,12 +1666,12 @@ export class Display extends EventDispatcher {
      * @param {import('settings').ProfileOptions} options
      */
     async _updateNestedFrontend(options) {
-        const {tabId, frameId} = this._application;
-        if (tabId === null || frameId === null) { return; }
+        if (typeof this._frameId !== 'number') { return; }
 
         const isSearchPage = (this._pageType === 'search');
         const isEnabled = (
             this._childrenSupported &&
+            typeof this._tabId === 'number' &&
             (
                 (isSearchPage) ?
                 (options.scanning.enableOnSearchPage) :
@@ -1696,6 +1700,10 @@ export class Display extends EventDispatcher {
 
     /** */
     async _setupNestedFrontend() {
+        if (typeof this._frameId !== 'number') {
+            throw new Error('No frameId assigned');
+        }
+
         const useProxyPopup = this._parentFrameId !== null;
         const parentPopupId = this._parentPopupId;
         const parentFrameId = this._parentFrameId;
@@ -1705,22 +1713,25 @@ export class Display extends EventDispatcher {
             import('../app/frontend.js')
         ]);
 
-        const popupFactory = new PopupFactory(this._application);
+        const popupFactory = new PopupFactory(this._frameId);
         popupFactory.prepare();
 
-        const frontend = new Frontend({
-            application: this._application,
+        /** @type {import('frontend').ConstructorDetails} */
+        const setupNestedPopupsOptions = {
             useProxyPopup,
             parentPopupId,
             parentFrameId,
             depth: this._depth + 1,
+            tabId: this._tabId,
+            frameId: this._frameId,
             popupFactory,
             pageType: this._pageType,
             allowRootFramePopupProxy: true,
             childrenSupported: this._childrenSupported,
-            hotkeyHandler: this._hotkeyHandler,
-            canUseWindowPopup: true
-        });
+            hotkeyHandler: this._hotkeyHandler
+        };
+
+        const frontend = new Frontend(setupNestedPopupsOptions);
         this._frontend = frontend;
         await frontend.prepare();
     }
@@ -1732,7 +1743,7 @@ export class Display extends EventDispatcher {
         if (typeof this._contentOriginFrameId !== 'number') { return false; }
         const selection = window.getSelection();
         if (selection !== null && selection.toString().length > 0) { return false; }
-        void this._copyHostSelectionSafe();
+        this._copyHostSelectionSafe();
         return true;
     }
 
@@ -1819,25 +1830,21 @@ export class Display extends EventDispatcher {
 
         if (this._contentTextScanner === null) {
             this._contentTextScanner = new TextScanner({
-                api: this._application.api,
                 node: window,
                 getSearchContext: this._getSearchContext.bind(this),
                 searchTerms: true,
                 searchKanji: false,
                 searchOnClick: true,
-                searchOnClickOnly: true,
-                textSourceGenerator: this._textSourceGenerator
+                searchOnClickOnly: true
             });
             this._contentTextScanner.includeSelector = '.click-scannable,.click-scannable *';
             this._contentTextScanner.excludeSelector = '.scan-disable,.scan-disable *';
             this._contentTextScanner.prepare();
             this._contentTextScanner.on('clear', this._onContentTextScannerClear.bind(this));
-            this._contentTextScanner.on('searchSuccess', this._onContentTextScannerSearchSuccess.bind(this));
-            this._contentTextScanner.on('searchError', this._onContentTextScannerSearchError.bind(this));
+            this._contentTextScanner.on('searched', this._onContentTextScannerSearched.bind(this));
         }
 
         const {scanning: scanningOptions, sentenceParsing: sentenceParsingOptions} = options;
-        this._contentTextScanner.language = options.general.language;
         this._contentTextScanner.setOptions({
             inputs: [{
                 include: 'mouse0',
@@ -1846,7 +1853,6 @@ export class Display extends EventDispatcher {
                 options: {
                     searchTerms: true,
                     searchKanji: true,
-                    scanOnTouchTap: true,
                     scanOnTouchMove: false,
                     scanOnTouchPress: false,
                     scanOnTouchRelease: false,
@@ -1880,9 +1886,15 @@ export class Display extends EventDispatcher {
     }
 
     /**
-     * @param {import('text-scanner').EventArgument<'searchSuccess'>} details
+     * @param {import('text-scanner').SearchedEventDetails} details
      */
-    _onContentTextScannerSearchSuccess({type, dictionaryEntries, sentence, textSource, optionsContext}) {
+    _onContentTextScannerSearched({type, dictionaryEntries, sentence, textSource, optionsContext, error}) {
+        if (error !== null && !yomitan.isExtensionUnloaded) {
+            log.error(error);
+        }
+
+        if (type === null) { return; }
+
         const query = textSource.text();
         const url = window.location.href;
         const documentTitle = document.title;
@@ -1912,24 +1924,10 @@ export class Display extends EventDispatcher {
     }
 
     /**
-     * @param {import('text-scanner').EventArgument<'searchError'>} details
-     */
-    _onContentTextScannerSearchError({error}) {
-        if (!this._application.webExtension.unloaded) {
-            log.error(error);
-        }
-    }
-
-    /**
      * @type {import('display').GetSearchContextCallback}
      */
     _getSearchContext() {
-        return {
-            optionsContext: this.getOptionsContext(),
-            detail: {
-                documentTitle: document.title
-            }
-        };
+        return {optionsContext: this.getOptionsContext()};
     }
 
     /**
@@ -1939,28 +1937,20 @@ export class Display extends EventDispatcher {
         this._hotkeyHandler.setHotkeys(this._pageType, options.inputs.hotkeys);
     }
 
-    /**
-     * @returns {Promise<?chrome.tabs.Tab>}
-     */
-    _getCurrentTab() {
-        return new Promise((resolve, reject) => {
+    /** */
+    async _closeTab() {
+        const tab = await new Promise((resolve, reject) => {
             chrome.tabs.getCurrent((result) => {
                 const e = chrome.runtime.lastError;
                 if (e) {
                     reject(new Error(e.message));
                 } else {
-                    resolve(typeof result !== 'undefined' ? result : null);
+                    resolve(result);
                 }
             });
         });
-    }
-
-    /**
-     * @param {number} tabId
-     * @returns {Promise<void>}
-     */
-    _removeTab(tabId) {
-        return new Promise((resolve, reject) => {
+        const tabId = tab.id;
+        await /** @type {Promise<void>} */ (new Promise((resolve, reject) => {
             chrome.tabs.remove(tabId, () => {
                 const e = chrome.runtime.lastError;
                 if (e) {
@@ -1969,16 +1959,7 @@ export class Display extends EventDispatcher {
                     resolve();
                 }
             });
-        });
-    }
-
-    /** */
-    async _closeTab() {
-        const tab = await this._getCurrentTab();
-        if (tab === null) { return; }
-        const tabId = tab.id;
-        if (typeof tabId === 'undefined') { return; }
-        await this._removeTab(tabId);
+        }));
     }
 
     /** */
@@ -1996,26 +1977,6 @@ export class Display extends EventDispatcher {
         if (!Number.isFinite(count)) { count = 1; }
         count = Math.max(0, Math.floor(count));
         this._focusEntry(this._index + count * sign, 0, true);
-    }
-
-    /**
-     * @param {number} direction
-     */
-    async _setProfile(direction) {
-        const optionsFull = await this.application.api.optionsGetFull();
-
-        const profileCount = optionsFull.profiles.length;
-        const newProfile = (optionsFull.profileCurrent + direction + profileCount) % profileCount;
-
-        /** @type {import('settings-modifications').ScopedModificationSet} */
-        const modification = {
-            action: 'set',
-            path: 'profileCurrent',
-            value: newProfile,
-            scope: 'global',
-            optionsContext: null
-        };
-        await this.application.api.modifySettings([modification], 'search');
     }
 
     /** */
@@ -2053,7 +2014,8 @@ export class Display extends EventDispatcher {
             }
         }
 
-        log.log(result);
+        // eslint-disable-next-line no-console
+        console.log(result);
     }
 
     /** */

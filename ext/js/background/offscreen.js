@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2016-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,10 +16,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import * as wanakana from '../../lib/wanakana.js';
 import {ClipboardReader} from '../comm/clipboard-reader.js';
 import {createApiMap, invokeApiMapHandler} from '../core/api-map.js';
-import {arrayBufferToBase64} from '../data/array-buffer-util.js';
+import {ArrayBufferUtil} from '../data/sandbox/array-buffer-util.js';
 import {DictionaryDatabase} from '../dictionary/dictionary-database.js';
+import {JapaneseUtil} from '../language/sandbox/japanese-util.js';
 import {Translator} from '../language/translator.js';
 
 /**
@@ -31,19 +33,25 @@ export class Offscreen {
      * Creates a new instance.
      */
     constructor() {
+        /** @type {JapaneseUtil} */
+        this._japaneseUtil = new JapaneseUtil(wanakana);
         /** @type {DictionaryDatabase} */
         this._dictionaryDatabase = new DictionaryDatabase();
         /** @type {Translator} */
-        this._translator = new Translator(this._dictionaryDatabase);
+        this._translator = new Translator({
+            japaneseUtil: this._japaneseUtil,
+            database: this._dictionaryDatabase
+        });
         /** @type {ClipboardReader} */
-        this._clipboardReader = new ClipboardReader(
-            (typeof document === 'object' && document !== null ? document : null),
-            '#clipboard-paste-target',
-            '#clipboard-rich-content-paste-target'
-        );
+        this._clipboardReader = new ClipboardReader({
+            // eslint-disable-next-line no-undef
+            document: (typeof document === 'object' && document !== null ? document : null),
+            pasteTargetSelector: '#clipboard-paste-target',
+            richContentPasteTargetSelector: '#clipboard-rich-content-paste-target'
+        });
 
 
-        /* eslint-disable @stylistic/no-multi-spaces */
+        /* eslint-disable no-multi-spaces */
         /** @type {import('offscreen').ApiMap} */
         this._apiMap = createApiMap([
             ['clipboardGetTextOffscreen',    this._getTextHandler.bind(this)],
@@ -59,7 +67,7 @@ export class Offscreen {
             ['getTermFrequenciesOffscreen',  this._getTermFrequenciesHandler.bind(this)],
             ['clearDatabaseCachesOffscreen', this._clearDatabaseCachesHandler.bind(this)]
         ]);
-        /* eslint-enable @stylistic/no-multi-spaces */
+        /* eslint-enable no-multi-spaces */
 
         /** @type {?Promise<void>} */
         this._prepareDatabasePromise = null;
@@ -107,12 +115,13 @@ export class Offscreen {
     /** @type {import('offscreen').ApiHandler<'databaseGetMediaOffscreen'>} */
     async _getMediaHandler({targets}) {
         const media = await this._dictionaryDatabase.getMedia(targets);
-        return media.map((m) => ({...m, content: arrayBufferToBase64(m.content)}));
+        const serializedMedia = media.map((m) => ({...m, content: ArrayBufferUtil.arrayBufferToBase64(m.content)}));
+        return serializedMedia;
     }
 
     /** @type {import('offscreen').ApiHandler<'translatorPrepareOffscreen'>} */
-    _prepareTranslatorHandler() {
-        this._translator.prepare();
+    _prepareTranslatorHandler({deinflectionReasons}) {
+        this._translator.prepare(deinflectionReasons);
     }
 
     /** @type {import('offscreen').ApiHandler<'findKanjiOffscreen'>} */

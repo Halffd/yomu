@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2020-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,18 +16,17 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {getFileExtensionFromImageMediaType} from '../media/media-util.js';
+import {MediaUtil} from '../media/media-util.js';
 
 /**
  * Class which can read text and images from the clipboard.
  */
 export class ClipboardReader {
     /**
-     * @param {?Document} document
-     * @param {?string} pasteTargetSelector
-     * @param {?string} richContentPasteTargetSelector
+     * Creates a new instances of a clipboard reader.
+     * @param {{document: ?Document, pasteTargetSelector: ?string, richContentPasteTargetSelector: ?string}} details Details about how to set up the instance.
      */
-    constructor(document, pasteTargetSelector, richContentPasteTargetSelector) {
+    constructor({document = null, pasteTargetSelector = null, richContentPasteTargetSelector = null}) {
         /** @type {?Document} */
         this._document = document;
         /** @type {?import('environment').Browser} */
@@ -131,7 +130,7 @@ export class ClipboardReader {
 
             for (const item of items) {
                 for (const type of item.types) {
-                    if (!getFileExtensionFromImageMediaType(type)) { continue; }
+                    if (!MediaUtil.getFileExtensionFromImageMediaType(type)) { continue; }
                     try {
                         const blob = await item.getType(type);
                         return await this._readFileAsDataURL(blob);

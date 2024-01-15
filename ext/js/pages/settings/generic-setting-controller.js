@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2020-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,7 +18,7 @@
 
 import {ExtensionError} from '../../core/extension-error.js';
 import {parseJson} from '../../core/json.js';
-import {convertElementValueToNumber} from '../../dom/document-util.js';
+import {DocumentUtil} from '../../dom/document-util.js';
 import {DOMDataBinder} from '../../dom/dom-data-binder.js';
 
 export class GenericSettingController {
@@ -31,13 +31,13 @@ export class GenericSettingController {
         /** @type {import('settings-modifications').OptionsScopeType} */
         this._defaultScope = 'profile';
         /** @type {DOMDataBinder<import('generic-setting-controller').ElementMetadata>} */
-        this._dataBinder = new DOMDataBinder(
-            '[data-setting]',
-            this._createElementMetadata.bind(this),
-            this._compareElementMetadata.bind(this),
-            this._getValues.bind(this),
-            this._setValues.bind(this)
-        );
+        this._dataBinder = new DOMDataBinder({
+            selector: '[data-setting]',
+            createElementMetadata: this._createElementMetadata.bind(this),
+            compareElementMetadata: this._compareElementMetadata.bind(this),
+            getValues: this._getValues.bind(this),
+            setValues: this._setValues.bind(this)
+        });
         /** @type {Map<import('generic-setting-controller').TransformType, import('generic-setting-controller').TransformFunction>} */
         this._transforms = new Map(/** @type {[key: import('generic-setting-controller').TransformType, value: import('generic-setting-controller').TransformFunction][]} */ ([
             ['setAttribute', this._setAttribute.bind(this)],
@@ -66,7 +66,7 @@ export class GenericSettingController {
 
     /** */
     _onOptionsChanged() {
-        void this._dataBinder.refresh();
+        this._dataBinder.refresh();
     }
 
     /**
@@ -328,7 +328,7 @@ export class GenericSettingController {
     _toNumber(value, data) {
         /** @type {import('document-util').ToNumberConstraints} */
         const constraints = typeof data.constraints === 'object' && data.constraints !== null ? data.constraints : {};
-        return typeof value === 'string' ? convertElementValueToNumber(value, constraints) : 0;
+        return typeof value === 'string' ? DocumentUtil.convertElementValueToNumber(value, constraints) : 0;
     }
 
     /**

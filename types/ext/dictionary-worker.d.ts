@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -59,12 +59,12 @@ export type MessageGetImageDetailsParams = {
 export type MessageData<TResponseRaw = unknown> = MessageCompleteData<TResponseRaw> | MessageProgressData | MessageGetImageDetailsData;
 
 export type MessageCompleteResultSerialized = {
-    result: DictionaryImporter.Summary | null;
+    result: DictionaryImporter.Summary;
     errors: Core.SerializedError[];
 };
 
 export type MessageCompleteResult = {
-    result: DictionaryImporter.Summary | null;
+    result: DictionaryImporter.Summary;
     errors: Error[];
 };
 

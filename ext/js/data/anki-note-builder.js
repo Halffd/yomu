@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2020-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,23 +16,23 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {deferPromise} from '../core.js';
 import {ExtensionError} from '../core/extension-error.js';
-import {deferPromise} from '../core/utilities.js';
-import {convertHiraganaToKatakana, convertKatakanaToHiragana} from '../language/ja/japanese.js';
-import {cloneFieldMarkerPattern, getRootDeckName} from './anki-util.js';
+import {yomitan} from '../yomitan.js';
+import {AnkiUtil} from './anki-util.js';
 
 export class AnkiNoteBuilder {
     /**
      * Initiate an instance of AnkiNoteBuilder.
-     * @param {import('anki-note-builder').MinimalApi} api
-     * @param {import('../templates/template-renderer-proxy.js').TemplateRendererProxy|import('../templates/template-renderer.js').TemplateRenderer} templateRenderer
+     * @param {import('../language/sandbox/japanese-util.js').JapaneseUtil} japaneseUtil
+     * @param {import('../templates/template-renderer-proxy.js').TemplateRendererProxy|import('../templates/sandbox/template-renderer.js').TemplateRenderer} templateRenderer
      */
-    constructor(api, templateRenderer) {
-        /** @type {import('anki-note-builder').MinimalApi} */
-        this._api = api;
+    constructor(japaneseUtil, templateRenderer) {
+        /** @type {import('../language/sandbox/japanese-util.js').JapaneseUtil} */
+        this._japaneseUtil = japaneseUtil;
         /** @type {RegExp} */
-        this._markerPattern = cloneFieldMarkerPattern(true);
-        /** @type {import('../templates/template-renderer-proxy.js').TemplateRendererProxy|import('../templates/template-renderer.js').TemplateRenderer} */
+        this._markerPattern = AnkiUtil.cloneFieldMarkerPattern(true);
+        /** @type {import('../templates/template-renderer-proxy.js').TemplateRendererProxy|import('../templates/sandbox/template-renderer.js').TemplateRenderer} */
         this._templateRenderer = templateRenderer;
         /** @type {import('anki-note-builder').BatchedRequestGroup[]} */
         this._batchedRequests = [];
@@ -54,6 +54,7 @@ export class AnkiNoteBuilder {
         fields,
         tags = [],
         requirements = [],
+        checkForDuplicates = true,
         duplicateScope = 'collection',
         duplicateScopeCheckAllModels = false,
         resultOutputMode = 'split',
@@ -65,7 +66,7 @@ export class AnkiNoteBuilder {
         let duplicateScopeCheckChildren = false;
         if (duplicateScope === 'deck-root') {
             duplicateScope = 'deck';
-            duplicateScopeDeckName = getRootDeckName(deckName);
+            duplicateScopeDeckName = AnkiUtil.getRootDeckName(deckName);
             duplicateScopeCheckChildren = true;
         }
 
@@ -88,7 +89,6 @@ export class AnkiNoteBuilder {
         }
 
         const formattedFieldValues = await Promise.all(formattedFieldValuePromises);
-        /** @type {Map<string, import('anki-note-builder').Requirement>} */
         const uniqueRequirements = new Map();
         /** @type {import('anki').NoteFields} */
         const noteFields = {};
@@ -111,7 +111,7 @@ export class AnkiNoteBuilder {
             deckName,
             modelName,
             options: {
-                allowDuplicate: true,
+                allowDuplicate: !checkForDuplicates,
                 duplicateScope,
                 duplicateScopeOptions: {
                     deckName: duplicateScopeDeckName,
@@ -286,7 +286,7 @@ export class AnkiNoteBuilder {
     _runBatchedRequestsDelayed() {
         if (this._batchedRequestsQueued) { return; }
         this._batchedRequestsQueued = true;
-        void Promise.resolve().then(() => {
+        Promise.resolve().then(() => {
             this._batchedRequestsQueued = false;
             this._runBatchedRequests();
         });
@@ -322,7 +322,7 @@ export class AnkiNoteBuilder {
 
         this._batchedRequests.length = 0;
 
-        void this._resolveBatchedRequests(items, allRequests);
+        this._resolveBatchedRequests(items, allRequests);
     }
 
     /**
@@ -433,7 +433,7 @@ export class AnkiNoteBuilder {
 
         // Inject media
         const selectionText = injectSelectionText ? this._getSelectionText() : null;
-        const injectedMedia = await this._api.injectAnkiNoteMedia(
+        const injectedMedia = await yomitan.api.injectAnkiNoteMedia(
             timestamp,
             dictionaryEntryDetails,
             audioDetails,
@@ -485,7 +485,7 @@ export class AnkiNoteBuilder {
     async _getTextFurigana(entries, optionsContext, scanLength) {
         const results = [];
         for (const {text, readingMode} of entries) {
-            const parseResults = await this._api.parseText(text, optionsContext, scanLength, true, false);
+            const parseResults = await yomitan.api.parseText(text, optionsContext, scanLength, true, false);
             let data = null;
             for (const {source, content} of parseResults) {
                 if (source !== 'scanning-parser') { continue; }
@@ -530,9 +530,9 @@ export class AnkiNoteBuilder {
     _convertReading(reading, readingMode) {
         switch (readingMode) {
             case 'hiragana':
-                return convertKatakanaToHiragana(reading);
+                return this._japaneseUtil.convertKatakanaToHiragana(reading);
             case 'katakana':
-                return convertHiraganaToKatakana(reading);
+                return this._japaneseUtil.convertHiraganaToKatakana(reading);
             default:
                 return reading;
         }

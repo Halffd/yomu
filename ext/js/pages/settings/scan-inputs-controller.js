@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2020-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,9 +16,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {EventListenerCollection} from '../../core/event-listener-collection.js';
-import {normalizeModifier} from '../../dom/document-util.js';
+import {EventListenerCollection} from '../../core.js';
+import {DocumentUtil} from '../../dom/document-util.js';
 import {querySelectorNotNull} from '../../dom/query-selector.js';
+import {yomitan} from '../../yomitan.js';
 import {KeyboardMouseInputField} from './keyboard-mouse-input-field.js';
 
 export class ScanInputsController {
@@ -42,7 +43,7 @@ export class ScanInputsController {
 
     /** */
     async prepare() {
-        const {platform: {os}} = await this._settingsController.application.api.getEnvironmentInfo();
+        const {platform: {os}} = await yomitan.api.getEnvironmentInfo();
         this._os = os;
 
         this._scanningInputCountNodes = /** @type {NodeListOf<HTMLElement>} */ (document.querySelectorAll('.scanning-input-count'));
@@ -51,7 +52,7 @@ export class ScanInputsController {
         this._settingsController.on('scanInputsChanged', this._onScanInputsChanged.bind(this));
         this._settingsController.on('optionsChanged', this._onOptionsChanged.bind(this));
 
-        await this.refresh();
+        this.refresh();
     }
 
     /**
@@ -67,7 +68,7 @@ export class ScanInputsController {
             this._entries[i].index = i;
         }
         this._updateCounts();
-        void this._modifyProfileSettings([{
+        this._modifyProfileSettings([{
             action: 'splice',
             path: 'scanning.inputs',
             start: index,
@@ -113,7 +114,7 @@ export class ScanInputsController {
      */
     _onScanInputsChanged({source}) {
         if (source === this) { return; }
-        void this.refresh();
+        this.refresh();
     }
 
     /**
@@ -144,7 +145,7 @@ export class ScanInputsController {
         const scanningInput = ScanInputsController.createDefaultMouseInput('', '');
         this._addOption(index, scanningInput);
         this._updateCounts();
-        void this._modifyProfileSettings([{
+        this._modifyProfileSettings([{
             action: 'splice',
             path: 'scanning.inputs',
             start: index,
@@ -208,9 +209,8 @@ export class ScanInputsController {
                 showAdvanced: false,
                 searchTerms: true,
                 searchKanji: true,
-                scanOnTouchTap: true,
-                scanOnTouchMove: false,
-                scanOnTouchPress: false,
+                scanOnTouchMove: true,
+                scanOnTouchPress: true,
                 scanOnTouchRelease: false,
                 scanOnPenMove: true,
                 scanOnPenHover: true,
@@ -316,7 +316,7 @@ class ScanInputField {
      */
     _onIncludeValueChange({modifiers}) {
         const modifiers2 = this._joinModifiers(modifiers);
-        void this._parent.setProperty(this._index, 'include', modifiers2, true);
+        this._parent.setProperty(this._index, 'include', modifiers2, true);
     }
 
     /**
@@ -324,7 +324,7 @@ class ScanInputField {
      */
     _onExcludeValueChange({modifiers}) {
         const modifiers2 = this._joinModifiers(modifiers);
-        void this._parent.setProperty(this._index, 'exclude', modifiers2, true);
+        this._parent.setProperty(this._index, 'exclude', modifiers2, true);
     }
 
     /**
@@ -407,7 +407,7 @@ class ScanInputField {
         if (this._node !== null) {
             this._node.dataset.showAdvanced = `${showAdvanced}`;
         }
-        void this._parent.setProperty(this._index, 'options.showAdvanced', showAdvanced, false);
+        this._parent.setProperty(this._index, 'options.showAdvanced', showAdvanced, false);
     }
 
     /**
@@ -418,7 +418,7 @@ class ScanInputField {
         /** @type {import('input').Modifier[]} */
         const results = [];
         for (const modifier of modifiersString.split(/[,;\s]+/)) {
-            const modifier2 = normalizeModifier(modifier.trim().toLowerCase());
+            const modifier2 = DocumentUtil.normalizeModifier(modifier.trim().toLowerCase());
             if (modifier2 === null) { continue; }
             results.push(modifier2);
         }

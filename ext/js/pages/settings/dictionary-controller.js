@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2020-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,10 +16,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {EventListenerCollection} from '../../core/event-listener-collection.js';
-import {log} from '../../core/log.js';
+import {EventListenerCollection, log} from '../../core.js';
 import {DictionaryWorker} from '../../dictionary/dictionary-worker.js';
 import {querySelectorNotNull} from '../../dom/query-selector.js';
+import {yomitan} from '../../yomitan.js';
 
 class DictionaryEntry {
     /**
@@ -149,7 +149,7 @@ class DictionaryEntry {
     _onEnabledChanged(e) {
         const {detail: {value}} = e;
         this._titleContainer.dataset.enabled = `${value}`;
-        void this._dictionaryController.updateDictionariesEnabled();
+        this._dictionaryController.updateDictionariesEnabled();
     }
 
     /** */
@@ -185,10 +185,6 @@ class DictionaryEntry {
         const partsOfSpeechFilterSetting = querySelectorNotNull(modal.node, '.dictionary-parts-of-speech-filter-setting');
         /** @type {HTMLElement} */
         const partsOfSpeechFilterToggle = querySelectorNotNull(partsOfSpeechFilterSetting, '.dictionary-parts-of-speech-filter-toggle');
-        /** @type {HTMLElement} */
-        const useDeinflectionsSetting = querySelectorNotNull(modal.node, '.dictionary-use-deinflections-setting');
-        /** @type {HTMLElement} */
-        const useDeinflectionsToggle = querySelectorNotNull(useDeinflectionsSetting, '.dictionary-use-deinflections-toggle');
 
         titleElement.textContent = title;
         versionElement.textContent = `rev.${revision}`;
@@ -197,9 +193,6 @@ class DictionaryEntry {
         wildcardSupportedElement.checked = prefixWildcardsSupported;
         partsOfSpeechFilterSetting.hidden = !counts.terms.total;
         partsOfSpeechFilterToggle.dataset.setting = `dictionaries[${this._index}].partsOfSpeechFilter`;
-
-        useDeinflectionsSetting.hidden = !counts.terms.total;
-        useDeinflectionsToggle.dataset.setting = `dictionaries[${this._index}].useDeinflections`;
 
         this._setupDetails(detailsTableElement);
 
@@ -211,14 +204,12 @@ class DictionaryEntry {
      * @returns {boolean}
      */
     _setupDetails(detailsTable) {
-        /** @type {[label: string, key: 'author'|'url'|'description'|'attribution'|'sourceLanguage'|'targetLanguage'][]} */
+        /** @type {[label: string, key: 'author'|'url'|'description'|'attribution'][]} */
         const targets = [
             ['Author', 'author'],
             ['URL', 'url'],
             ['Description', 'description'],
-            ['Attribution', 'attribution'],
-            ['Source Language', 'sourceLanguage'],
-            ['Target Language', 'targetLanguage']
+            ['Attribution', 'attribution']
         ];
 
         const dictionaryInfo = this._dictionaryInfo;
@@ -257,7 +248,7 @@ class DictionaryEntry {
      * @param {number} offset
      */
     _move(offset) {
-        void this._dictionaryController.moveDictionaryOptions(this._index, this._index + offset);
+        this._dictionaryController.moveDictionaryOptions(this._index, this._index + offset);
     }
 
     /**
@@ -438,7 +429,7 @@ export class DictionaryController {
         /** @type {HTMLButtonElement} */
         const dictionaryMoveButton = querySelectorNotNull(document, '#dictionary-move-button');
 
-        this._settingsController.application.on('databaseUpdated', this._onDatabaseUpdated.bind(this));
+        yomitan.on('databaseUpdated', this._onDatabaseUpdated.bind(this));
         this._settingsController.on('optionsChanged', this._onOptionsChanged.bind(this));
         this._allCheckbox.addEventListener('change', this._onAllCheckboxChange.bind(this), false);
         dictionaryDeleteButton.addEventListener('click', this._onDictionaryConfirmDelete.bind(this), false);
@@ -530,8 +521,7 @@ export class DictionaryController {
             enabled,
             allowSecondarySearches: false,
             definitionsCollapsible: 'not-collapsible',
-            partsOfSpeechFilter: true,
-            useDeinflections: true
+            partsOfSpeechFilter: true
         };
     }
 
@@ -550,7 +540,6 @@ export class DictionaryController {
             optionsFull = await settingsController.getOptionsFull();
         }
 
-        /** @type {Set<string>} */
         const installedDictionaries = new Set();
         for (const {title} of dictionaries) {
             installedDictionaries.add(title);
@@ -561,7 +550,7 @@ export class DictionaryController {
         const {profiles} = optionsFull;
         for (let i = 0, ii = profiles.length; i < ii; ++i) {
             let modified = false;
-            const missingDictionaries = new Set(installedDictionaries);
+            const missingDictionaries = new Set([...installedDictionaries]);
             const dictionaryOptionsArray = profiles[i].options.dictionaries;
             for (let j = dictionaryOptionsArray.length - 1; j >= 0; --j) {
                 const {name} = dictionaryOptionsArray[j];
@@ -601,7 +590,7 @@ export class DictionaryController {
     _onOptionsChanged({options}) {
         this._updateDictionariesEnabledWarnings(options);
         if (this._dictionaries !== null) {
-            void this._updateEntries();
+            this._updateEntries();
         }
     }
 
@@ -623,7 +612,7 @@ export class DictionaryController {
         const allCheckbox = /** @type {HTMLInputElement} */ (this._allCheckbox);
         const value = allCheckbox.checked;
         allCheckbox.checked = !value;
-        void this._setAllDictionariesEnabled(value);
+        this._setAllDictionariesEnabled(value);
     }
 
     /** */
@@ -721,7 +710,7 @@ export class DictionaryController {
         if (typeof title !== 'string') { return; }
         delete modal.node.dataset.dictionaryTitle;
 
-        void this._deleteDictionary(title);
+        this._deleteDictionary(title);
     }
 
     /**
@@ -729,7 +718,7 @@ export class DictionaryController {
      */
     _onCheckIntegrityButtonClick(e) {
         e.preventDefault();
-        void this._checkIntegrity();
+        this._checkIntegrity();
     }
 
     /** */
@@ -746,7 +735,7 @@ export class DictionaryController {
 
         if (!Number.isFinite(target) || !Number.isFinite(indexNumber) || indexNumber === target) { return; }
 
-        void this.moveDictionaryOptions(indexNumber, target);
+        this.moveDictionaryOptions(indexNumber, target);
     }
 
     /**
@@ -874,8 +863,8 @@ export class DictionaryController {
             const onProgress = ({processed, count, storeCount, storesProcesed}) => {
                 const percent = (
                     (count > 0 && storesProcesed > 0) ?
-                    (processed / count) * (storesProcesed / storeCount) * 100 :
-                    0
+                    (processed / count) * (storesProcesed / storeCount) * 100.0 :
+                    0.0
                 );
                 const cssString = `${percent}%`;
                 const statusString = `${percent.toFixed(0)}%`;
@@ -919,7 +908,7 @@ export class DictionaryController {
      */
     async _deleteDictionaryInternal(dictionaryTitle, onProgress) {
         await new DictionaryWorker().deleteDictionary(dictionaryTitle, onProgress);
-        void this._settingsController.application.api.triggerDatabaseUpdated('dictionary', 'delete');
+        yomitan.api.triggerDatabaseUpdated('dictionary', 'delete');
     }
 
     /**
@@ -949,7 +938,7 @@ export class DictionaryController {
 
     /** */
     _triggerStorageChanged() {
-        this._settingsController.application.triggerStorageChanged();
+        yomitan.triggerStorageChanged();
     }
 
     /** */

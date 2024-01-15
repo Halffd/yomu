@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2020-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,17 +16,18 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {yomitan} from '../yomitan.js';
 import {FrameAncestryHandler} from './frame-ancestry-handler.js';
 
 export class FrameOffsetForwarder {
     /**
-     * @param {import('../comm/cross-frame-api.js').CrossFrameAPI} crossFrameApi
+     * @param {number} frameId
      */
-    constructor(crossFrameApi) {
-        /** @type {import('../comm/cross-frame-api.js').CrossFrameAPI} */
-        this._crossFrameApi = crossFrameApi;
+    constructor(frameId) {
+        /** @type {number} */
+        this._frameId = frameId;
         /** @type {FrameAncestryHandler} */
-        this._frameAncestryHandler = new FrameAncestryHandler(crossFrameApi);
+        this._frameAncestryHandler = new FrameAncestryHandler(frameId);
     }
 
     /**
@@ -34,7 +35,7 @@ export class FrameOffsetForwarder {
      */
     prepare() {
         this._frameAncestryHandler.prepare();
-        this._crossFrameApi.registerHandlers([
+        yomitan.crossFrame.registerHandlers([
             ['frameOffsetForwarderGetChildFrameRect', this._onMessageGetChildFrameRect.bind(this)]
         ]);
     }
@@ -47,18 +48,15 @@ export class FrameOffsetForwarder {
             return [0, 0];
         }
 
-        const {frameId} = this._crossFrameApi;
-        if (frameId === null) { return null; }
-
         try {
             const ancestorFrameIds = await this._frameAncestryHandler.getFrameAncestryInfo();
 
-            let childFrameId = frameId;
+            let childFrameId = this._frameId;
             /** @type {Promise<?import('frame-offset-forwarder').ChildFrameRect>[]} */
             const promises = [];
-            for (const ancestorFrameId of ancestorFrameIds) {
-                promises.push(this._crossFrameApi.invoke(ancestorFrameId, 'frameOffsetForwarderGetChildFrameRect', {frameId: childFrameId}));
-                childFrameId = ancestorFrameId;
+            for (const frameId of ancestorFrameIds) {
+                promises.push(yomitan.crossFrame.invoke(frameId, 'frameOffsetForwarderGetChildFrameRect', {frameId: childFrameId}));
+                childFrameId = frameId;
             }
 
             const results = await Promise.all(promises);

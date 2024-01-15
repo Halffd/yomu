@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2019-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -133,10 +133,10 @@ export class ScrollElement {
      */
     _easeInOutCubic(t) {
         if (t < 0.5) {
-            return (4 * t * t * t);
+            return (4.0 * t * t * t);
         } else {
-            t = 1 - t;
-            return 1 - (4 * t * t * t);
+            t = 1.0 - t;
+            return 1.0 - (4.0 * t * t * t);
         }
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2020-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -28,9 +28,6 @@ function prepareWindow(window) {
 
     // Define innerText setter as an alias for textContent setter
     Object.defineProperty(window.HTMLDivElement.prototype, 'innerText', {
-        /** @returns {string} */
-        get() { return this.textContent; },
-        /** @param {string} value */
         set(value) { this.textContent = value; }
     });
 
@@ -46,13 +43,10 @@ function prepareWindow(window) {
 export async function setupDomTest(htmlFilePath) {
     const html = typeof htmlFilePath === 'string' ? fs.readFileSync(htmlFilePath, {encoding: 'utf8'}) : '<!DOCTYPE html>';
     const env = builtinEnvironments.jsdom;
-    const environment = await env.setup(global, {jsdom: {html}});
+    const {teardown} = await env.setup(global, {jsdom: {html}});
     const window = /** @type {import('jsdom').DOMWindow} */ (/** @type {unknown} */ (global.window));
     prepareWindow(window);
-    return {
-        window,
-        teardown: (global) => environment.teardown(global)
-    };
+    return {window, teardown};
 }
 
 /**
@@ -65,13 +59,13 @@ export function createDomTest(htmlFilePath) {
         // eslint-disable-next-line no-empty-pattern
         window: async ({}, use) => {
             const env = builtinEnvironments.jsdom;
-            const environment = await env.setup(global, {jsdom: {html}});
+            const {teardown} = await env.setup(global, {jsdom: {html}});
             const window = /** @type {import('jsdom').DOMWindow} */ (/** @type {unknown} */ (global.window));
             prepareWindow(window);
             try {
                 await use(window);
             } finally {
-                await environment.teardown(global);
+                teardown(global);
             }
         }
     });

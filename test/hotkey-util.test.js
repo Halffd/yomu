@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2020-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,12 +16,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+/* eslint-disable no-multi-spaces */
+
 import {describe, expect, test} from 'vitest';
 import {HotkeyUtil} from '../ext/js/input/hotkey-util.js';
 
-describe('HotkeyUtil', () => {
+/** */
+function testCommandConversions() {
     describe('CommandConversions', () => {
-        /* eslint-disable @stylistic/no-multi-spaces */
         /** @type {{os: import('environment').OperatingSystem, command: string, expectedCommand: string, expectedInput: {key: string, modifiers: import('input').Modifier[]}}[]} */
         const data = [
             {os: 'win', command: 'Alt+F', expectedCommand: 'Alt+F', expectedInput: {key: 'KeyF', modifiers: ['alt']}},
@@ -39,7 +41,6 @@ describe('HotkeyUtil', () => {
             {os: 'linux', command: 'MacCtrl+Alt+Shift+F1', expectedCommand: 'Ctrl+Alt+Shift+F1',    expectedInput: {key: 'F1', modifiers: ['ctrl', 'alt', 'shift']}},
             {os: 'linux', command: 'Command+Alt+Shift+F1', expectedCommand: 'Command+Alt+Shift+F1', expectedInput: {key: 'F1', modifiers: ['meta', 'alt', 'shift']}}
         ];
-        /* eslint-enable @stylistic/no-multi-spaces */
 
         const hotkeyUtil = new HotkeyUtil();
         for (const {command, os, expectedInput, expectedCommand} of data) {
@@ -52,9 +53,11 @@ describe('HotkeyUtil', () => {
             });
         }
     });
+}
 
+/** */
+function testDisplayNames() {
     describe('DisplayNames', () => {
-        /* eslint-disable @stylistic/no-multi-spaces */
         /** @type {{os: import('environment').OperatingSystem, key: ?string, modifiers: import('input').Modifier[], expected: string}[]} */
         const data = [
             {os: 'win', key: null,   modifiers: [], expected: ''},
@@ -133,7 +136,6 @@ describe('HotkeyUtil', () => {
             {os: 'unknown', key: 'KeyF', modifiers: ['mouse1'], expected: 'Mouse 1 + F'},
             {os: 'unknown', key: 'F1',   modifiers: ['mouse1'], expected: 'Mouse 1 + F1'}
         ];
-        /* eslint-enable @stylistic/no-multi-spaces */
 
         const hotkeyUtil = new HotkeyUtil();
 
@@ -143,7 +145,10 @@ describe('HotkeyUtil', () => {
             expect(displayName).toStrictEqual(expected);
         });
     });
+}
 
+/** */
+function testSortModifiers() {
     describe('SortModifiers', () => {
         /** @type {{modifiers: import('input').Modifier[], expected: import('input').Modifier[]}[]} */
         const data = [
@@ -153,11 +158,21 @@ describe('HotkeyUtil', () => {
 
         const hotkeyUtil = new HotkeyUtil();
         for (const {modifiers, expected} of data) {
-            test(`[${modifiers.join(',')}] -> [${expected.join(',')}]`, () => {
+            test(`[${modifiers}] -> [${expected}]`, () => {
                 const modifiers2 = hotkeyUtil.sortModifiers(modifiers);
                 expect(modifiers2).toStrictEqual(modifiers);
                 expect(modifiers2).toStrictEqual(expected);
             });
         }
     });
-});
+}
+
+
+/** */
+function main() {
+    testCommandConversions();
+    testDisplayNames();
+    testSortModifiers();
+}
+
+main();

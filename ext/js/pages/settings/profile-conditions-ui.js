@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2020-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,9 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {EventDispatcher} from '../../core/event-dispatcher.js';
-import {EventListenerCollection} from '../../core/event-listener-collection.js';
-import {normalizeModifier} from '../../dom/document-util.js';
+import {EventDispatcher, EventListenerCollection} from '../../core.js';
+import {DocumentUtil} from '../../dom/document-util.js';
 import {querySelectorNotNull} from '../../dom/query-selector.js';
 import {KeyboardMouseInputField} from './keyboard-mouse-input-field.js';
 
@@ -51,7 +50,7 @@ export class ProfileConditionsUI extends EventDispatcher {
         const normalizeInteger = this._normalizeInteger.bind(this);
         const validateFlags = this._validateFlags.bind(this);
         const normalizeFlags = this._normalizeFlags.bind(this);
-        /* eslint-disable @stylistic/no-multi-spaces */
+        /* eslint-disable no-multi-spaces */
         /** @type {Map<import('profile-conditions-ui').DescriptorType, import('profile-conditions-ui').Descriptor>} */
         this._descriptors = new Map([
             [
@@ -107,7 +106,7 @@ export class ProfileConditionsUI extends EventDispatcher {
                 }
             ]
         ]);
-        /* eslint-enable @stylistic/no-multi-spaces */
+        /* eslint-enable no-multi-spaces */
         /** @type {Set<string>} */
         this._validFlags = new Set([
             'clipboard'
@@ -266,7 +265,7 @@ export class ProfileConditionsUI extends EventDispatcher {
             this._children[i].index = i;
         }
 
-        void this.settingsController.modifyGlobalSettings([{
+        this.settingsController.modifyGlobalSettings([{
             action: 'splice',
             path: this.getPath('conditionGroups'),
             start: index,
@@ -333,7 +332,7 @@ export class ProfileConditionsUI extends EventDispatcher {
 
         this._addConditionGroup(conditionGroup, index);
 
-        void this.settingsController.modifyGlobalSettings([{
+        this.settingsController.modifyGlobalSettings([{
             action: 'splice',
             path: this.getPath('conditionGroups'),
             start: index,
@@ -543,7 +542,7 @@ class ProfileConditionGroupUI {
             this._children[i].index = i;
         }
 
-        void this.settingsController.modifyGlobalSettings([{
+        this.settingsController.modifyGlobalSettings([{
             action: 'splice',
             path: this.getPath('conditions'),
             start: index,
@@ -581,7 +580,7 @@ class ProfileConditionGroupUI {
 
         this._addCondition(condition, index);
 
-        void this.settingsController.modifyGlobalSettings([{
+        this.settingsController.modifyGlobalSettings([{
             action: 'splice',
             path: this.getPath('conditions'),
             start: index,
@@ -714,7 +713,7 @@ class ProfileConditionUI {
         const element = /** @type {HTMLSelectElement} */ (e.currentTarget);
         const type = ProfileConditionsUI.normalizeProfileConditionType(element.value);
         if (type === null) { return; }
-        void this._setType(type);
+        this._setType(type);
     }
 
     /**
@@ -725,7 +724,7 @@ class ProfileConditionUI {
         const type = ProfileConditionsUI.normalizeProfileConditionType(this._typeInput.value);
         if (type === null) { return; }
         const operator = element.value;
-        void this._setOperator(type, operator);
+        this._setOperator(type, operator);
     }
 
     /**
@@ -740,7 +739,7 @@ class ProfileConditionUI {
         if (okay) {
             const normalizedValue = this._normalizeValue(value, normalize);
             node.value = normalizedValue;
-            void this.settingsController.setGlobalSetting(this.getPath('value'), normalizedValue);
+            this.settingsController.setGlobalSetting(this.getPath('value'), normalizedValue);
         }
     }
 
@@ -754,7 +753,7 @@ class ProfileConditionUI {
         this._value = modifiers;
         if (okay) {
             const normalizedValue = this._normalizeValue(modifiers, normalize);
-            void this.settingsController.setGlobalSetting(this.getPath('value'), normalizedValue);
+            this.settingsController.setGlobalSetting(this.getPath('value'), normalizedValue);
         }
     }
 
@@ -782,7 +781,7 @@ class ProfileConditionUI {
                 this._parent.removeSelf();
                 break;
             case 'resetValue':
-                void this._resetValue();
+                this._resetValue();
                 break;
         }
     }
@@ -941,7 +940,7 @@ class ProfileConditionUI {
         /** @type {import('input').Modifier[]} */
         const results = [];
         for (const item of modifiersString.split(/[,;\s]+/)) {
-            const modifier = normalizeModifier(item.trim().toLowerCase());
+            const modifier = DocumentUtil.normalizeModifier(item.trim().toLowerCase());
             if (modifier !== null) { results.push(modifier); }
         }
         return results;

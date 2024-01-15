@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,6 +15,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import type {DisplayContentManager} from '../../ext/js/display/display-content-manager';
+import type {HotkeyHelpController} from '../../ext/js/input/hotkey-help-controller';
+import type {JapaneseUtil} from '../../ext/js/language/sandbox/japanese-util';
 import type * as Dictionary from './dictionary';
 import type * as Extension from './extension';
 import type * as Settings from './settings';
@@ -123,13 +126,17 @@ export type SearchMode = null | 'popup' | 'action-popup';
 
 export type GetSearchContextCallback = TextScannerTypes.GetSearchContextCallbackSync;
 
+export type QueryParserConstructorDetails = {
+    getSearchContext: GetSearchContextCallback;
+    japaneseUtil: JapaneseUtil;
+};
+
 export type QueryParserOptions = {
     selectedParser: string | null;
     termSpacing: boolean;
     readingMode: Settings.ParsingReadingMode;
     useInternalParser: boolean;
     useMecabParser: boolean;
-    language: string;
     scanning: TextScannerTypes.Options;
 };
 
@@ -160,6 +167,12 @@ export type Events = {
 };
 
 export type EventArgument<TName extends EventNames<Events>> = BaseEventArgument<Events, TName>;
+
+export type DisplayGeneratorConstructorDetails = {
+    japaneseUtil: JapaneseUtil;
+    contentManager: DisplayContentManager;
+    hotkeyHelpController?: HotkeyHelpController | null;
+};
 
 // Direct API
 

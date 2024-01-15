@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023  Yomitan Authors
  * Copyright (C) 2020-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,17 +16,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {log} from '../core/log.js';
-import {WebExtension} from '../extension/web-extension.js';
+import {yomitan} from '../yomitan.js';
 import {Backend} from './backend.js';
 
 /** Entry point. */
 async function main() {
-    const webExtension = new WebExtension();
-    log.configure(webExtension.extensionName);
+    yomitan.prepare(true);
 
-    const backend = new Backend(webExtension);
+    const backend = new Backend();
     await backend.prepare();
 }
 
-void main();
+main();
