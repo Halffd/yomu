@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import * as wanakana from '../../lib/wanakana.js';
+import * as wanakana from '../../lib/wanakana/esm';
 import {log} from '../core.js';
 import {DocumentFocusController} from '../dom/document-focus-controller.js';
 import {HotkeyHandler} from '../input/hotkey-handler.js';
@@ -28,11 +28,22 @@ import {Display} from './display.js';
 import {SearchActionPopupController} from './search-action-popup-controller.js';
 import {SearchDisplayController} from './search-display-controller.js';
 import {SearchPersistentStateController} from './search-persistent-state-controller.js';
-
-var aDict
-var aNote
-var sv
-var japaneseUtil
+import {AnkiController} from '../pages/settings/anki-controller.js';
+import {SettingsController} from '../pages/settings/settings-controller.js';
+import {Mecab} from '../comm/mecab.js';
+import {aDict} from '../mod/aDict.js';
+import {Note} from '../mod/aNote.js';
+/**
+ * @type {aDict}
+ */
+let aD;
+let aN;
+/* eslint-disable */
+let sv;
+let japaneseUtil;
+/**
+ *
+ */
 async function main() {
     try {
         const documentFocusController = new DocumentFocusController('#search-textbox');
@@ -48,15 +59,16 @@ async function main() {
 
         const {tabId, frameId} = await yomitan.api.frameInformationGet();
 
-        const japaneseUtil = new JapaneseUtil(wanakana);
+        japaneseUtil = new JapaneseUtil(wanakana);
 
         const hotkeyHandler = new HotkeyHandler();
         hotkeyHandler.prepare();
-        var control
+        let control;
         try {
-            control = new AnkiController(null)
+            const settingsController = new SettingsController();
+            control = new AnkiController(settingsController);
         } catch {
-            control = null
+            control = null;
         }
         //        control.prepare()
 
@@ -70,14 +82,16 @@ async function main() {
         displayAnki.prepare();
 
         const mecab = new Mecab();
-        aNote = new Note()
-        aDict = new Dict(display, displayAudio, japaneseUtil, displayAnki, control, mecab);
-        aNote.dic = aDict.util
-        aNote.anki = displayAnki
-        aNote.aDict = aDict
-        sv = aNote.svClk.bind(aNote)
-        display.setDict(aDict)
-        const searchDisplayController = new SearchDisplayController(tabId, frameId, display, displayAudio, japaneseUtil, searchPersistentStateController, aDict);
+        aN = new Note();
+        if (display) {
+            aD = new aDict(display, displayAudio, japaneseUtil, displayAnki, control, mecab);
+            aN.dic = aD.util;
+            aN.anki = displayAnki;
+            aN.aDict = aD;
+            sv = aN.svClk.bind(aN);
+            display.setDict(aD);
+        }
+        const searchDisplayController = new SearchDisplayController(tabId, frameId, display, displayAudio, japaneseUtil, searchPersistentStateController);
         await searchDisplayController.prepare();
 
         display.initializeState();
