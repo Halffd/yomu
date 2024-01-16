@@ -22,3 +22,4 @@ ext/legal-npm.html
 .firebase
 
 /js/admin/
+ext/js/admin/key.json

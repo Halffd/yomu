@@ -611,6 +611,137 @@ export class DisplayAnki {
                         } catch (error) {
                             console.error('Error reading file:', error);
                         }
+                        // console.log(run, document.URL);
+                        if (dict < 0 && (!run || !(document.URL.includes('search.html') && document.URL.includes('chrome-extension')))) {
+                            note.fields.ExtraDefinitions += this.getText();
+                            // this._display._copyText(note.fields['Key']);
+                        }
+                        if (o) {
+                            note.fields.Sentence = o.st;
+                        }
+                        try {
+                            const y = note.fields.Key;
+                            const RGEX_CHINESE = new RegExp(/[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]/);
+                            const iji = RGEX_CHINESE.test(y);
+                            let kx = 0;
+                            const de = document.createElement('div');
+                            de.insertAdjacentHTML('afterbegin', '<div class="dd" style="border: 2px solid rgb(20,100,10)"></div><div class="df" style="border: 1px solid rgb(60,45,45)"></div>');
+                            let dd = '';
+                            let df = '';
+                            if (iji && y.length >= 1) {
+                                for (const i in y.split('')) {
+                                    if (RGEX_CHINESE.test(y[i])) {
+                                        dd += `<span style="font-size: 1.75em">${y[i]}</span>`;
+                                        df += `<span style="font-size: 1.75em">${y[i]}</span>`;
+                                        const result = await this._display._findDictionaryEntries(true, y[i], true, this._display.getOptionsContext());
+                                        console.dir(result);
+                                        let kym = '';
+                                        let oym = '';
+                                        for (const d in result) {
+                                            if (result[d].dictionary.includes('KANJIDIC')) {
+                                                try {
+                                                    dd += `<div>Onyomi: ${result[kx].kunyomi.join(' ')}</br>Kunyomi: ${result[kx].onyomi.join(' ')}</br>${result[kx].definitions.join(', ')}</div>`;
+                                                } catch (error) {
+                                                    console.log(error);
+                                                }
+                                                kx += 1;
+                                            } else {
+                                                try {
+                                                    kym = result[d].kunyomi.length > 0 ? `Onyomi: ${result[d].kunyomi.join(' ')}</br>` : '';
+                                                    oym = result[d].onyomi.length > 0 ? `Kunyomi: ${result[d].onyomi.join(' ')}</br>` : '';
+                                                    df += `<div>${kym}${oym}${result[d].definitions.join(', ')}</div>`;
+                                                } catch (error) {
+                                                    console.log(error);
+                                                }
+                                                kx += 1;
+                                            }
+                                        }
+                                        // elem.querySelector('dd').innerHTML += `<li>${o}</li>`
+                                    }
+                                }
+                            }
+                            if (de) {
+                                const [dde, dfe] = [de.querySelector('.dd'), de.querySelector('.df')];
+                                if (dde) {
+                                    dde.innerHTML = dd;
+                                }
+                                if (dfe) {
+                                    dfe.innerHTML = df;
+                                }
+                                df = de.innerHTML;
+                                note.fields.ExtraDefinitions += df;
+                            }
+                        } catch (ne) {
+                            console.error(ne);
+                        }
+                        // this._display._copyHostSelection()
+                    } catch (noe) {
+                        console.warn(noe);
+                    }
+                    try {
+                        noteId = await yomitan.api.addAnkiNote(note);
+                        addNoteOkay = true;
+                    } catch (rr) {
+                        console.error(rr, note);
+                    }
+                    if (!noteId) {
+                        this._addAnkiNote(dictionaryEntryIndex, 'term-kana', dict, req);
+                        return;
+                    }
+                    try {
+                        const response = await fetch('sound.txt');
+                        const text = await response.text();
+                        const base64AudioData = text.trim(); // Assuming the Base64 string is the entire content of the file
+
+                        // Use the base64Data as needed
+                        // Convert the Base64 data to ArrayBuffer
+                        const binaryAudioData = window.atob(base64AudioData);
+                        const arrayBuffer = new ArrayBuffer(binaryAudioData.length);
+                        const view = new Uint8Array(arrayBuffer);
+                        for (let i = 0; i < binaryAudioData.length; i++) {
+                            view[i] = binaryAudioData.charCodeAt(i);
+                        }
+                        // Create an audio context
+                        const audioContext = new AudioContext();
+                        // Decode the audio data
+                        audioContext.decodeAudioData(arrayBuffer)
+                            .then((decodedData) => {
+                                // Create an audio buffer source
+                                const audioSource = audioContext.createBufferSource();
+
+                                // Set the audio buffer
+                                audioSource.buffer = decodedData;
+
+                                // Connect the audio source to the audio context destination
+                                audioSource.connect(audioContext.destination);
+
+                                // Start playing the audio
+                                audioSource.start();
+                            })
+                            .catch((error) => {
+                                console.error('Error decoding audio data:', error);
+                            });
+                    } catch (error) {
+                        console.error('Error reading file:', error);
+                    }
+                } catch (e) {
+                    allErrors.length = 0;
+                    allErrors.push(e instanceof Error ? e : new Error(`${e}`));
+                }
+
+                if (addNoteOkay) {
+                    if (noteId === null) {
+                        allErrors.push(new Error('Note could not be added'));
+                    } else {
+                        if (this._suspendNewCards) {
+                            try {
+                                await yomitan.api.suspendAnkiCardsForNote(noteId);
+                            } catch (e) {
+                                allErrors.push(e instanceof Error ? e : new Error(`${e}`));
+                            }
+                        }
+                        if (button && dict < 0) { button.disabled = true; }
+                        if (typeof dictionaryEntryIndex === 'number') { this._updateViewNoteButton(dictionaryEntryIndex, [noteId], true); }
                     }
                 } catch (e) {
                     allErrors.length = 0;
@@ -809,6 +940,19 @@ export class DisplayAnki {
             results.push({canAdd, valid, noteIds: null});
         }
         return results;
+    }
+    /**
+     * Retrieves the text from the clipboard.
+     * @returns {Promise<string>} A promise that resolves to the text from the clipboard.
+     */
+    async getText() {
+        try {
+            const clipboardText = await navigator.clipboard.readText();
+            return clipboardText;
+        } catch (error) {
+            console.error('Failed to read text from clipboard:', error);
+            return ''; // Return an empty string or handle the error as needed
+        }
     }
 
     /**

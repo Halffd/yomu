@@ -1,8 +1,16 @@
+/* eslint-disable */
 /* globals Dict, aDict, aNote, merge, aIn, wn */
-var nv = (v) => {
+import {aDict} from '../mod/aDict.js';
+
+var nv = (/** @type {string} */ v) => {
     return localStorage.getItem(v) == 'true'
 }
 // Function to apply the comparison operator to the value and targetValue
+/**
+ * @param {string | number} value
+ * @param {string} comparison
+ * @param {string | number} targetValue
+ */
 function applyComparison(value, comparison, targetValue) {
     // Check if the value can be parsed as a number
     if (!isNaN(parseFloat(value))) {
@@ -27,6 +35,10 @@ function applyComparison(value, comparison, targetValue) {
             throw new Error('Invalid comparison operator: ' + comparison);
     }
 }
+/**
+ * @param {string | number} value
+ * @param {any} conversion
+ */
 function time(value, conversion) {
     var date;
     var day, month, year, hours, minutes, seconds;
@@ -58,13 +70,25 @@ function time(value, conversion) {
         return timestamp;
     }
 }
-class Note {
+export class Note {
     constructor(u = null, dict = null, anki = null) {
+        /**
+         * @type {any}
+         */
         this.dic = u
+        /**
+         * @type {aDict | null}
+         */
         this.aDict = dict
+        /**
+         * @type {import("../display/display-anki").DisplayAnki | null}
+         */
         this.anki = anki
     }
 
+    /**
+     * @param {any[]} dic
+     */
     async addAnki(dic, kanji = '', kana = '', o = {}, q = 1, i = 0) {
         try {
             const req = [
@@ -97,6 +121,10 @@ class Note {
         }
     }
 
+    /**
+     * @param {any} word
+     * @param {any} sentence
+     */
     async create(
         word,
         sentence,
@@ -300,6 +328,9 @@ class Note {
         }
     }
 
+    /**
+     * @param {any} jsonData
+     */
     async setFileContents(jsonData) {
         try {
             const opts = {
@@ -327,6 +358,10 @@ class Note {
         }
     }
 
+    /**
+     * @param {string | undefined} t
+     * @param {string} txt
+     */
     async saveAdd(cx = 0, t, txt, def = '', fq = [], tags = [], html = '', moe = false, audio = [], image = [], clip = '', yc = false, read = '') {
         try {
             const log = {
@@ -463,7 +498,7 @@ class Note {
                 if (fq.length == 0) {
                     let sum = 0;
                     const frequencies = results[0].frequencies;
-                    frequencies.forEach((item) => {
+                    frequencies.forEach((/** @type {{ frequency: any; }} */ item) => {
                         //sum += item.frequencyValue;
                         if (nv('log')) console.log(item);
                         fq.push(item.frequency)
@@ -502,6 +537,9 @@ class Note {
         }
     }
 
+    /**
+     * @param {HTMLDivElement} saveDiv
+     */
     svDiv(saveDiv, sz = null, _flag = '', m = false) {
         if (!sz) {
             sz = localStorage.getItem('words') ?? ''
@@ -523,6 +561,9 @@ class Note {
     }
 
 
+    /**
+     * @param {{ innerHTML: any; querySelector: (arg0: string) => string; getAttribute: (arg0: string) => string; classList: { add: (arg0: string) => void; }; parentElement: { getAttribute: (arg0: string) => any; }; querySelectorAll: (arg0: string) => any; }} elem
+     */
     async svClk(elem, cx = 0, tw = '', tx = '', _yc = null, clip = '', img = [], snd = []) {
         const fq = []
         let df = ''
@@ -629,6 +670,10 @@ class Note {
         }
     }
 
+    /**
+     * @param {ArrayLike<any> | { [s: string]: any; }} obj
+     * @param {{ appendChild: (arg0: HTMLDivElement) => void; }} bo
+     */
     displayObjectInHTML(obj, bo) {
         // Create a container element
         const container = document.createElement('div')
@@ -661,6 +706,11 @@ class Note {
         // Append the container to the document body
         bo.appendChild(container)
     }
+    /**
+     * @param {string} type
+     * @param {any} value
+     * @param {any} comparison
+     */
     delete(type, value, comparison) {
         try {
             var a = localStorage.getItem("save");
@@ -733,6 +783,9 @@ class Note {
               return null;
             }
           }
+          /**
+             * @type {any[]}
+             */
           var result = [];
       
           for (var index in oc) {
@@ -789,6 +842,9 @@ class Note {
           return null;
         }
       }
+      /**
+     * @param {any} w
+     */
       getKey(w) {
         try {
             var a = localStorage.getItem("save");
@@ -804,6 +860,9 @@ class Note {
             return null;
         }
     }
+    /**
+     * @param {any} k
+     */
     move(k, pos = -1) {
         try {
             var a = localStorage.getItem("save");
@@ -823,6 +882,10 @@ class Note {
             console.error(error);
         }
     }
+    /**
+     * @param {{ [x: string]: any; } | null} obj
+     * @param {PropertyKey} key
+     */
     moveEnd(obj, key) {
         try {
             if (typeof obj !== 'object' || obj === null) {
@@ -865,6 +928,11 @@ class Note {
             throw error;
         }
     }
+    /**
+     * @param {{ [x: string]: any; }} obj
+     * @param {PropertyKey} key
+     * @param {number} newPosition
+     */
     movePos(obj, key, newPosition) {
         if (!Object.prototype.hasOwnProperty.call(obj, key)) {
             throw new Error('The provided key does not exist in the object.');
