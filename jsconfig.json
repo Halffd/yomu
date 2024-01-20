@@ -31,7 +31,7 @@
         "ext/**/*.js",
         "types/ext/**/*.ts",
         "types/other/globals.d.ts"
-, "temp/aDict copy 2.js", "temp/aDict copy.js"    ],
+, "temp/aDict copy 2.js", "temp/aDict copy.js", "ext/js/mod/aGlobal.js"    ],
     "exclude": [
         "node_modules",
         "ext/lib"

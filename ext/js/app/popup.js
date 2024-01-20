@@ -327,7 +327,9 @@ export class Popup extends EventDispatcher {
     async setContentScale(scale) {
         this._contentScale = scale;
         this._frame.style.fontSize = `${scale}px`;
-        await this._invokeSafe('displaySetContentScale', {scale});
+        try {
+            await this._invokeSafe('displaySetContentScale', {scale});
+        } catch { }
     }
 
     /**

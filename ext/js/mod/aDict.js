@@ -1,14 +1,17 @@
 /* eslint-disable */
 
 import {Display} from "../display/display.js";
-
+import {Analyze} from './aAnalyze.js';
+import {aAll, getWords, sortArrays, sort_by_property, aId, aModel, aDeck, aIn, aQuery, aTag, api, iDeck, iTag, isIndexInsideElement} from './aUtil.js';
 /* global aDict, Note, isIndexInsideElement, aDeck, aTag, aAll, aModel, api, aNote, sv, aQuery
 getWords, merge, unconjugate, japaneseUtil
 Analyze */
-let av = (/** @type {string} */ v) => {
+export function av(/** @type {string} */ v) {
   return localStorage.getItem(v) == 'true'
 }
-var wn = console.warn
+export var wn = console.warn
+// @ts-ignore
+var japaneseUtil
 /**
  * @type {any[]}
  */
@@ -38,6 +41,21 @@ var wa = () => {
   console.warn(...hiddenLogs, ...hiddenWarns)
   return [hiddenLogs, hiddenWarns]
 }
+export const inSearch = (id = 'run', page = 'search.html', ext = 'extension', noext = false) => {
+  try {
+    let run = false;
+    let pag = document.URL.includes(page) && (noext || document.URL.includes(ext))
+    if (pag) {
+      run = localStorage.getItem(id) === 'true';
+    }
+    if (!run || !(pag)) {
+      return true
+    }
+    return false
+  } catch (e) {
+    console.error(e);
+  }
+}
 // console.log = lg;console.warn = wr
 var rI = 0
 var tg
@@ -58,7 +76,7 @@ var ctg
  * @param {string} str
  * @param {string | any[]} tt
  */
-function replace(str, tt, rep = `<s>{}</s>`, reset = true, tgs = ['<sp','an>']) {
+function replace(str, tt, rep = `<s>{}</s>`, reset = true, tgs = ['<sp', 'an>']) {
   try {
     if (reset) rI = 0
     wn(str, tt)
@@ -68,7 +86,7 @@ function replace(str, tt, rep = `<s>{}</s>`, reset = true, tgs = ['<sp','an>']) 
     done = false
     tot = tt.length
     cur = 0
-    ctg = [0,0]
+    ctg = [0, 0]
     end = tot - 1
     pos = [-1, -1]
     res = ''
@@ -81,11 +99,11 @@ function replace(str, tt, rep = `<s>{}</s>`, reset = true, tgs = ['<sp','an>']) 
       if (c === tgs[0][ctg[0]]) {
         ctg[0] += 1
       }
-      if(ctg[0] >= tgs[0].length-1){
+      if (ctg[0] >= tgs[0].length - 1) {
         tg = true
         ctg[0] = 0
       }
-      if(ctg[1] >= tgs[1].length-1){
+      if (ctg[1] >= tgs[1].length - 1) {
         tg = false
         ctg[1] = 0
       }
@@ -116,7 +134,7 @@ function replace(str, tt, rep = `<s>{}</s>`, reset = true, tgs = ['<sp','an>']) 
         res = bef + rs + aft
         wn(i, rI, rs.length, tt.length, res.length)
         rI = pos[0] + rs.length;
-        wn({i: [i, res[i]],tt,replaceLen: [rs.length, res[rs.length]],rI: [rI, res[rI]],stoppedin: res[rI],searchLen: [tot, res[tot]],resLen: [res, res.length],calculatedLim: [rI+1, res[rI+1]],startEnd: pos,searchCur: cur})
+        wn({i: [i, res[i]], tt, replaceLen: [rs.length, res[rs.length]], rI: [rI, res[rI]], stoppedin: res[rI], searchLen: [tot, res[tot]], resLen: [res, res.length], calculatedLim: [rI + 1, res[rI + 1]], startEnd: pos, searchCur: cur})
         if (rs.length + rI - tt.length > res.length) {
           //rI = 0
         }
@@ -138,10 +156,10 @@ function readFileContents(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (event) => {
-      resolve(event.target.result);
+      resolve(event?.target?.result);
     };
     reader.onerror = (event) => {
-      reject(event.target.error);
+      reject(event?.target?.error);
     };
     reader.readAsText(file);
   });
@@ -150,16 +168,18 @@ export class aDict {
   /**
    * @param {import("../display/display.js").Display} display
    * @param {import("../display/display-audio.js").DisplayAudio} audio
-   * @param {import("../language/sandbox/japanese-util.js").JapaneseUtil} japaneseUtil
+   * @param {import("../language/sandbox/japanese-util.js").JapaneseUtil} jpu
    * @param {import("../display/display-anki.js").DisplayAnki} anki
    * @param {import("../pages/settings/anki-controller.js").AnkiController | null} control
    * @param {import("../comm/mecab.js").Mecab | null} mecab
+   * @param {import("./aNote.js").Note | null} note
    */
-  constructor(display, audio, japaneseUtil, anki, control, mecab = null, param = true) {
+  constructor(display, audio, jpu, anki, control, mecab = null, param = true, note) {
     this.search = param == true && display !== null
     this.param = param
     this.anki = anki
-    this.japaneseUtil = japaneseUtil
+    this.japaneseUtil = jpu
+    this.note = note
     // Set up the AnkiConnect server and enable the connection
     // api.server = 'http://localhost:8765';
     // api.enabled = true;
@@ -174,7 +194,7 @@ export class aDict {
       control,
       mecab,
       param,
-      japaneseUtil
+      jpu
     }
     mecab?.setEnabled(true)
     // Usage examples
@@ -184,18 +204,18 @@ export class aDict {
     // getNotesByTag('jp2');
 
     // Accessing the JSON data
+    japaneseUtil = jpu;
     this.upd = true
     this.util = util
     this.fl = true
     let tx
     let V
-    this.lmt = performance.memory.jsHeapSizeLimit * 75 / 100
     let prev
     this.first = true
     this.save = []
     this.stop = false
     this.clas = 'mns vis nav'
-    this.fval = parseInt(localStorage.getItem('freq'))
+    this.fval = parseInt(localStorage.getItem('freq') ?? '-1')
     const o = this.var
     let height
     let width
@@ -215,16 +235,16 @@ export class aDict {
     const rr = document.querySelector('.search-button')//('.search-option-pre-label')
     if (rr) {
       rr.textContent += ' |Enable|'
-      rr.onclick = (/** @type {{ stopPropagation: () => void; }} */ e) => {
+      rr.addEventListener('click', (e) => (/** @type {{ stopPropagation: () => void; }} */ e) => {
         e.stopPropagation()
-        localStorage.setItem('run', true)
+        localStorage.setItem('run', 'true')
         location.reload()
-      }
+      })
     }
     if (!this.var('run')) {
       return
     }
-    this.prt = parseInt(localStorage.getItem('prt')) ?? 4
+    this.prt = parseInt(localStorage.getItem('prt') ?? '4')
 
     var def
     var anm
@@ -251,7 +271,7 @@ export class aDict {
           let pops = getWords(pop.notes)
           const all = jpws // getWords(jp2.notes)
           const un = merge(local, jpws)
-          aN.svDiv(document.querySelector('.save'), un, undefined, true)
+          this.note.svDiv(document.querySelector('.save'), un, undefined, true)
           if (av('log')) console.log(anms.length, all.length, pops.length, jpmn.length, un.length)
           // Assuming 'all' is the array containing your data
 
@@ -557,7 +577,7 @@ this.txtImg(false)
       fft = false
     }
     try {
-      chrome.storage.sync.set({ save: 'myBody' }, function () {
+      chrome.storage.sync.set({save: 'myBody'}, function () {
         //  A data saved callback omg so fancy
       })
       chrome.storage.sync.get(/* String or Array */['yourBody'], function () {
@@ -764,6 +784,8 @@ this.txtImg(false)
           /**
            * @param {string} text
            */
+          let reg = new RegExp(`.{35,99999999999}`, 'g');
+          let reg2 = new RegExp(`^[A-Za-z]+$`, 'gm');
           function convertToSrt(text) {
             const lines = text.trim().split('\n');
             let srt = '';
@@ -780,7 +802,8 @@ this.txtImg(false)
                 srt += `${i + 1}\n00:${startTime.replace('.', ',')} --> 00:${endTime.replace('.', ',')}\n${content.trim()}\n\n`;
               }
             }
-
+            srt = srt.replace(reg, '')
+            srt = srt.replace(reg2, '')
             return srt.trim();
           }
           async function getTextFromClipboard() {
@@ -798,7 +821,7 @@ this.txtImg(false)
            * @param {BlobPart} text
            */
           function downloadFile(filename, text) {
-            const blob = new Blob([text], { type: 'text/plain' });
+            const blob = new Blob([text], {type: 'text/plain'});
             const url = URL.createObjectURL(blob);
 
             const link = document.createElement('a');
@@ -813,7 +836,7 @@ this.txtImg(false)
           }
           function getText() {
             const parent = document.body;
-            if (parent === null) { return; }
+            if (parent === null) {return;}
 
             let textarea = null;
             if (textarea === null) {
@@ -901,7 +924,8 @@ this.txtImg(false)
       if (ex) {
         ex.oncontextmenu = this.yomi
         ex.onclick = ex.ondblclick = () => {
-          window.open('chrome-extension://oocpecoaklhhaihpbkncpblbjncgdjmm/search.html', '_self')
+          const baseUrl = chrome.runtime.getURL('/search.html');
+          window.open(baseUrl, '_self')
         }
       }
       // this.wait().then(() => {
@@ -937,7 +961,7 @@ this.txtImg(false)
           return
         }
         const saveDiv = document.createElement('div')
-        aN.svDiv(saveDiv)
+        this.note.svDiv(saveDiv)
         saveDiv.classList.add('save') // Apply Material Design card style
         saveDiv.classList.add('mdc-card') // Apply Material Design card style
         saveDiv.style.fontFamily = 'Arial'
@@ -1060,7 +1084,8 @@ this.txtImg(false)
       qp.style.display = 'block'
       this.t.appendChild(qpc)
       this.analyze = new Analyze(this, this.t)
-      aA = this.analyze
+      var aA = this.analyze
+      this.iS = inSearch;
       if (av('log')) console.log(qpc);
       document.querySelector('#istart').value = this.istart
       document.querySelector('#istart').onchange = (/** @type {{ target: any; }} */ e) => {
@@ -1189,32 +1214,35 @@ this.txtImg(false)
           this.terms = []
           if (av('warn')) console.warn('slw---', spl[ii])
           this.lines.push(spl[ii])
-          let ptxt = document.createElement('div')
-          const ctxt = document.createElement('div')
-          ctxt.innerHTML = `<p>${spl[ii]}</p>`
-          ptxt.className = 'ptxt'
-          ptxt.appendChild(ctxt)
-          const htxt = document.createElement('div')
-          htxt.className = 'htxt'
-          htxt.innerHTML = spl[ii]
-          ptxt.appendChild(htxt)
-          ptxt.setAttribute('s', spl[ii])
-          ptxt.setAttribute('ii', ii)
-          ptxt.ondblclick = function (/** @type {{ stopPropagation: () => void; target: { closest: (arg0: string) => { (): any; new (): any; getAttribute: { (arg0: string): any; new (): any; }; }; }; }} */ e) {
-            e.stopPropagation()
-            const s = e.target.closest('.ptxt').getAttribute('s')
-            if (av('warn')) console.warn(s)
-            this._copyText(s)
-          }.bind(this)
-          ptxt.oncontextmenu = function (/** @type {{ stopPropagation: () => void; target: { closest: (arg0: string) => { (): any; new (): any; getAttribute: { (arg0: string): string; new (): any; }; }; }; }} */ e) {
-            e.stopPropagation()
-            let i = parseInt(e.target.closest('.ptxt').getAttribute('ii'))
-            let s = this.spl[0].slice(i).join('\n')
-            if (av('warn')) console.warn(s)
-            this._copyText(s)
-          }.bind(this)
-          this.modP.appendChild(ptxt)
-          ctxt.className = 'full sentence'
+          let ptx = () => {
+            let ptxt = document.createElement('div')
+            const ctxt = document.createElement('div')
+            ctxt.innerHTML = `<p>${spl[ii]}</p>`
+            ptxt.className = 'ptxt'
+            ptxt.appendChild(ctxt)
+            const htxt = document.createElement('div')
+            htxt.className = 'htxt'
+            htxt.innerHTML = spl[ii]
+            ptxt.appendChild(htxt)
+            ptxt.setAttribute('s', spl[ii])
+            ptxt.setAttribute('ii', ii)
+            ptxt.ondblclick = function (/** @type {{ stopPropagation: () => void; target: { closest: (arg0: string) => { (): any; new (): any; getAttribute: { (arg0: string): any; new (): any; }; }; }; }} */ e) {
+              e.stopPropagation()
+              const s = e.target.closest('.ptxt').getAttribute('s')
+              if (av('warn')) console.warn(s)
+              this._copyText(s)
+            }.bind(this)
+            ptxt.oncontextmenu = function (/** @type {{ stopPropagation: () => void; target: { closest: (arg0: string) => { (): any; new (): any; getAttribute: { (arg0: string): string; new (): any; }; }; }; }} */ e) {
+              e.stopPropagation()
+              let i = parseInt(e.target.closest('.ptxt').getAttribute('ii'))
+              let s = this.spl[0].slice(i).join('\n')
+              if (av('warn')) console.warn(s)
+              this._copyText(s)
+            }.bind(this)
+            this.modP.appendChild(ptxt)
+            ctxt.className = 'full sentence'
+          }
+          ptx()
           if (filters.some((filter) => spl[ii].includes(filter))) {
             continue // Skip the current iteration if the item is in filters
           }
@@ -1224,23 +1252,22 @@ this.txtImg(false)
             console.error(this.lmt)
             break
           }
-          if (spl[ii].length > 300) {
-            const spm = this.splitter(spl[ii], 300)
-            if (av('warn')) console.warn(spm)
-            for (const mm in spm) {
-              rI = 0
-              if (mm > 0) {
-                ptxt = document.createElement('div')
-                const fc = document.createElement('div')
-                fc.innerHTML = `${spl[ii]}`
-                ptxt.appendChild(fc)
-                this.modP.appendChild(ptxt)
-                ptxt.className = 'full sentence'
+          if (this.var('moe')) {
+            if (spl[ii].length > 300) {
+              const spm = this.splitter(spl[ii], 300)
+              if (av('warn')) console.warn(spm)
+              for (const mm in spm) {
+                rI = 0
+                if (rI > 0) {
+                  ptx()
+                }
+                await this.moe(spm, mm, spm.length)
               }
-              await this.moe(spm, mm, spm.length)
+            } else {
+              await this.moe(spl, ii, spl.length)
             }
           } else {
-            await this.moe(spl, ii, spl.length)
+            await this.tokens(spl[ii], spl.length)
           }
         }
         ii = 0
@@ -1414,7 +1441,7 @@ this.txtImg(false)
     elem.setAttribute('w', tt)
     let tit
     let txt = spl[0]
-    wn({ tt, spl, txt, ii, splL, I, w, line, emph, ltp, tts, mns, y, rI, elem })
+    wn({tt, spl, txt, ii, splL, I, w, line, emph, ltp, tts, mns, y, rI, elem})
     if (mns) {
       elem.innerHTML = `${mns[ii].innerHTML}`
       tit = elem.querySelector('dt')
@@ -1422,100 +1449,31 @@ this.txtImg(false)
     }
     if (y) {
       elem.innerHTML = y
-    }
-    elem.insertAdjacentHTML('beforeend', '<span id="particle" class="part" style="font-size: 1.25em;padding:0;margin:0;"></span>')
-    let ff = await this.frequency(tt, this.cc) ?? 0
-    let fj = await this.frequency(tt, this.jpdb) ?? 0
-    let f = `${ff} *${fj}`
-    if (fj <= 0) {
-      f = ff
-    } else if (ff <= 0) {
-      f = `*${fj}`
-    }
-    if (av('warn')) console.warn(f)
-    if (typeof ii == 'string') {
-      ii = parseInt(ii)
-    }
-    try {
-      if (av('warn')) console.warn(tit)
-      elem.addEventListener('dblclick', function (/** @type {Event | undefined} */ ele) {
-        if (!ele) ele = window.event
-        ele.stopPropagation()
-        if (av('log')) console.dir(ele, ele.target)
-        const elemc = ele.target.closest('.mns')
-        const ist = ele.target.closest('.title')
-        const fv = document.querySelector('.fav')
-        if (fv) {
-          fv.style.flex = 'none'
-          fv.style.height = ''
-          fv.style.width = ''
-          fv.style.setProperty('--cc', 'orange')
-        } // else { }
-        elemc.classList.add('fav')
-        elemc.style.setProperty('--cc', 'gray')
-        elemc.style.setProperty('--sz', '0.8em');
-        if (elemc.style.height.length > 1) {
-          elemc.style.height = ''
-          elemc.style.flex = 'none'
-        } else {
-          elemc.style.height = height
-          elemc.style.flex = width
-        }
-        if (av('warn')) console.warn(elemc, ist, fv, elem.style.height)
-      }, false)
-      elem.addEventListener('click', function (/** @type {Event | undefined} */ ele) {
-        if (!ele) ele = window.event
-        ele.stopPropagation()
-        if (av('log')) console.dir(ele, ele.target)
-        const elemc = ele.target.closest('.mns')
-        const ist = ele.target.closest('.title')
-        const b = document.querySelectorAll('.vis')
-        this.pos = parseInt(elemc.getAttribute('pos'))
-        /**
-         * @type {never[]}
-         */
-        const ps = []
-        this.posr = [this.pos, elemc, ps]
-        if (av('warn')) console.warn(elemc, ist, this.pos, b)
-        try {
-          document.querySelector('#cur').id = ''
-        } catch { }
-        elemc.id = 'cur'
-
-        if (!ist && !ele.button != 2) {
-          return
-        }
-        if (ele.target.closest('.w')) {
-          const x = ele.target.closest('.w')
-          if (x.style.display === 'none') {
-            x.style.display = 'block'
-          } else {
-            x.style.display = 'none'
-          }
-          return
-        }
-        try {
-          sv(elemc)
-        } catch (err) {
-          console.error(err)
-        }
-        /* if (ele.ctrlKey != true) {
-          return
-        }
-        if (elemc.style.height.length > 1) {
-          elemc.style.height = ''
-          elemc.style.flex = 'none'
-        } else {
-          elemc.style.height = height
-          elemc.style.flex = width
-        } */
-      }.bind(this), false)
-      if (tit) {
-        tit.innerHTML = `<div class="tit"><span class="kj">${tt}</span><span class="rd">${tts}</span><span class="fq">${f}</span></div>`
+      this.terms.push(tt)
+      if (y) {
+        tts = this.yomiread(elem, false)
       }
-    } catch (clrr) {
-      console.error(clrr)
     }
+    const searchString = tt
+    const replacement = `<span class="words" i="${I}"><ruby class="word">${searchString}<rt class="reading">${tts}</rt></ruby></span>`
+      try {
+        const ltpChildren = Array.from(ltp.childNodes)
+        const firstChild = ltpChildren[0]
+        const firstChildText = firstChild.innerHTML
+        let result = replace(firstChildText, tt, replacement)
+        firstChild.innerHTML = result
+      } catch (error) {
+        console.error('An error occurred:', error)
+      }
+    // Check if gloss-definitions element exists and has no innerHTML
+    let go = true;
+    const glossDefinitions = elem.querySelector('.gloss-definitions');
+    if (this.var('moe') && !this.var("slw") && !glossDefinitions) {
+      elem.style.display = 'none';
+      elem.classList.value = 'mns';
+      elem.remove()
+      go = false
+    } // else if (glossDefinitions.innerHTML.length < 1) {
     const RGEX_CHINESE = new RegExp(/[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]/)
     const kji = RGEX_CHINESE.test(tt)
     const isKana = !!(this.var('kan') == true && kji == true)
@@ -1529,44 +1487,6 @@ this.txtImg(false)
       }
     }
     let isPart = this.var('pt') ? ptc : false
-    if (av('warn')) console.warn(pi, this.part.length, elem, isKana, ii, tt, tts)
-    tt = elem.getAttribute('w')
-    this.terms.push(tt)
-    const searchString = tt
-    const replacement = `<span class="words" i="${I}"><ruby class="word">${searchString}<rt class="reading">${tts}</rt></ruby></span>`
-    try {
-      const ltpChildren = Array.from(ltp.childNodes)
-      const firstChild = ltpChildren[0]
-      const firstChildText = firstChild.innerHTML
-      let result = replace(firstChildText, tt, replacement)
-      firstChild.innerHTML = result
-    } catch (error) {
-      console.error('An error occurred:', error)
-    }
-    if (emph === true) {
-      elem.style.fontWeight = 'bold'
-      emph = false
-    } else if (emph === false) {
-      elem.style.fontWeight = 'auto'
-    } else {
-      elem.style.borderColor = `hsl(${emph.pi} ${emph.sat}%,50%)`
-      elem.querySelector('#particle').innerHTML += emph.tt
-    }
-    // Check if gloss-definitions element exists and has no innerHTML
-    const glossDefinitions = elem.querySelector('.gloss-definitions');
-    if (!glossDefinitions || glossDefinitions.innerHTML.length < 1) {
-      elem.style.display = 'none';
-      elem.classList.value = 'mns';
-    }
-
-    // Check conditions using meaningful variable names
-    const isFValid = f !== -1 && f < this.fval && this.var('jd');
-    const isNotKana = !isKana && this.var('kan');
-
-    if (isFValid || isNotKana) {
-      elem.style.display = 'none';
-      elem.classList.value = 'mns';
-    }
     if (tt.length == txt.length) {
       isPart = false
     }
@@ -1591,7 +1511,7 @@ this.txtImg(false)
         vis[vis.length - 1].querySelector('#particle').innerHTML += tt
       }
       if (ii == 0) {
-        emph = { pl, sat, tt }
+        emph = {pl, sat, tt}
       } else if (tt == 'が') {
         emph = false
         elem.style.fontWeight = 'bold'
@@ -1606,65 +1526,234 @@ this.txtImg(false)
       if (sc && elem.style.borderColor == '') {
         elem.style.borderColor = 'rgb(170,255,170)'
       }
-    } else {
+      elem.remove()
+    } else if (go) {
       w.push(tt)
       line.push(tt)
-    }
-    if (typeof ii == 'string') {
-      ii = parseInt(ii)
-    }
-    try {
-      il = spl[ii].length
-    } catch {
+      elem.insertAdjacentHTML('beforeend', '<span id="particle" class="part" style="font-size: 1.25em;padding:0;margin:0;"></span>')
+      let ff = await this.frequency(tt, this.cc) ?? 0
+      let fj = await this.frequency(tt, this.jpdb) ?? 0
+      let f = `${ff} *${fj}`
+      if (fj <= 0) {
+        f = ff
+      } else if (ff <= 0) {
+        f = `*${fj}`
+      }
+      if (av('warn')) console.warn(f)
+      if (typeof ii == 'string') {
+        ii = parseInt(ii)
+      }
       try {
-        il = spl[0].length
-      } catch {
-        il = spl.length * 2
-      }
-    }
-    if (av('warn')) console.warn(il, spl, ii, spl[ii], splL, I, this.var('yc'), this.var('aut'))
-    this.modK.appendChild(elem)
-    if ((this.var('del') || (this.var('scr')))
-      && this.new && document.querySelectorAll('.vis')[0]) {
-      let bs = document.querySelectorAll('.vis')
-      let sx = (this.var('scr') && this.var('pre')) ? 0 : (bs.length - 1)
-      bs[sx].scrollIntoView({
-        behavior: 'auto',
-        block: 'center'
-      })
-      bs[sx].focus()
-      bs[sx].id = 'cur'
-      this.pos = 0
-      this.new = false
-    }
-
-    if (this.fl) {
-      if ((this.var('auto') && !this.var('yc') && !this.var('both')) || (il < 5 && splL < 3)) {
-        sv(elem, 1, tt, spl[ii])
-      }
-    }
-
-    if (this.var('kanji') || this.var('yc')) { //(!this.slow || this.var('fq') || (this.var('yc') && !this.var('both'))) {
-      const fx = this.dictionary(isKana, elem, tt, 0, tt, spl, tts, elem).then(async () => {
-        if (this.fl && this.var('yc')) {
-          if (this.var('auto')) {
-            await sv(elem, -1)
+        if (av('warn')) console.warn(tit)
+        elem.addEventListener('dblclick', function (/** @type {Event | undefined} */ ele) {
+          if (!ele) ele = window.event
+          ele.stopPropagation()
+          if (av('log')) console.dir(ele, ele.target)
+          const elemc = ele.target.closest('.mns')
+          const ist = ele.target.closest('.title')
+          const fv = document.querySelector('.fav')
+          if (fv) {
+            fv.style.flex = 'none'
+            fv.style.height = ''
+            fv.style.width = ''
+            fv.style.setProperty('--cc', 'orange')
+          } // else { }
+          elemc.classList.add('fav')
+          elemc.style.setProperty('--cc', 'gray')
+          elemc.style.setProperty('--sz', '0.8em');
+          if (elemc.style.height.length > 1) {
+            elemc.style.height = ''
+            elemc.style.flex = 'none'
+          } else {
+            elemc.style.height = height
+            elemc.style.flex = width
           }
+          if (av('warn')) console.warn(elemc, ist, fv, elem.style.height)
+        }, false)
+        elem.addEventListener('click', function (/** @type {Event | undefined} */ ele) {
+          if (!ele) ele = window.event
+          ele.stopPropagation()
+          if (av('log')) console.dir(ele, ele.target)
+          const elemc = ele.target.closest('.mns')
+          const ist = ele.target.closest('.title')
+          const b = document.querySelectorAll('.vis')
+          this.pos = parseInt(elemc.getAttribute('pos'))
+          /**
+           * @type {never[]}
+           */
+          const ps = []
+          this.posr = [this.pos, elemc, ps]
+          if (av('warn')) console.warn(elemc, ist, this.pos, b)
+          try {
+            document.querySelector('#cur').id = ''
+          } catch { }
+          elemc.id = 'cur'
+
+          if (!ist && !ele.button != 2) {
+            return
+          }
+          if (ele.target.closest('.w')) {
+            const x = ele.target.closest('.w')
+            if (x.style.display === 'none') {
+              x.style.display = 'block'
+            } else {
+              x.style.display = 'none'
+            }
+            return
+          }
+          try {
+            sv(elemc)
+          } catch (err) {
+            console.error(err)
+          }
+          /* if (ele.ctrlKey != true) {
+            return
+          }
+          if (elemc.style.height.length > 1) {
+            elemc.style.height = ''
+            elemc.style.flex = 'none'
+          } else {
+            elemc.style.height = height
+            elemc.style.flex = width
+          } */
+        }.bind(this), false)
+        if (tit) {
+          tit.innerHTML = `<div class="tit"><span class="kj">${tt}</span><span class="rd">${tts}</span><span class="fq">${f}</span></div>`
         }
-      })
+      } catch (clrr) {
+        console.error(clrr)
+      }
+      if (av('warn')) console.warn(pi, this.part.length, elem, isKana, ii, tt, tts)
+      if (emph === true) {
+        elem.style.fontWeight = 'bold'
+        emph = false
+      } else if (emph === false) {
+        elem.style.fontWeight = 'auto'
+      } else {
+        elem.style.borderColor = `hsl(${emph.pi} ${emph.sat}%,50%)`
+        elem.querySelector('#particle').innerHTML += emph.tt
+      }
+
+      // Check conditions using meaningful variable names
+      const isFValid = f !== -1 && f < this.fval && this.var('jd');
+      const isNotKana = !isKana && this.var('kan');
+
+      if (isFValid || isNotKana) {
+        elem.style.display = 'none';
+        elem.classList.value = 'mns';
+      }
+      if (typeof ii == 'string') {
+        ii = parseInt(ii)
+      }
+      try {
+        il = spl[ii].length
+      } catch {
+        try {
+          il = spl[0].length
+        } catch {
+          il = spl.length * 2
+        }
+      }
+      if (av('warn')) console.warn(il, spl, ii, spl[ii], splL, I, this.var('yc'), this.var('aut'))
+      this.modK.appendChild(elem)
+      if ((this.var('del') || (this.var('scr')))
+        && this.new && document.querySelectorAll('.vis')[0]) {
+        let bs = document.querySelectorAll('.vis')
+        let sx = (this.var('scr') && this.var('pre')) ? 0 : (bs.length - 1)
+        bs[sx].scrollIntoView({
+          behavior: 'auto',
+          block: 'center'
+        })
+        bs[sx].focus()
+        bs[sx].id = 'cur'
+        this.pos = 0
+        this.new = false
+      }
+
+      if (this.fl) {
+        if ((this.var('auto') && !this.var('yc') && !this.var('both')) || (il < 5 && splL < 3)) {
+          sv(elem, 1, tt, spl[ii])
+        }
+      }
+
+      if (this.var('kanji') || this.var('yc')) { //(!this.slow || this.var('fq') || (this.var('yc') && !this.var('both'))) {
+        const fx = this.dictionary(isKana, elem, tt, 0, tt, spl, tts, elem).then(async () => {
+          if (this.fl && this.var('yc')) {
+            if (this.var('auto')) {
+              await sv(elem, -1)
+            }
+          }
+        })
+      }
+      if (av('warn')) console.warn([emph, line, w])
     }
-    if (av('warn')) console.warn([emph, line, w])
     return [emph, line, w]
   }
   /**
    * @param {{ stopPropagation: () => void; }} e
    */
-  async words(e) {
-    e.stopPropagation()
+  words(e) {
+    if (e) e.stopPropagation()
     let si = localStorage.getItem('words') // + ` ${localStorage.getItem('wordbk')}`*/ document.querySelector('.save .w').innerText
     si = si.split(' ')
     this.svs(si, [])
     this.hke = true
+  }
+  async yomigen(tt) {
+    try {
+      const options = this._display.getOptionsContext()
+      const results = await this._display._findDictionaryEntries(false, tt, false, options)
+      if (results?.length > 0) {
+        let yc = await this.yomichan(results)
+        const elem = document.createElement('div')
+        let bot = this.yomishow(yc, elem, undefined, undefined, elem, tt, -1)
+        console.warn(bot, yc)
+        const y = bot[3].innerHTML + bot[0].innerHTML
+        return `<div class="yomi">${y}</div>`
+      }
+    } catch (error) {
+      console.error(error);
+      return null
+    }
+  }
+  async tokens(spl, splL) {
+    let txt = spl
+    txt = txt.replace(/[&/\\#,+()$~%.'":*?<>{}]/g, '')
+    const isKana = this.japaneseUtil.isStringPartiallyJapanese(txt)
+    if (isKana) {
+      spl = await token(txt)
+      this.spls = spl
+      let ptxt = this.setup()
+      if (av('warn')) console.warn(this.modK, this.modP)
+      this.modK.setAttribute('txt', txt)
+      this.I = 0
+      let w = []
+      let emph = false
+      let line = []
+      for (const ii in spl) {
+        try {
+          if (this.stop) {
+            return
+          }
+          let tt = spl[ii]
+          let y = await this.yomigen(tt)
+          if (y) {
+            let yel = document.createElement('div')
+            yel.insertAdjacentHTML('afterbegin', y)
+            let tts = tt
+            const retv = await this.makeElem(tt, [txt], ii, splL, this.I, w, line, emph, ptxt, tts, undefined, y)
+            console.warn('rettttt', retv);
+            emph = retv[0]
+            line = retv[1]
+            w = retv[2]
+          }
+        } catch (ez) {
+          w.push(false)
+          console.error(ez)
+        }
+        this.I += 1
+      }
+    }
   }
   /**
    * @param {string | any[]} spl
@@ -2196,7 +2285,7 @@ this.txtImg(false)
         return
       }
     }
-    if (ret && e.key != 'Alt') { return }
+    if (ret && e.key != 'Alt') {return }
     ret = true
     let ki = -1
     for (ki in this.keys) {
@@ -2482,7 +2571,8 @@ this.txtImg(false)
         localStorage.setItem('yc', false)
       }
       if (ki == 28) {
-        window.open('chrome-extension://oocpecoaklhhaihpbkncpblbjncgdjmm/search.html', '_self')
+        const baseUrl = chrome.runtime.getURL('/search.html');
+        window.open(baseUrl, '_self')
       }
       if (ki == 29) {
         if (this.var('yc')) {
@@ -2550,6 +2640,25 @@ this.txtImg(false)
           console.error(err)
         }
       }
+      if (kn === 'delete') {
+        let elem = document.getElementById('cur')
+        let w = elem.getAttribute('w')
+        let ws = await unconjugate(w)
+        console.warn(w, ws);
+        if (ws) w = ws
+        let dl = []
+        let d = localStorage.getItem('deleted') ?? null
+        if (d) {
+          dl = d.split(' ')
+          dl.push(w)
+        }
+        localStorage.setItem('deleted', dl.join(' '))
+        let s = localStorage.getItem('words')
+        s = s?.split(' ').filter(element => element !== w);
+        localStorage.setItem('words', s.join(' '))
+        //        aNote.find(w)
+        //        aNote.delete('word', w, '==')
+      }
       if (ki < -999999) {
         if (ki == 103) {
           let si = localStorage.getItem('words') // + ` ${localStorage.getItem('wordbk')}`*/ document.querySelector('.save .w').innerText
@@ -2611,7 +2720,7 @@ this.txtImg(false)
       pos = pos <= 0 ? l : pos
       strs.push(str.substring(0, pos))
       let i = str.indexOf(' ', pos) + 1
-      if (i < pos || i > pos + l) { i = pos }
+      if (i < pos || i > pos + l) {i = pos}
       str = str.substring(i)
     }
     strs.push(str)
@@ -2819,7 +2928,7 @@ this.txtImg(false)
    */
   waitFor(conditionFunction) {
     const poll = (/** @type {() => void} */ resolve) => {
-      if (conditionFunction()) { resolve() } else { setTimeout((_) => poll(resolve), 400) }
+      if (conditionFunction()) {resolve()} else {setTimeout((_) => poll(resolve), 400)}
     }
 
     return new Promise(poll)
@@ -3014,7 +3123,8 @@ this.txtImg(false)
       createSettingsInputTemplate('prt', 'Split By', '', '2px solid purple'),
       createSettingsInputTemplate('lim', 'Limit to Split', '', '2px solid purple'),
       createSettingsInputTemplate('svl', 'Save Words', '', '2px solid purple'),
-      createSettingsInputTemplate('istart', 'Lines Pos', '', '2px solid purple')
+      createSettingsInputTemplate('istart', 'Lines Pos', '', '2px solid purple'),
+      createSettingsInputTemplate('deck', 'Deck Name', '', '2px solid purple')
     ]
     const inputs = document.createElement('div')
     inputs.className = 'inputs'
@@ -3142,37 +3252,39 @@ this.txtImg(false)
 
     // Define the array of button IDs and labels
     const buttonData = [
-      { id: 'run', label: 'Toggle' },
-      { id: 'qp', label: 'Query Parser' },
-      { id: 'wk', label: 'Wiki' },
-      { id: 'kan', label: 'Kanji' },
-      { id: 'rl', label: 'Reload' },
-      { id: 'pt', label: 'Particle' },
-      { id: 'aut', label: 'AutoSave' },
-      { id: 'rd', label: 'Reading' },
-      { id: 'yc', label: 'Yomu' },
-      { id: 'fq', label: 'Frequency' },
-      { id: 'jd', label: 'JPDB' },
-      { id: 'both', label: 'Both' },
-      { id: 'ps', label: 'ParseC' },
-      { id: 'scr', label: 'AutoScroll' },
-      { id: 'log', label: 'Log' },
-      { id: 'warn', label: 'Warn' },
-      { id: 'kanji', label: 'Kanjis' },
-      { id: 'sav', label: 'Save' },
-      { id: 'hk', label: 'Split' },
-      { id: 'cp', label: 'CopyMonitor' },
-      { id: 'pre', label: 'Prepend' },
-      { id: 'del', label: 'Delete' },
-      { id: 'slw', label: 'Fast' },
-      { id: 'roma', label: 'Romaji' },
-      { id: 'tl', label: 'Translation' },
-      { id: 'tla', label: 'TLAbove' },
-      { id: 'eras', label: 'EraseSt' },
-      { id: 'export', label: 'Export', def: 0 },
-      { id: 'backup', label: 'Backup/Restore', def: 0 },
-      { id: 'jax', label: 'JAXsubs', def: 0 },
-      { id: 'exe', label: 'Restart', def: 0 }
+      {id: 'run', label: 'Toggle'},
+      {id: 'qp', label: 'Query Parser'},
+      {id: 'wk', label: 'Wiki'},
+      {id: 'kan', label: 'Kanji'},
+      {id: 'rl', label: 'Reload'},
+      {id: 'pt', label: 'Particle'},
+      {id: 'aut', label: 'AutoSave'},
+      {id: 'rd', label: 'Reading'},
+      {id: 'yc', label: 'Yomu'},
+      {id: 'fq', label: 'Frequency'},
+      {id: 'jd', label: 'JPDB'},
+      {id: 'both', label: 'Both'},
+      {id: 'ps', label: 'ParseC'},
+      {id: 'scr', label: 'AutoScroll'},
+      {id: 'log', label: 'Log'},
+      {id: 'warn', label: 'Warn'},
+      {id: 'kanji', label: 'Kanjis'},
+      {id: 'sav', label: 'Save'},
+      {id: 'hk', label: 'Split'},
+      {id: 'cp', label: 'CopyMonitor'},
+      {id: 'anki', label: ' Anki'},
+      {id: 'pre', label: 'Prepend'},
+      {id: 'del', label: 'Delete'},
+      {id: 'slw', label: 'Fast'},
+      {id: 'roma', label: 'Romaji'},
+      {id: 'moe', label: 'Moe'},
+      {id: 'tl', label: 'Translation'},
+      {id: 'tla', label: 'TLAbove'},
+      {id: 'eras', label: 'EraseSt'},
+      {id: 'export', label: 'Export', def: 0},
+      {id: 'backup', label: 'Backup/Restore', def: 0},
+      {id: 'jax', label: 'JAXsubs', def: 0},
+      {id: 'exe', label: 'Restart', def: 0}
     ]
 
     // Loop through the button data and create buttons using the generateTemplate function
@@ -3335,7 +3447,7 @@ this.txtImg(false)
     this.delete()
     //this.startMod()
     this.yomi.bind(this, spl[istart], istart)()
-    // this.update(arr)
+    //this.update(arr)
   }
 
   /**
@@ -3655,7 +3767,7 @@ this.txtImg(false)
     if (!w) {
       w = ''
     }
-    chunks = Array.from({ length: Math.ceil(w.length / maxLength) }, (_, index) =>
+    chunks = Array.from({length: Math.ceil(w.length / maxLength)}, (_, index) =>
       w.slice(index * maxLength, (index + 1) * maxLength))
     const translatedChunks = []
     // Translate each chunk
@@ -3746,7 +3858,7 @@ this.txtImg(false)
     const promise = await fetch(
       url,
       {
-        headers: { 'Content-Type': 'text/html; charset=UTF-8' }
+        headers: {'Content-Type': 'text/html; charset=UTF-8'}
       }
     )
     // if (signal) signal.addEventListener("abort", () => controller.abort());
@@ -3804,7 +3916,7 @@ this.txtImg(false)
     const promise = await fetch(
       decodeURI(url),
       {
-        headers: { 'Content-Type': 'text/html; charset=UTF-8' }
+        headers: {'Content-Type': 'text/html; charset=UTF-8'}
       }
     )
     // if (signal) signal.addEventListener("abort", () => controller.abort());
@@ -4138,10 +4250,12 @@ this.txtImg(false)
    * @param {any} word
    */
   async frequency(word, dbs = this.jpdb) {
-    let v = unconjugate(word, false)
+    let v = await unconjugate(word, false)
+    wn(v)
     let b = false
-    if (v.length > 0) {
-      for (let c of v) {
+    if (v) { //.length > 0) {
+      word = v
+      /*for (let c of v) {
         if (c.word) {
           word = c.word
           break
@@ -4156,7 +4270,7 @@ this.txtImg(false)
         if (b) {
           return
         }
-      }
+      }*/
     }
     if (av('log')) console.log(word, v);
     let db = await this.is(dbs)
@@ -4533,7 +4647,7 @@ this.txtImg(false)
   }
 
   _copyHostSelection() {
-    if (this._contentOriginFrameId === null || window.getSelection().toString()) { return false }
+    if (this._contentOriginFrameId === null || window.getSelection().toString()) {return false}
     this._copyHostSelectionSafe()
     return true
   }
@@ -4571,7 +4685,7 @@ this.txtImg(false)
    */
   _copyText(text) {
     const parent = document.body
-    if (parent === null) { return }
+    if (parent === null) {return }
 
     let textarea = null
     if (textarea === null) {
@@ -4626,9 +4740,9 @@ this.txtImg(false)
    * @param {number} fq
    * @param {HTMLDivElement} bot
    */
-  yomishow(yc, elem, fqs, fq, bot, tt = '', q = 0) {
+  yomishow(yc, elem, fqs = [], fq = -1, bot = document.createElement(), tt = '', q = 0) {
     try {
-      if (this.var('fq') || this.var('yc')) {
+      if (yc) {
         if (av('warn')) console.warn(yc.length, yc)
         try {
           for (const y of yc) {
@@ -4655,7 +4769,7 @@ this.txtImg(false)
               }
               yc = []
             }
-            if (this.var('yc')) { // en.indexOf(elem.querySelector('.kj').innerText) != -2) {llz
+            if (yc) { // en.indexOf(elem.querySelector('.kj').innerText) != -2) {llz
               for (const t of y.querySelectorAll('.frequency-group-tag')) {
                 // y.querySelector('.entry-header').innerHTML += t.innerHTML
                 bot.appendChild(t)
@@ -4681,6 +4795,27 @@ this.txtImg(false)
               }
               y.querySelector('.entry-header').classList.add('title'); y.querySelector('.headword-term').className += ' kj'
               const o = this.var
+              try {
+                y.querySelector('div.definition-tag-list.tag-list').remove()
+                let l = y.querySelectorAll('.gloss-sc-ol, .structured-content')
+                let p = y.querySelector('.definition-list').prepend(document.createElement('div'))
+                for (let i of l) {
+                  p?.appendChild(i)
+                }
+                let gs = y.querySelectorAll('.gloss-separator, .gloss-sc-span')
+                for (let i of gs) {
+                  i.remove()
+                }
+                let ls = y.querySelectorAll('.gloss-sc-ul')
+                for (let i of ls) {
+                  i.style.listStyleType = 'none'
+                  i.style.padding = 0
+                  i.style.margin = 0
+                }
+                //y.querySelector('.definition-item[data-index="0"]').remove()
+              } catch (error) {
+                console.error(error);
+              }
               if (!(this.var('rd') || this.var('fq') || this.var('kan'))) {
                 // y.querySelector('.headword-term').className += ' nav'
               }
@@ -4732,6 +4867,30 @@ this.txtImg(false)
     }
     return [bot, fq, tt, elem, ...fqs]
   }
+  yomiread(elem, kj = true) {
+    this.ee = elem
+    let en = elem.querySelector('.headword-text-container').cloneNode(true)
+    let rd = ''
+    for (const r of en.querySelectorAll('rt')) {
+      rd += r.innerText
+      r.remove()
+    }
+    if (!kj) {
+    console.warn(rd);
+      return rd
+    }
+
+    en.querySelector('.headword-reading').remove()
+    const rs = en.querySelectorAll('rt')
+    for (const rr of rs) {
+      rr.remove()
+    }
+    try {
+      en.querySelector('rt').remove(); en.querySelector('rt').remove(); en.querySelector('rt').remove(); en.querySelector('rt').remove(); en.querySelector('rt').remove(); en.querySelector('rt').remove(); en.querySelector('rt').remove()
+    } catch { }
+    en = en.innerText || en.textContent
+    return en
+  }
 
   /**
    * @param {number} l
@@ -4778,7 +4937,7 @@ this.txtImg(false)
 
   getText() {
     const parent = document.body
-    if (parent === null) { return }
+    if (parent === null) {return }
 
     let textarea = null
     if (textarea === null) {

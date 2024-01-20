@@ -1,6 +1,8 @@
 /* eslint-disable */
 /* globals Dict, aDict, aNote, merge, aIn, wn */
 import {aDict} from '../mod/aDict.js';
+import {merge, aIn} from './aUtil.js';
+import {wn, av} from './aDict.js';
 
 var nv = (/** @type {string} */ v) => {
     return localStorage.getItem(v) == 'true'
@@ -79,11 +81,13 @@ export class Note {
         /**
          * @type {aDict | null}
          */
-        this.aDict = dict
+        this.aDict = dict ?? window.aDict ?? null
         /**
          * @type {import("../display/display-anki").DisplayAnki | null}
          */
         this.anki = anki
+        this.svClk = this.svClk.bind(this);
+        this.saveAdd = this.saveAdd.bind(this);
     }
 
     /**
@@ -91,31 +95,45 @@ export class Note {
      */
     async addAnki(dic, kanji = '', kana = '', o = {}, q = 1, i = 0) {
         try {
-            const req = [
-                {
-                    type: 'clipboardImage'
-                },
-                {
-                    type: 'textFurigana',
-                    text: `${kana}${kanji}Words — ${q} found`,
-                    readingMode: null
-                },
-                {
-                    type: 'screenshot'
-                },
-                {
-                    type: 'audio'
-                },
-                {
-                    type: 'clipboardText'
-                }
-            ]
-
+            const det = await this.aDict?.anki._getDictionaryEntryDetails(dic)
+            
             const mode = 'term-kanji'
-
+            
+            let req = [
+                {
+                    "type": "selectionText"
+                },
+                {
+                    "type": "dictionaryMedia",
+                    "dictionary": "Jitendex [2023-12-12]",
+                    "path": "jitendex/1-dan.svg"
+                },
+                {
+                    "type": "dictionaryMedia",
+                    "dictionary": "Jitendex [2023-12-12]",
+                    "path": "jitendex/transitive.svg"
+                },
+                {
+                    "type": "dictionaryMedia",
+                    "dictionary": "Jitendex [2023-12-12]",
+                    "path": "jitendex/Kansai.svg"
+                },
+                {
+                    "type": "clipboardImage"
+                },
+                {
+                    "type": "screenshot"
+                },
+                {
+                    "type": "audio"
+                }
+            ];
+            console.warn(det,req,mode);
+            if(det) req = det[0].modeMap.get(mode);
+            console.warn(req);
             if (nv('log')) console.log(mode, req, dic, q) // Output: "term-kanji"
             // Call the addAnkiNote function
-            await aDict.anki._addAnkiNote(dic[i], mode, q, req, o)
+            await this.aDict.anki._addAnkiNote(dic[i], mode, q, req, o)
         } catch (error) {
             console.error(error)
         }
@@ -386,10 +404,12 @@ export class Note {
             console.error(ler)
         }
         try {
-            const note = aNote
+            let tu = await unconjugate(t);
+            if(tu) t = tu;
+            const note = window.aNote
             const noteMod = Object.create(Note.prototype, { dict: this })
             const storedDay = parseInt(localStorage.getItem('day'))
-            const day = Dict.prototype.int('day') ?? -1 //isNaN(storedDay) ? 0 : storedDay
+            const day = aDict.prototype.int('day') ?? -1 //isNaN(storedDay) ? 0 : storedDay
             const unixSeconds = Math.floor(Date.now() / 1000); // Current Unix timestamp
             //const date = new Date(unixSeconds * 1000).getDate();
             localStorage.setItem('unix', unixSeconds)
@@ -480,14 +500,16 @@ export class Note {
                 word = word.join(' ')
                 localStorage.setItem('words', word)
                 let so = {
-                    st: txt
+                    st: txt,
+                    sound: false,
+                    deck: localStorage.getItem('deck') ?? 'aDict'
                 }
-                const options = aDict._display.getOptionsContext()
-                const results = await aDict._display._findDictionaryEntries(false, t, false, options)
+                const options = this.aDict._display.getOptionsContext()
+                const results = await this.aDict._display._findDictionaryEntries(false, t, false, options)
                 if (nv('warn')) console.warn(options, yc, read, results, fq, fq.length)
             let ain
                 try{
-            ain = await aIn(t, this.aDict.jpws)
+                ain = av("anki") ? await aIn(t, this.aDict.jpws) : true
                 wn(ain,t)
             } catch(zx){
                 console.error(zx);
@@ -547,9 +569,15 @@ export class Note {
         if (!m) {
             sz = merge(sz.split(' '))
         }
-        saveDiv.innerHTML = `${localStorage.getItem('navsave')}: ${localStorage.getItem('navsentence')}`
-        const s3 = saveDiv.appendChild(document.createElement('div'))
+        let s3 = saveDiv.querySelector(".w")
+        let cache = saveDiv.querySelector(".cache")
+        if(!cache){
+            cache = saveDiv.appendChild(prepend.createElement('div'))
+        cache.className = 'cache'
+        s3 = saveDiv.appendChild(document.createElement('div'))
         s3.className = 'w'
+        }
+        cache.innerHTML = `${localStorage.getItem('navsave')}: ${localStorage.getItem('navsentence')}`
         if (saveDiv) {
             let wordsOnly = sz // .replace(/(\d{1,2}-\d{1,2}-\d{4}-\d{1,2}:\d{1,2}: )|(\w{3} \w{3} \d{2} \d{4} \d{2}:\d{2}:\d{2} \w{3}-\d{4} \(\w{3}\))/g, '');
             wordsOnly = wordsOnly.split(' ')
@@ -575,7 +603,7 @@ export class Note {
             await new Promise((r) => setTimeout(r, 3000))
         }
         try {
-            Dict.prototype.cache(elem, cx)
+            aDict.prototype.cache(elem, cx)
             //if (img == []) {            }
             if (clip == '') {
                 clip = this.dic.main.getText()
@@ -602,13 +630,13 @@ export class Note {
         if (nv('warn')) console.warn(fv, rd)
         if (fv.length > 0) {
             for (let f of fv) {
-                f.style.height = aDict.width
-                f.style.flex = aDict.height
+                f.style.height = this.aDict.width
+                f.style.flex = this.aDict.height
                 f.style.setProperty('--cc', 'blue')
             }
         }
         elem.classList.add('fav')
-        const note = aNote //new Note(this.dic) // Create an instance of the Note class
+        const note = this //new Note(this.dic) // Create an instance of the Note class
         if (isNaN(cx)) {
             cx = 0
         }
@@ -632,25 +660,7 @@ export class Note {
                 df = elem.querySelector('li').innerText
                 rd = elem.querySelector('rt').innerText
                 // let cpn = document.createElement('div')
-                let en = elem.querySelector('.headword-text-container').cloneNode(true)
-                // en = y.cloneNode()
-                // en.querySelector('rt').remove()
-                // cpn.appendChild(en)
-                // cpn.querySelector('rt').remove()
-                for (const r of en.querySelectorAll('rt')) {
-                    r.remove()
-                }
-
-                en.querySelector('.headword-reading').remove()
-                const rs = en.querySelectorAll('rt')
-                for (const rr of rs) {
-                    rr.remove()
-                }
-                try {
-                    en.querySelector('rt').remove(); en.querySelector('rt').remove(); en.querySelector('rt').remove(); en.querySelector('rt').remove(); en.querySelector('rt').remove(); en.querySelector('rt').remove(); en.querySelector('rt').remove()
-                } catch { }
-                if (nv('warn')) console.warn(en.innerHTML)
-                en = en.innerText || en.textContent
+                let en = this.aDict.yomiread(elem)
                 if (nv('log')) console.log(en)
                 const wn = en // ?? elem.getAttribute('w')
                 // rd = elem.querySelector('rt')
@@ -965,5 +975,15 @@ export class Note {
         });
 
         return result;
+    }
+    obj(){
+        var a = localStorage.getItem("save");
+        var oc
+        try {
+            oc = JSON.parse(a)
+        } catch {
+            return null
+        }
+        return oc       
     }
 }

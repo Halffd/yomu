@@ -1,21 +1,26 @@
+/* The `Analyze` class is a JavaScript class that provides methods for analyzing Japanese text,
+including analyzing the text itself, generating furigana, converting to romaji, analyzing grammar,
+and analyzing word frequency. */
 /* globals aDict lg wn */
-const API_URL = 'http://localhost:5000'; // Replace with your API URL
+import {wn} from './aDict.js';
+const lg = console.log;
 
-const analyzeText = async (text, mode = 'A', nominalForm = false, printFields = false) => {
+const API_URL = 'http://localhost:5000'; // Replace with your API URL
+const analyzeText = async (/** @type {any} */ text, mode = 'A', nominalForm = false, printFields = false) => {
     const url = `${API_URL}/analyze`;
     const payload = {
         text,
         mode,
         nominal_form: nominalForm,
-        print_fields: printFields,
+        print_fields: printFields
     };
 
     const response = await fetch(url, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
+            'Content-Type': 'application/json'
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(payload)
     });
 
     if (!response.ok) {
@@ -26,19 +31,19 @@ const analyzeText = async (text, mode = 'A', nominalForm = false, printFields = 
     return data;
 };
 
-const analyzeFurigana = async (text, mode = 'A') => {
+const analyzeFurigana = async (/** @type {any} */ text, mode = 'A') => {
     const url = `${API_URL}/furigana`;
     const payload = {
         text,
-        mode,
+        mode
     };
 
     const response = await fetch(url, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
+            'Content-Type': 'application/json'
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(payload)
     });
 
     if (!response.ok) {
@@ -49,19 +54,19 @@ const analyzeFurigana = async (text, mode = 'A') => {
     return data;
 };
 
-const analyzeRomaji = async (text, mode = 'A') => {
+const analyzeRomaji = async (/** @type {any} */ text, mode = 'A') => {
     const url = `${API_URL}/romaji`;
     const payload = {
         text,
-        mode,
+        mode
     };
 
     const response = await fetch(url, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
+            'Content-Type': 'application/json'
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(payload)
     });
 
     if (!response.ok) {
@@ -72,19 +77,19 @@ const analyzeRomaji = async (text, mode = 'A') => {
     return data;
 };
 
-const analyzeGrammar = async (text, mode = 'A') => {
+const analyzeGrammar = async (/** @type {any} */ text, mode = 'A') => {
     const url = `${API_URL}/grammar`;
     const payload = {
         text,
-        mode,
+        mode
     };
 
     const response = await fetch(url, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
+            'Content-Type': 'application/json'
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(payload)
     });
 
     if (!response.ok) {
@@ -95,19 +100,19 @@ const analyzeGrammar = async (text, mode = 'A') => {
     return data;
 };
 
-const analyzeFrequency = async (text, mode = 'A') => {
+const analyzeFrequency = async (/** @type {any} */ text, mode = 'A') => {
     const url = `${API_URL}/frequency`;
     const payload = {
         text,
-        mode,
+        mode
     };
 
     const response = await fetch(url, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
+            'Content-Type': 'application/json'
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(payload)
     });
 
     if (!response.ok) {
@@ -117,9 +122,10 @@ const analyzeFrequency = async (text, mode = 'A') => {
     const data = await response.json();
     return data;
 };
-class Analyze {
+
+export class Analyze {
     constructor(dic, t) {
-        this.dic = aDict ?? dic
+        this.dic = dic
         this.t = t
         this.txt = document.createElement('textarea')
         this.txt.placeholder = 'Text to Analyze'
@@ -132,31 +138,31 @@ class Analyze {
         let t
         if (e) {
             e.stopPropagation();
-            //txt = e.target
+            // txt = e.target
             t = e.target.value
         }
-        lg(txt, t);
+        console.log();(txt, t);
         try {
-            //document.querySelector('.content-body-inner').remove()
+            // document.querySelector('.content-body-inner').remove()
         } catch { }
-        //this.del(this.t)
+        // this.del(this.t)
         // Regular expression pattern to match Japanese katakana, hiragana, or kanji
         const regex = /[^\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}]/gu;
         try {
             t = t.replace(regex, '')
             let tokens
             if (!ta) {
-                tokens = await analyzeGrammar(t);
+                tokens = await token(t);
             } else {
                 tokens = ta
             }
             var fq = {}
-            console.l(tokens);
+            lg(tokens);
             tokens = [...new Set(tokens)]
             for (let i in tokens) {
                 let t = tokens[i]
-                let f1 = await aDict.frequency(t, aDict.cc) ?? 0
-                let f2 = await aDict.frequency(t) ?? 0
+                let f1 = await this.dic.frequency(t, this.dic.cc) ?? 0
+                let f2 = await this.dic.frequency(t) ?? 0
                 let f
                 if (f2 > 0 && f2 > 0) {
                     f = Math.round((f1 + f2) / 2)
@@ -175,13 +181,16 @@ class Analyze {
                 ft += t + ' '
                 this.tc.innerHTML += ` ${t}: ${f} `
             }
-            aDict.delete()
-            await aDict.update(ft)
-            aDict.pos = 0
+            this.dic.delete()
+            await this.dic.update(ft)
+            this.dic.pos = 0
         } catch (error) {
             console.error(error);
         }
     }
+    /**
+     * @param {{ [s: string]: any; } | ArrayLike<any>} obj
+     */
     sort(obj) {
         const entries = Object.entries(obj);
 
@@ -189,6 +198,9 @@ class Analyze {
 
         return entries;
     }
+    /**
+     * @param {{ parentElement: { children: ArrayLike<any> | Iterable<any>; }; }} txt
+     */
     del(txt) {
         try {
             var elementsToDelete = Array.from(txt.parentElement.children);
@@ -203,6 +215,9 @@ class Analyze {
             console.error(error);
         }
     }
+    /**
+     * @param {any} text
+     */
     test(text, mode = 'A') {
         analyzeText(text, mode, true, false)
             .then(data => {

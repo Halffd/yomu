@@ -30,5 +30,11 @@
     "files.trimTrailingWhitespace": true,
     "html-validate.validate": [
         "html"
-    ]
+    ],
+    "docwriter.style": "JSDoc",
+    "docwriter.progress.trackFunctions": true,
+    "docwriter.progress.trackClasses": true,
+    "docwriter.progress.trackTypes": true,
+    "docwriter.hotkey.windows": "Alt + .",
+    "CodeGPT.apiKey": "Custom"
 }

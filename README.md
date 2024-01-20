@@ -9,7 +9,7 @@
 
 - Completed the Manifest V2 → V3 transition, [read why here!](https://developer.chrome.com/blog/resuming-the-transition-to-mv3/).
 - Switched to using ECMAScript modules and npm-sourced dependencies.
-- Implemented an end-to-end CI/CD pipeline. 
+- Implemented an end-to-end CI/CD pipeline.
 - Switched to standard testing frameworks, vitest and playwrights.
 
 In addition, we are beginning to make important bug fixes and minor enhancements:

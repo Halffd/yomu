@@ -23,3 +23,6 @@ ext/legal-npm.html
 
 /js/admin/
 ext/js/admin/key.json
+.history/
+.history/*
+.vscode/*
