@@ -572,8 +572,9 @@ export class Note {
         let s3 = saveDiv.querySelector(".w")
         let cache = saveDiv.querySelector(".cache")
         if(!cache){
-            cache = saveDiv.appendChild(prepend.createElement('div'))
+            cache = document.createElement('div')
         cache.className = 'cache'
+        saveDiv.prepend(cache)
         s3 = saveDiv.appendChild(document.createElement('div'))
         s3.className = 'w'
         }
