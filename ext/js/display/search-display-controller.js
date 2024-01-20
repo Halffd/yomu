@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import * as wanakana from '../../lib/wanakana/cjs';
+import * as wanakana from '../../lib/wanakana.js';
 import {ClipboardMonitor} from '../comm/clipboard-monitor.js';
 import {EventListenerCollection} from '../core.js';
 import {createApiMap, invokeApiMapHandler} from '../core/api-map.js';
@@ -51,6 +51,7 @@ export class SearchDisplayController {
         this._queryInput = querySelectorNotNull(document, '#search-textbox');
         /** @type {HTMLElement} */
         this._introElement = querySelectorNotNull(document, '#intro');
+        this._introElement.style.display = 'none';
         /** @type {HTMLInputElement} */
         this._clipboardMonitorEnableCheckbox = querySelectorNotNull(document, '#clipboard-monitor-enable');
         /** @type {HTMLInputElement} */

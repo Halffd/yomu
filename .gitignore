@@ -16,3 +16,6 @@ ext/manifest.json
 ext/lib/*
 
 ext/legal-npm.html
+.history/
+.history/*
+.vscode/*

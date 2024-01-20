@@ -16,11 +16,16 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import * as wanakana from '../../lib/wanakana/esm';
+import * as wanakana from '../../lib/wanakana.js';
+import {Mecab} from '../comm/mecab.js';
 import {log} from '../core.js';
 import {DocumentFocusController} from '../dom/document-focus-controller.js';
 import {HotkeyHandler} from '../input/hotkey-handler.js';
 import {JapaneseUtil} from '../language/sandbox/japanese-util.js';
+import {aDict} from '../mod/aDict.js';
+import {Note} from '../mod/aNote.js';
+import {AnkiController} from '../pages/settings/anki-controller.js';
+import {SettingsController} from '../pages/settings/settings-controller.js';
 import {yomitan} from '../yomitan.js';
 import {DisplayAnki} from './display-anki.js';
 import {DisplayAudio} from './display-audio.js';
@@ -28,19 +33,6 @@ import {Display} from './display.js';
 import {SearchActionPopupController} from './search-action-popup-controller.js';
 import {SearchDisplayController} from './search-display-controller.js';
 import {SearchPersistentStateController} from './search-persistent-state-controller.js';
-import {AnkiController} from '../pages/settings/anki-controller.js';
-import {SettingsController} from '../pages/settings/settings-controller.js';
-import {Mecab} from '../comm/mecab.js';
-import {aDict} from '../mod/aDict.js';
-import {Note} from '../mod/aNote.js';
-/**
- * @type {aDict}
- */
-let aD;
-let aN;
-/* eslint-disable */
-let sv;
-let japaneseUtil;
 /**
  *
  */
@@ -59,7 +51,7 @@ async function main() {
 
         const {tabId, frameId} = await yomitan.api.frameInformationGet();
 
-        japaneseUtil = new JapaneseUtil(wanakana);
+        const japaneseUtil = new JapaneseUtil(wanakana);
 
         const hotkeyHandler = new HotkeyHandler();
         hotkeyHandler.prepare();
@@ -82,14 +74,15 @@ async function main() {
         displayAnki.prepare();
 
         const mecab = new Mecab();
-        aN = new Note();
+        const aN = new Note();
         if (display) {
-            aD = new aDict(display, displayAudio, japaneseUtil, displayAnki, control, mecab);
+            const aD = new aDict(display, displayAudio, japaneseUtil, displayAnki, control, mecab, true, aN);
             aN.dic = aD.util;
             aN.anki = displayAnki;
             aN.aDict = aD;
-            sv = aN.svClk.bind(aN);
+            const sv = aN.svClk.bind(aN);
             display.setDict(aD);
+            window.vars(aD, displayAnki, aN, sv, japaneseUtil);
         }
         const searchDisplayController = new SearchDisplayController(tabId, frameId, display, displayAudio, japaneseUtil, searchPersistentStateController);
         await searchDisplayController.prepare();

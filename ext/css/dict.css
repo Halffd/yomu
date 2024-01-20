@@ -428,6 +428,14 @@ dd>li {
     border: 1px solid #9e4697;
 }
 
+.yomu .gloss-sc-ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+.yomu ::marker {
+    display: none;
+}
 dd {
     display: block;
     margin-inline-start: 0.5px;
@@ -437,7 +445,11 @@ dd {
     overflow-y: auto;
     margin-right: -0.3rem;
 }
-
+.content-body-inner {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+}
 dl dt {
     margin-bottom: 0.3rem;
     font-weight: bold;
@@ -445,6 +457,9 @@ dl dt {
 
 .pos-desc {
     color: #007200;
+}
+textarea, #search-textbox {
+    width: 100%;
 }
 
 body {
