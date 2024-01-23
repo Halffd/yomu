@@ -733,7 +733,13 @@ this.txtImg(false)
       this.txts = document.querySelector('textarea')
 
       // document.removeEventListener('keydown')
+      /** @global
+       * @type {number}
+       */
       this.pos = 0
+      /** @global
+        * @type {Array<number|string>}
+       */
       this.posr = [0, '']
       document.addEventListener('keydown', this.input.bind(this))
       if (this.wiki && l >= 0) {
@@ -1456,15 +1462,15 @@ this.txtImg(false)
     }
     const searchString = tt
     const replacement = `<span class="words" i="${I}"><ruby class="word">${searchString}<rt class="reading">${tts}</rt></ruby></span>`
-      try {
-        const ltpChildren = Array.from(ltp.childNodes)
-        const firstChild = ltpChildren[0]
-        const firstChildText = firstChild.innerHTML
-        let result = replace(firstChildText, tt, replacement)
-        firstChild.innerHTML = result
-      } catch (error) {
-        console.error('An error occurred:', error)
-      }
+    try {
+      const ltpChildren = Array.from(ltp.childNodes)
+      const firstChild = ltpChildren[0]
+      const firstChildText = firstChild.innerHTML
+      let result = replace(firstChildText, tt, replacement)
+      firstChild.innerHTML = result
+    } catch (error) {
+      console.error('An error occurred:', error)
+    }
     // Check if gloss-definitions element exists and has no innerHTML
     let go = true;
     const glossDefinitions = elem.querySelector('.gloss-definitions');
@@ -2270,17 +2276,37 @@ this.txtImg(false)
     }
   }
   /**
-   * @param {{ ctrlKey: any; altKey: any; metaKey: any; shiftKey: any; key: string; preventDefault: () => void; }} e
-   */
+ * Handles keyboard input event.
+ * @param {KeyboardEvent} e - The keyboard input event object.
+ * @returns {Promise<void>}
+ */
   async input(e) {
-    const activeElement = document.activeElement
-    let ret = activeElement.tagName == 'INPUT' || activeElement.tagName == 'TEXTAREA' || activeElement == this.txts || (this.nk && (e.ctrlKey || e.altKey || e.metaKey || e.shiftKey))
+    /**
+     * @type {Element | null}
+     */
+    const activeElement = document.activeElement ?? null; // Currently active element
+
+    // Determine if the active element is an input or textarea element,
+    // or if it's equal to this.txts, or if this.nk is truthy and any of the Ctrl, Alt, Meta, or Shift keys are pressed.
+    /**
+     * @type {boolean | undefined}
+     */
+    let ret = false
+    if (activeElement) {
+      ret = activeElement === this.txts ||
+        activeElement.tagName === 'INPUT' ||
+        activeElement.tagName === 'TEXTAREA'
+    }
+    if (!ret) ret = (this.nk && (e.ctrlKey || e.altKey || e.metaKey || e.shiftKey));
+    /**
+     * @type {string}
+     */
     var kn = e.key.trim().toLowerCase()
     if (av('log')) console.log(activeElement.tagName, ret, e.key)
     if (e.key == '' || e.key == ' ' || e.key == 'arrowup') {
       e.preventDefault()
       if (ret) {
-        this.txts.blur()
+        this.txts?.blur()
         document.body.focus()
         return
       }
@@ -2308,7 +2334,7 @@ this.txtImg(false)
      */
     const ps = []
     // txt.value = `${keys[ki]} ${ki}: ${e.key}`
-    if (av('log')) console.log(`${this.keys[ki]} ${ki}: ${e.key}`)
+    if (av('log')) console.log(`${this.keys?.[ki]} ${ki}: ${e.key}`)
     wn(kn, ki)
     if (ki <= 9) {
       let n = ki
@@ -2338,8 +2364,19 @@ this.txtImg(false)
       return
     } else if (ki <= 13) {
       const dir = ki - 10
+      this.ppos = this.pos
       if (av('warn')) console.warn(dir)
       let vis
+      const cur = (c) => {
+        try {
+          document.querySelector('#cur').id = 'prev';
+        } catch { }
+        c.id = 'cur';
+        c.scrollIntoView({
+          behavior: 'auto',
+          block: 'center'
+        })
+      }
       const mv = (/** @type {number} */ d, /** @type {string | number | undefined} */ pos, /** @type {NodeListOf<Element>} */ _t, /** @type {string | any[] | NodeListOf<Element>} */ b) => {
         let l = pos
         l += 1 * d
@@ -2422,28 +2459,41 @@ this.txtImg(false)
       if (b[this.pos]?.innerText == '' || b[this.pos]?.innerText == ' ') {
         this.pos += 1
       }
-      b[this.pos].scrollIntoView({
-        behavior: 'auto',
-        block: 'center'
-      })// .scrollIntoView()
-      // b[posr].style.borderStyle = 'solid'
+      if (e.ctrlKey || e.shiftKey) {
+        console.warn(this.pos,this.ppos);
+        let a = b[this.ppos]
+        let d = b[this.pos]
+        let parent = d.parentNode;
+        if (parent) {
+          const children = Array.from(b);
+          if (e.shiftKey) {
+            //parent.appendChild(d); // end
+            //parent.insertBefore(d, parent.firstChild); // start
+            if (this.pos > this.ppos) {
+              parent.insertBefore(d, a); // a-d left, d-a right
+            } else {
+              parent.insertBefore(a, d); // a-d left, d-a right
+            }
+          } else {
+            if (this.pos > this.ppos) {
+              //parent.insertBefore(a, parent.lastChild);
+              parent.appendChild(a); // end
+              this.pos = 0
+              //this.pos = children.map((child) => child === parent.lastChild).indexOf(true);
+            } else {
+              parent.insertBefore(a, parent.firstChild); // start
+              this.pos = b.length - 1
+              //this.pos = children.map((child) => child === parent.firstChild).indexOf(true);
+            }
+          }
+          cur(a)
+          console.warn(this.pos);
+        }
+      } else {
+        cur(b[this.pos])
+      }
       if (av('warn')) console.warn(this.pos, this.posr)
       const ys = document.querySelectorAll('.vis')
-      /* if (posr[1]) {
-                    b[posr[0]].style.border = posr[1]
-                    try {
-                        if (posr[2]) {
-                            for (let i of posr[0]) {
-                                ys[i].style.display = 'none'
-                            }
-                        } else {
-                            ys[posr[0]].style.display = 'none'
-                        }
-                    } catch { }
-                }
-                */
-      // b[posr].style.children[0].borderColor = '#511a84'
-      // b[pos].style.borderStyle = 'groove'
       if (av('log')) console.log(`${dir}`)
       if (av('warn')) console.warn(dir, this.pos, b[this.pos], this.posr, ps)
       if (this.var('rd')) {
@@ -2495,10 +2545,7 @@ this.txtImg(false)
         }
       }
 
-      try {
-        document.querySelector('#cur').id = 'prev'
-      } catch { }
-      b[this.pos].id = 'cur'
+      console.warn(this.pos,this.ppos);
       this.posr = [this.pos, b[this.pos], ps]
       // b[pos].style.border = '1px dotted red'
       // alert(t,x)
@@ -4876,7 +4923,7 @@ this.txtImg(false)
       r.remove()
     }
     if (!kj) {
-    console.warn(rd);
+      console.warn(rd);
       return rd
     }
 

@@ -609,7 +609,7 @@ export class DisplayAnki {
                         this._addAnkiNote(dictionaryEntryIndex, 'term-kana', dict, req);
                         return;
                     }
-                    if (o.sound) {
+                    if (o?.sound) {
                         try {
                             // const response = await fetch('sound.txt');
                             // const text = await response.text();

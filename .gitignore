@@ -4,6 +4,7 @@ node_modules/
 
 builds/
 
+dict/
 dictionaries/
 
 /test-results/
@@ -17,5 +18,5 @@ ext/lib/*
 
 ext/legal-npm.html
 .history/
-.history/*
-.vscode/*
+.vscode/
+.tmp.driveupload/
