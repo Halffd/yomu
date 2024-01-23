@@ -4,6 +4,7 @@ node_modules/
 
 builds/
 
+dict/
 dictionaries/
 
 /test-results/
@@ -26,3 +27,5 @@ ext/js/admin/key.json
 .history/
 .history/*
 .vscode/*
+.vscode/
+.tmp.driveupload/
