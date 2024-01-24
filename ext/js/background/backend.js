@@ -1091,7 +1091,7 @@ export class Backend {
         if (typeof id !== 'number') {
             throw new Error('Tab does not have an id');
         }
-        await this._waitUntilTabFrameIsReady(id, 0, 2000);
+        await this._waitUntilTabFrameIsReady(id, 0, 30000);
 
         await this._sendMessageTabPromise(
             id,
@@ -1843,13 +1843,13 @@ export class Backend {
                     () => {} // NOP
                 );
 
-            if (timeout !== null) {
+            /* if (timeout !== null) {
                 timer = setTimeout(() => {
                     timer = null;
                     cleanup();
                     reject(new Error('Timeout'));
                 }, timeout);
-            }
+            } */
         });
     }
 

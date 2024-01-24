@@ -141,16 +141,17 @@ export class Analyze {
             // txt = e.target
             t = e.target.value
         }
-        console.log();(txt, t);
+        console.log(); (txt, t);
         try {
             // document.querySelector('.content-body-inner').remove()
         } catch { }
         // this.del(this.t)
         // Regular expression pattern to match Japanese katakana, hiragana, or kanji
-        const regex = /[^\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}]/gu;
+        const regex = /[^\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}\n\d\-:,]/gu;
         try {
             t = t.replace(regex, '')
-            let tokens
+            console.log(t);
+            let tokens = []
             if (!ta) {
                 tokens = await token(t);
             } else {
@@ -158,7 +159,38 @@ export class Analyze {
             }
             var fq = {}
             lg(tokens);
+            this.sts = [];
+            this.ref = {};
+            this.an = true;
+            let st = [];
+            const re = /--/g
+            for (let i = 0; i < tokens.length; i++) {
+                let word = tokens[i];
+                if (i === tokens.length - 1) {
+                    st.push(word)
+                }
+                let count = ((st.join('') || '').match(re) || []).length
+                let sub = st.join('').includes('--');
+                if ((!sub && word.includes('\n'))
+                    || (sub && count > 1)
+                    || (sub && word.includes('\n\n'))
+                    || i === tokens.length - 1) {
+                    st.forEach((w) => {
+                        if (this.ref[w]) {
+                            this.ref[w] += '\n' + st.join('');
+                        } else {
+                            this.ref[w] = st.join('');
+                        }
+                    });
+                    this.sts.push(st.join());
+                    st = [];
+                } else {
+                    st.push(word);
+                }
+            }
+            console.warn({st, ref: this.ref, sts: this.sts});
             tokens = [...new Set(tokens)]
+
             for (let i in tokens) {
                 let t = tokens[i]
                 let f1 = await this.dic.frequency(t, this.dic.cc) ?? 0
@@ -175,15 +207,21 @@ export class Analyze {
             let res = this.sort(fq)
             wn(fq, res)
             let ft = ''
+            let ts = []
             for (let fs of res) {
                 let t = fs[0]
                 let f = fs[1]
                 ft += t + ' '
+                ts.push(t)
                 this.tc.innerHTML += ` ${t}: ${f} `
             }
-            this.dic.delete()
-            await this.dic.update(ft)
-            this.dic.pos = 0
+            this.dic.delete();
+            if (this.dic.var('moe') || this.dic.var('slw')) {
+                await this.dic.update(ft)
+            } else {
+                await this.dic.tokens(ts);
+            }
+            this.dic.pos = 0;
         } catch (error) {
             console.error(error);
         }

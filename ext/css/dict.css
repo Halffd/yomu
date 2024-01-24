@@ -142,6 +142,24 @@
     margin: 0
 }
 
+.wset {
+    display: none;
+}
+.mns:hover .wset {
+    display: block;
+    position: absolute;
+    top: 25%;
+    left: 0; 
+    background-color: #020202;
+    font-size: 0.7em;
+    /* Enable word wrapping */
+    border-radius: 12px;
+    border-color: rgb(75, 11, 131);
+    border-style: solid;
+    font-weight: normal;
+    border-width: 2px;
+    padding: 0;
+}
 .mns:hover #particle {
     display: none;
 }

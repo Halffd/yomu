@@ -211,6 +211,7 @@ export class aDict {
     let tx
     let V
     let prev
+    this.do = true
     this.first = true
     this.save = []
     this.stop = false
@@ -1258,7 +1259,7 @@ this.txtImg(false)
             console.error(this.lmt)
             break
           }
-          if (this.var('moe')) {
+          if (this.var('moe') && typeof spl[ii] === 'string') {
             if (spl[ii].length > 300) {
               const spm = this.splitter(spl[ii], 300)
               if (av('warn')) console.warn(spm)
@@ -1455,7 +1456,7 @@ this.txtImg(false)
     }
     if (y) {
       elem.innerHTML = y
-      this.terms.push(tt)
+      this.terms?.push(tt)
       if (y) {
         tts = this.yomiread(elem, false)
       }
@@ -1537,13 +1538,25 @@ this.txtImg(false)
       w.push(tt)
       line.push(tt)
       elem.insertAdjacentHTML('beforeend', '<span id="particle" class="part" style="font-size: 1.25em;padding:0;margin:0;"></span>')
-      let ff = await this.frequency(tt, this.cc) ?? 0
-      let fj = await this.frequency(tt, this.jpdb) ?? 0
-      let f = `${ff} *${fj}`
-      if (fj <= 0) {
-        f = ff
-      } else if (ff <= 0) {
-        f = `*${fj}`
+      if (this.analyze?.ref) {
+        try {
+          let st = this.analyze.ref[tt]
+          elem.setAttribute('wset', st)
+          elem.insertAdjacentHTML('beforeend', `<span class="wset" style="font-size: 1.05em;padding:0;margin:0;">${st}</span>`)
+        } catch (error) {
+          console.error(error);
+        }
+      }
+      let f = -1
+      if (this.var('token')) {
+        let ff = await this.frequency(tt, this.cc) ?? 0
+        let fj = await this.frequency(tt, this.jpdb) ?? 0
+        f = `${ff} *${fj}`
+        if (fj <= 0) {
+          f = ff
+        } else if (ff <= 0) {
+          f = `*${fj}`
+        }
       }
       if (av('warn')) console.warn(f)
       if (typeof ii == 'string') {
@@ -1555,27 +1568,8 @@ this.txtImg(false)
           if (!ele) ele = window.event
           ele.stopPropagation()
           if (av('log')) console.dir(ele, ele.target)
-          const elemc = ele.target.closest('.mns')
-          const ist = ele.target.closest('.title')
-          const fv = document.querySelector('.fav')
-          if (fv) {
-            fv.style.flex = 'none'
-            fv.style.height = ''
-            fv.style.width = ''
-            fv.style.setProperty('--cc', 'orange')
-          } // else { }
-          elemc.classList.add('fav')
-          elemc.style.setProperty('--cc', 'gray')
-          elemc.style.setProperty('--sz', '0.8em');
-          if (elemc.style.height.length > 1) {
-            elemc.style.height = ''
-            elemc.style.flex = 'none'
-          } else {
-            elemc.style.height = height
-            elemc.style.flex = width
-          }
-          if (av('warn')) console.warn(elemc, ist, fv, elem.style.height)
-        }, false)
+          this.expand(ele.target)
+        }.bind(this), false)
         elem.addEventListener('click', function (/** @type {Event | undefined} */ ele) {
           if (!ele) ele = window.event
           ele.stopPropagation()
@@ -1722,12 +1716,12 @@ this.txtImg(false)
       return null
     }
   }
-  async tokens(spl, splL) {
+  async tokens(spl, splL = 0) {
     let txt = spl
-    txt = txt.replace(/[&/\\#,+()$~%.'":*?<>{}]/g, '')
+    if (typeof spl === 'string') txt = txt.replace(/[&/\\#,+()$~%.'":*?<>{}]/g, '')
     const isKana = this.japaneseUtil.isStringPartiallyJapanese(txt)
     if (isKana) {
-      spl = await token(txt)
+      if (typeof spl === 'string') spl = await token(txt)
       this.spls = spl
       let ptxt = this.setup()
       if (av('warn')) console.warn(this.modK, this.modP)
@@ -2460,7 +2454,7 @@ this.txtImg(false)
         this.pos += 1
       }
       if (e.ctrlKey || e.shiftKey) {
-        console.warn(this.pos,this.ppos);
+        console.warn(this.pos, this.ppos);
         let a = b[this.ppos]
         let d = b[this.pos]
         let parent = d.parentNode;
@@ -2474,19 +2468,19 @@ this.txtImg(false)
             } else {
               parent.insertBefore(a, d); // a-d left, d-a right
             }
+            cur(a)
           } else {
             if (this.pos > this.ppos) {
               //parent.insertBefore(a, parent.lastChild);
               parent.appendChild(a); // end
-              this.pos = 0
               //this.pos = children.map((child) => child === parent.lastChild).indexOf(true);
             } else {
               parent.insertBefore(a, parent.firstChild); // start
-              this.pos = b.length - 1
               //this.pos = children.map((child) => child === parent.firstChild).indexOf(true);
             }
+            this.pos = this.ppos
+            cur(b[this.pos])
           }
-          cur(a)
           console.warn(this.pos);
         }
       } else {
@@ -2545,7 +2539,7 @@ this.txtImg(false)
         }
       }
 
-      console.warn(this.pos,this.ppos);
+      console.warn(this.pos, this.ppos);
       this.posr = [this.pos, b[this.pos], ps]
       // b[pos].style.border = '1px dotted red'
       // alert(t,x)
@@ -2660,23 +2654,7 @@ this.txtImg(false)
         this.hke = true
       }
       if (e.key == '' || e.key == ' ') {
-        if (b[this.pos]) {
-          if (b[this.pos].style.height.length > 1) {
-            b[this.pos].style.height = ''
-            b[this.pos].style.flex = 'none'
-          } else {
-            b[this.pos].style.height = localStorage.getItem('ht')
-
-            b[this.pos].style.flex = localStorage.getItem('wt')
-          }
-        }
-        if (this.pos < 0) {
-          this.pos = 0
-        } else if (this.pos > b.length - 1) {
-          this.pos = b.length - 1
-        }
-        b[this.pos].scrollIntoView()// {behavior: 'auto',block: 'center'});
-        this.cache(b[this.pos], this.istart, this.pos)
+        this.expand(b[this.pos])
       }
       wn(ki)
       if (ki == 21) {
@@ -2689,20 +2667,22 @@ this.txtImg(false)
       }
       if (kn === 'delete') {
         let elem = document.getElementById('cur')
-        let w = elem.getAttribute('w')
+        let w = elem.getAttribute('w') ?? ''
         let ws = await unconjugate(w)
         console.warn(w, ws);
         if (ws) w = ws
         let dl = []
-        let d = localStorage.getItem('deleted') ?? null
-        if (d) {
-          dl = d.split(' ')
-          dl.push(w)
+        let d = localStorage.getItem('deleted') ?? []
+        if (typeof d === 'string') {
+          dl = d.split(' ') ?? []
         }
+        dl.push(w)
         localStorage.setItem('deleted', dl.join(' '))
         let s = localStorage.getItem('words')
-        s = s?.split(' ').filter(element => element !== w);
-        localStorage.setItem('words', s.join(' '))
+        if (s) {
+          let r = s?.split(' ').filter(element => element !== w);
+          localStorage.setItem('words', r.join(' '))
+        }
         //        aNote.find(w)
         //        aNote.delete('word', w, '==')
       }
@@ -2751,6 +2731,7 @@ this.txtImg(false)
       si = si.slice(si.length - ln)
       si = si.join(' ')
     } catch { }
+    this.si = si
     if (cp) {
       this._copyText(si)
     }
@@ -2913,6 +2894,7 @@ this.txtImg(false)
    * @param {string | undefined} q
    */
   async update(q, from = null) {
+    if(!this.do) return
     if (av('warn')) console.warn(q)
     this.new = true
     if (this.var('cp') === false) {
@@ -2935,32 +2917,34 @@ this.txtImg(false)
       if (this.var('del')) {
         this.delete()
       }
-      this.frst = false
-      this.istart = -1
-      this.spl = fq.split('\n')// .filter(item=>item);
-      const ln = this.spl.length
-      const nl = this.int('lim')
-      if (this.prt > nl) {
-        localStorage.setItem('lim', this.prt)
-      } else if (this.prt < (nl / 5)) {
-        localStorage.setItem('lim', Math.round(nl / 5))
-      }
-      this.lis = ln > nl
-      this.len = ln
-      this.spl = [this.spl]
-      if (this.var('slw')) {
-        this.read = false
-        let txt = fq
-        console.log(this.spl, ln, nl)
-        if (this.var('hk') || this.lis) {
-          this.istart = 0
-          this.spl = this.groupByN(this.prt, this.spl[0], this.istart)
-          await this.yomi.bind(this, this.spl[this.istart], this.istart)()
-        } else {
-          await this.yomi.bind(this, this.spl[this.istart + 1], this.istart + 1)()
+      if (fq) {
+        this.frst = false;
+        this.istart = -1;
+        this.spl = fq?.split ? fq.split('\n') : fq // .filter(item=>item);
+        const ln = this.spl.length;
+        const nl = this.int('lim');
+        if (this.prt > nl) {
+          localStorage.setItem('lim', this.prt)
+        } else if (this.prt < (nl / 5)) {
+          localStorage.setItem('lim', Math.round(nl / 5))
         }
-      } else {
-        await this.yomi.bind(this, this.spl, 0, false)()
+        this.lis = ln > nl;
+        this.len = ln;
+        this.spl = [this.spl];
+        if (this.var('slw')) {
+          this.read = false
+          let txt = fq
+          console.log(this.spl, ln, nl)
+          if (this.var('hk') || this.lis) {
+            this.istart = 0
+            this.spl = this.groupByN(this.prt, this.spl[0], this.istart)
+            await this.yomi.bind(this, this.spl[this.istart], this.istart)()
+          } else {
+            await this.yomi.bind(this, this.spl[this.istart + 1], this.istart + 1)()
+          }
+        } else {
+          await this.yomi.bind(this, this.spl, 0, false)()
+        }
       }
       this.start = true
     }
@@ -3065,7 +3049,46 @@ this.txtImg(false)
       this.anki._addAnkiNote(0, 'term-kanji')
     }
   }
+  expand(elem) {
+    const elemc = elem.closest('.mns')
+    const ist = elem.closest('.title')
+    const fv = document.querySelector('.fav')
+    if (fv) {
+      fv.style.flex = 'none'
+      fv.style.height = ''
+      fv.style.width = ''
+      fv.style.setProperty('--cc', 'orange')
+    } // else { }
+    elemc.classList.add('fav')
+    elemc.style.setProperty('--cc', 'gray')
+    elemc.style.setProperty('--sz', '0.8em');
+    if (elem) {
+      if (elem.style.height.length > 1) {
+        elem.style.height = ''
+        elem.style.flex = 'none'
+      } else {
+        elem.style.height = localStorage.getItem('ht')
 
+        elem.style.flex = localStorage.getItem('wt')
+      }
+    }
+    let b = document.querySelectorAll('.vis')
+    if (this.pos < 0) {
+      this.pos = 0;
+    } else if (this.pos > b.length - 1) {
+      this.pos = b.length - 1
+    }
+    elem.scrollIntoView()// {behavior: 'auto',block: 'center'});
+    this.cache(elem, this.istart, this.pos)
+    let ws = elem.getAttribute('wset') ?? null
+    if(ws){
+      this.do = false
+      this._copyText(ws)
+      setTimeout(() => {
+        this.do = true
+      }, 5000);
+    }
+  }
   /**
    * @param {any} k
    * @param {any} optionsContext
@@ -3315,6 +3338,7 @@ this.txtImg(false)
       {id: 'scr', label: 'AutoScroll'},
       {id: 'log', label: 'Log'},
       {id: 'warn', label: 'Warn'},
+      {id: 'token', label: 'Tokenizer'},
       {id: 'kanji', label: 'Kanjis'},
       {id: 'sav', label: 'Save'},
       {id: 'hk', label: 'Split'},
