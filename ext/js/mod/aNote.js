@@ -856,13 +856,13 @@ export class Note {
       /**
      * @param {any} w
      */
-      getKey(w) {
+      key(w) {
         try {
             var a = localStorage.getItem("save");
             var oc = JSON.parse(a);
             for (var prop in oc) {
                 if (Object.prototype.hasOwnProperty.call(oc, prop) && oc[prop].word === w) {
-                    return oc[prop];
+                    return prop;
                 }
             }
             return null; // Word not found
@@ -927,11 +927,11 @@ export class Note {
 
             const result = {};
 
-            newKeys.forEach((k) => {
-                result[k] = obj[k];
-            });
-
-            return result;
+            let newKey = Math.floor(Date.now() / 1000); // Current Unix timestamp
+            const value = obj[currentIndex];
+            delete obj[currentIndex];
+            obj[newKey] = value;
+            return obj;
         } catch (error) {
             // Handle the error here
             console.error('An error occurred:', error.message);
@@ -977,8 +977,8 @@ export class Note {
 
         return result;
     }
-    obj(){
-        var a = localStorage.getItem("save");
+    get obj(){
+        var a = localStorage.getItem("save") ?? '';
         var oc
         try {
             oc = JSON.parse(a)

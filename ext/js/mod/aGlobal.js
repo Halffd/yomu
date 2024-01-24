@@ -118,7 +118,11 @@ function initializeTokenizer() {
  * @typedef {Object} Tokenizer
  * @property {function(string): Array} tokenize - Tokenizes text.
  */
-var tokenizer = initializeTokenizer();
+
+/**
+ * @type {Tokenizer | Promise<void>}
+ */
+var tokenizer = Promise.resolve();;
 
 /**
  * Unconjugates a word.
@@ -128,7 +132,7 @@ var tokenizer = initializeTokenizer();
 async function unconjugate(word) {
     try {
         if (tokenizer instanceof Promise) {
-            tokenizer = await tokenizer
+            tokenizer = await initializeTokenizer()
         }
         if (tokenizer) {
             // Use the tokenizer to analyze the specific word
@@ -214,7 +218,7 @@ function get_token_frequency(text) {
  */
 async function analyse(text, mode = 'A', nom = false) {
     if (tokenizer instanceof Promise) {
-        tokenizer = await tokenizer
+        tokenizer = await initializeTokenizer()
     }
     // mode = modes(mode || "A");
     const nominal_form = nom
@@ -237,7 +241,7 @@ async function analyse(text, mode = 'A', nom = false) {
  */
 async function furigana(text, mode = 'A') {
     if (tokenizer instanceof Promise) {
-        tokenizer = await tokenizer
+        tokenizer = await initializeTokenizer()
     }
     // mode = modes(mode || "A");
 
@@ -260,7 +264,7 @@ async function furigana(text, mode = 'A') {
  */
 async function furiganas(texts, mode = 'A') {
     if (tokenizer instanceof Promise) {
-        tokenizer = await tokenizer
+        tokenizer = await initializeTokenizer()
     }
     // mode = modes(mode || "A");
 
@@ -290,7 +294,7 @@ async function furiganas(texts, mode = 'A') {
  */
 async function token(text, mode = 'A') {
     if (tokenizer instanceof Promise) {
-        tokenizer = await tokenizer
+        tokenizer = await initializeTokenizer()
     }
     // mode = modes(mode || "A");
 
