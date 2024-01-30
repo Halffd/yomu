@@ -58,8 +58,8 @@ function time(value, conversion) {
         return formattedDate;
     } else {
         var parts = value.split(' ');
-        var dateParts = parts[0]?.split('/') ?? ['1','1','2000'];
-        var timeParts = parts[1]?.split(':') ?? ['0','0','0'];
+        var dateParts = parts[0]?.split('/') ?? ['1', '1', '2000'];
+        var timeParts = parts[1]?.split(':') ?? ['0', '0', '0'];
         day = parseInt(dateParts[0], 10);
         month = parseInt(dateParts[1], 10) - 1;
         year = parseInt(dateParts[2], 10);
@@ -96,9 +96,9 @@ export class Note {
     async addAnki(dic, kanji = '', kana = '', o = {}, q = 1, i = 0) {
         try {
             const det = await this.aDict?.anki._getDictionaryEntryDetails(dic)
-            
+
             const mode = 'term-kanji'
-            
+
             let req = [
                 {
                     "type": "selectionText"
@@ -128,8 +128,8 @@ export class Note {
                     "type": "audio"
                 }
             ];
-            console.warn(det,req,mode);
-            if(det) req = det[0].modeMap.get(mode);
+            console.warn(det, req, mode);
+            if (det) req = det[0].modeMap.get(mode);
             console.warn(req);
             if (nv('log')) console.log(mode, req, dic, q) // Output: "term-kanji"
             // Call the addAnkiNote function
@@ -375,12 +375,20 @@ export class Note {
             console.error('An error occurred:', error)
         }
     }
-
+    nobj(on, i, dateString, unixSeconds, txt) {
+        on[i].status += 1
+        on[i].sentence += '\n' + txt
+        if (on[i].time) {
+            on[i].time += ' ' + dateString ?? unixSeconds
+        } else {
+            on[i].time = dateString ?? unixSeconds
+        }
+    }
     /**
      * @param {string | undefined} t
      * @param {string} txt
      */
-    async saveAdd(cx = 0, t, txt, def = '', fq = [], tags = [], html = '', moe = false, audio = [], image = [], clip = '', yc = false, read = '') {
+    async saveAdd(cx = 0, t, txt, def = '', fq = [], tags = [], html = '', moe = false, audio = [], image = [], clip = '', yc = false, read = '', elem = null) {
         try {
             const log = {
                 dict: this.dic,
@@ -405,9 +413,9 @@ export class Note {
         }
         try {
             let tu = await unconjugate(t);
-            if(tu) t = tu;
+            if (tu) t = tu;
             const note = window.aNote
-            const noteMod = Object.create(Note.prototype, { dict: this })
+            const noteMod = Object.create(Note.prototype, {dict: this})
             const storedDay = parseInt(localStorage.getItem('day'))
             const day = aDict.prototype.int('day') ?? -1 //isNaN(storedDay) ? 0 : storedDay
             const unixSeconds = Math.floor(Date.now() / 1000); // Current Unix timestamp
@@ -433,7 +441,7 @@ export class Note {
             // Nullish Coalescing Operator (??)
             // This operator returns the first operand if it is not null or undefined.
             // Otherwise, it returns the second operand.
-            const s = save ?? { data: [] }
+            const s = save ?? {data: []}
             // Optional Chaining Operator (?.)
             // This operator allows you to read the value of a property located deep within a chain of connected objects
             // without having to check that each reference in the chain is valid.
@@ -446,26 +454,51 @@ export class Note {
             // then an expression to execute if the condition is truthy followed by a colon (:),
             // and finally the expression to execute if the condition is falsy.
             // let data2 = s.text ?? ''; //let data2 = s.text ? s.text : '';
+            let options = {
+                year: 'numeric',
+                month: 'numeric',
+                day: 'numeric',
+                weekday: 'short',
+                hour: 'numeric',
+                minute: 'numeric',
+                second: 'numeric',
+                timeZone: 'America/Sao_Paulo',
+                timeZoneName: 'short'
+            };
+            let dateString = new Date().toLocaleString('pt-BR', options).replaceAll(',', '');
 
             let word = localStorage.getItem('words').replace(/(\d{1,2}-\d{1,2}-\d{4}-\d{1,2}:\d{1,2}: )|(\w{3} \w{3} \d{2} \d{4} \d{2}:\d{2}:\d{2} \w{3}-\d{4} \(\w{3}\))/g, '')
             // note.setFileContents({ day: date.toString(), lastAccess: d, words: t, sentences: txt, html: html });
-            if (save) {
-                for (let i = 0; i < save.length; i++) {
-                    if (save[i]/* .word */ === t) {
-                        break
-                    }
-                }
-            }
+
             let ww
             let w2
-            if (cx == 0) {
+            if (cx >= 0) {
                 ww = word.split(' ')
             }
             let isStringInSet = ww.includes(t)
 
             const saveDiv = document.querySelector('.save')
             if (nv('warn')) console.warn(cx, isStringInSet, ww, w2, t)
-            if (cx == -1) return
+            //if (cx == -1) return
+            if (cx >= 1 || this.aDict?.saving) {
+                let k = localStorage.getItem('keep') ?? ''
+                let ks = k.split(' ')
+                let is = ks.includes(t)
+                if (!is) {
+                    ks.push(t)
+                    k = ks.join(' ')
+                    // elem.style.borderColor = 'green'
+                    elem.style.setProperty('--cc', 'aqua')
+                } else {
+                    const kf = ks.filter(item => item !== t);
+                    k = kf.join(' ')
+                    elem.style.setProperty('--cc', 'red')
+                    this.delete('word', t, '==')
+                }
+                localStorage.setItem('keep', k)
+            } else {
+                elem.style.setProperty('--cc', 'lime')
+            }
             if ((isStringInSet && cx >= 0)) {
                 const bsWithoutString = ww.filter(function (element) {
                     return element !== t
@@ -476,6 +509,19 @@ export class Note {
                     localStorage.setItem('words', ww.join(' '))
                 }
                 note.svDiv(saveDiv, ww.join(' '), flag)
+                if (this.find(t) ? true : false) {
+                    let on = this.obj;
+                    let ow = this.find(t, "word");
+                    if (ow?.length > 2) {
+                        let ox = ow[ow.length - 1]
+                        for (let i in ox) {
+                            this.nobj(on, i, dateString, unixSeconds, txt)
+                        }
+                    } else {
+                        this.nobj(on, ow[1], dateString, unixSeconds, txt)
+                    }
+                    localStorage.setItem('save', JSON.stringify(on))
+                }
                 return isStringInSet
             } else if (cx < -1) {
                 let b = localStorage.getItem('exp') ?? ''
@@ -507,15 +553,16 @@ export class Note {
                 const options = this.aDict._display.getOptionsContext()
                 const results = await this.aDict._display._findDictionaryEntries(false, t, false, options)
                 if (nv('warn')) console.warn(options, yc, read, results, fq, fq.length)
-            let ain
-                try{
-                ain = av("anki") ? await aIn(t, this.aDict.jpws) : true
-                wn(ain,t)
-            } catch(zx){
-                console.error(zx);
-            }
-                if(!ain){
-                    note.addAnki(results, t, read, so, results.length)
+                let ain
+                try {
+                    ain = av("anki") ? aIn(t, this.aDict.jpws) : false
+                } catch (zx) {
+                    console.error(zx);
+                }
+                if (ain) {
+                    ain.then(()=>{
+                        note.addAnki(results, t, read, so, results.length)
+                    })
                 }
                 if (fq.length == 0) {
                     let sum = 0;
@@ -534,8 +581,8 @@ export class Note {
                     definition: def,
                     frequency: fq,
                     clipboard: clip?.substring(0, 5) === txt.substring(0, 5) ? '' : clip?.substring(0, 80),
-                    status: 1,
-                    time: d.toLocaleString('pt-BR').replace(',', ''),
+                    status: cx < 1 ? 1 : cx,
+                    time: dateString,
                     params: `Yc:${yc} Cx:${cx} Flag:${flag}`
                 }
                 try {
@@ -571,12 +618,12 @@ export class Note {
         }
         let s3 = saveDiv.querySelector(".w")
         let cache = saveDiv.querySelector(".cache")
-        if(!cache){
+        if (!cache) {
             cache = document.createElement('div')
-        cache.className = 'cache'
-        saveDiv.prepend(cache)
-        s3 = saveDiv.appendChild(document.createElement('div'))
-        s3.className = 'w'
+            cache.className = 'cache'
+            saveDiv.prepend(cache)
+            s3 = saveDiv.appendChild(document.createElement('div'))
+            s3.className = 'w'
         }
         cache.innerHTML = `${localStorage.getItem('navsave')}: ${localStorage.getItem('navsentence')}`
         if (saveDiv) {
@@ -643,7 +690,7 @@ export class Note {
         }
         const xt = elem.parentElement.getAttribute('txt')
         let st = xt?.substring(0, 80)
-        if (cx <= 0) {
+        if (cx <= 50) {
             const k = elem.querySelector('.kj')
             if (nv('warn')) console.warn(k.innerHTML) // console.dir(kj)
             if (nv('warn')) console.warn(kj, I, df, rd)
@@ -668,16 +715,16 @@ export class Note {
                 // en = cpn.innerText
                 //
                 // async saveAdd(t, txt, def = '', fq = [], tags = [], html = '', moe = false, audio = [], image = [], clip = '', yc = null) {
-                await note.saveAdd(cx, wn, st, df, fq, tag, ht, false, snd, img, clip, true, rd)// localStorage.setItem('save', `${save} ${en}`)
+                await note.saveAdd(cx, wn, st, df, fq, tag, ht, false, snd, img, clip, true, rd, elem)// localStorage.setItem('save', `${save} ${en}`)
             } else {
                 //try { //df += elem.querySelector('dt').innerText } finally {
-                await note.saveAdd(cx, k.innerText, st, df, undefined, tag, ht, true, snd, img, clip, true, rd) // localStorage.setItem('save', `${save} ${k.innerHTML}`)
+                await note.saveAdd(cx, k.innerText, st, df, undefined, tag, ht, true, snd, img, clip, true, rd, elem) // localStorage.setItem('save', `${save} ${k.innerHTML}`)
             }
         } else {
             try {
                 df += elem.querySelector('dt').innerText
             } catch { }
-            await note.saveAdd(cx, tw, st, df, undefined, tag, ht, true, snd, img, clip, undefined, rd)
+            await note.saveAdd(cx, tw, st, df, undefined, tag, ht, true, snd, img, clip, undefined, rd, elem)
         }
     }
 
@@ -777,86 +824,89 @@ export class Note {
             console.error(error);
         }
     }
-    get(a = true){
-        if(a){
-            return this.find('','word','')
+    get(a = true) {
+        if (a) {
+            return this.find('', 'word', '')
         } else {
             return this.find()
         }
     }
     find(query = '', prop = 'word', comparison = '=', oc = null) {
         try {
-          if (!oc) {
-            try {
-              var a = localStorage.getItem("save");
-              oc = JSON.parse(a);
-            } catch {
-              return null;
+            if (!oc) {
+                try {
+                    var a = localStorage.getItem("save");
+                    oc = JSON.parse(a);
+                } catch {
+                    return null;
+                }
             }
-          }
-          /**
-             * @type {any[]}
-             */
-          var result = [];
-      
-          for (var index in oc) {
-            if (Object.prototype.hasOwnProperty.call(oc, index)) {
-              var item = oc[index];
-              var match = false;
-      
-              if (comparison === '') {
-                // Return array of item[prop]
-                if (prop in item) {
-                  result.push(item[prop]);
+            /**
+               * @type {any[]}
+               */
+            var result = [];
+            var i = []
+            for (var index in oc) {
+                if (Object.prototype.hasOwnProperty.call(oc, index)) {
+                    var item = oc[index];
+                    var match = false;
+
+                    if (comparison === '') {
+                        // Return array of item[prop]
+                        if (prop in item) {
+                            result.push(item[prop]);
+                        }
+                    } else if (query === '') {
+                        // Return all objects
+                        result.push(item);
+                    } else if (prop === 'key') {
+                        // Query by index (key) comparison
+                        if (applyComparison(index, comparison, query)) {
+                            match = true;
+                        }
+                    } else if (prop in item) {
+                        var value = item[prop];
+
+                        if (typeof value === 'number' && typeof query === 'number') {
+                            // Number comparison
+                            if (applyComparison(value, comparison, query)) {
+                                match = true;
+                            }
+                        } else if (comparison === 'search' && typeof value === 'string' && typeof query === 'string') {
+                            // String search
+                            if (value.includes(query)) {
+                                match = true;
+                            }
+                        } else if (value === query) {
+                            // Exact match
+                            match = true;
+                        }
+                    }
+
+                    if (match) {
+                        i.push(index)
+                        result.push(item);
+                    }
                 }
-              } else if (query === '') {
-                // Return all objects
-                result.push(item);
-              } else if (prop === 'key') {
-                // Query by index (key) comparison
-                if (applyComparison(index, comparison, query)) {
-                  match = true;
-                }
-              } else if (prop in item) {
-                var value = item[prop];
-      
-                if (typeof value === 'number' && typeof query === 'number') {
-                  // Number comparison
-                  if (applyComparison(value, comparison, query)) {
-                    match = true;
-                  }
-                } else if (comparison === 'search' && typeof value === 'string' && typeof query === 'string') {
-                  // String search
-                  if (value.includes(query)) {
-                    match = true;
-                  }
-                } else if (value === query) {
-                  // Exact match
-                  match = true;
-                }
-              }
-      
-              if (match) {
-                result.push(item);
-              }
             }
-          }
-          if (result.length === 0) {
-            return null; // No matching objects found
-          } else if (result.length === 1) {
-            return result[0]; // Return single matching object
-          } else {
-            return result; // Return array of matching objects
-          }
+            if (result.length === 0) {
+                return null; // No matching objects found
+            } else if (result.length === 1) {
+                result.push(i)
+                return result; // Return single matching object
+            } else {
+                result.push(i)
+                return result; // Return array of matching objects
+            }
         } catch (error) {
-          console.error('An error occurred:', error.message);
-          return null;
+            console.error('An error occurred:', error.message);
+            return null;
         }
-      }
-      /**
-     * @param {any} w
-     */
-      key(w) {
+    }
+    /**
+   * @param {any} w
+   */
+    key(w) {
         try {
             var a = localStorage.getItem("save");
             var oc = JSON.parse(a);
@@ -940,6 +990,16 @@ export class Note {
         }
     }
     /**
+     * @param {boolean} k1
+     * @param {boolean} k2
+     * @param {Element} elem
+     */
+    keep(k1, k2, elem) {
+        let v = 1
+        let opt = k1 && k2 ? v+2 : ((k1 || k2) ? v+1 : v)
+        this.svClk(elem, opt)
+    }
+    /**
      * @param {{ [x: string]: any; }} obj
      * @param {PropertyKey} key
      * @param {number} newPosition
@@ -977,7 +1037,7 @@ export class Note {
 
         return result;
     }
-    get obj(){
+    get obj() {
         var a = localStorage.getItem("save") ?? '';
         var oc
         try {
@@ -985,6 +1045,37 @@ export class Note {
         } catch {
             return null
         }
-        return oc       
+        return oc
+    }
+    get words() {
+        var a = localStorage.getItem("words") ?? '';
+        var oc
+        try {
+            oc = a.split(' ')
+        } catch {
+            return null
+        }
+        return oc
+    }
+    get bin() {
+        var a = localStorage.getItem("keep") ?? '';
+        var oc
+        try {
+            oc = a.split(' ')
+        } catch {
+            return null
+        }
+        return oc
+    }
+    get arr() {
+        var a = localStorage.getItem("save") ?? '';
+        var oc
+        try {
+            oc = JSON.parse(a)
+            oc = Object.values(oc)
+        } catch {
+            return null
+        }
+        return oc
     }
 }
