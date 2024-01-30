@@ -131,6 +131,9 @@ var tokenizer = Promise.resolve();;
  */
 async function unconjugate(word) {
     try {
+        if(!aDict?.var("unconj")){
+            return word
+        }
         if (tokenizer instanceof Promise) {
             tokenizer = await initializeTokenizer()
         }
@@ -149,11 +152,11 @@ async function unconjugate(word) {
 
             // Get the unconjugated form of the word
             let unconjugatedForm = '';
-            for (let i = 0; i < tokens.length; i++) {
+            let lm = tokens.length
+            for (let i = 0; i < lm; i++) {
                 const element = tokens[i].basic_form ?? tokens[i].surface_form;;
                 unconjugatedForm += element;
             }
-
             return unconjugatedForm;
         }
         return word
@@ -239,7 +242,7 @@ async function analyse(text, mode = 'A', nom = false) {
  * @param {string} [mode='A'] - The tokenization mode.
  * @returns {Promise<Array<Object>>} - The furigana information.
  */
-async function furigana(text, mode = 'A') {
+async function makeFurigana(text, mode = 'A') {
     if (tokenizer instanceof Promise) {
         tokenizer = await initializeTokenizer()
     }
@@ -262,7 +265,7 @@ async function furigana(text, mode = 'A') {
  * @param {string} [mode='A'] - The tokenization mode.
  * @returns {Promise<Array<Array<Object>>>} - The furigana information for each text.
  */
-async function furiganas(texts, mode = 'A') {
+async function makeFuriganas(texts, mode = 'A') {
     if (tokenizer instanceof Promise) {
         tokenizer = await initializeTokenizer()
     }

@@ -145,11 +145,19 @@
 .wset {
     display: none;
 }
+
+.navst {
+    padding-left: 8px;
+    padding-right: 15px;
+    border: 2px solid #096450;
+    border-radius: 25px;
+}
+
 .mns:hover .wset {
     display: block;
     position: absolute;
     top: 25%;
-    left: 0; 
+    left: 0;
     background-color: #020202;
     font-size: 0.7em;
     /* Enable word wrapping */
@@ -160,6 +168,7 @@
     border-width: 2px;
     padding: 0;
 }
+
 .mns:hover #particle {
     display: none;
 }
@@ -285,6 +294,11 @@ dd>div>div>div.conj-gloss>dl>dt {
     padding-bottom: 25%;
 }
 
+.saving {
+    padding: 2px;
+    border: 4px solid plum;
+}
+
 dt {
     font-size: 1.35em;
     font-weight: 300;
@@ -397,6 +411,58 @@ dd>li {
     position: relative;
 }
 
+.mns:hover .navigation-button {
+    display: block;
+}
+.navigation-button {
+    display: none;
+    position: absolute;
+    width: 22px;
+    height: 14px;
+    font-size: 0.6em;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    background-color: rgb(41, 41, 41);
+    opacity: 0.6;
+    color: rgb(255, 207, 129);
+    border: 1px solid rgb(248, 255, 153);
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.left-top {
+    content: '<<';
+    top: 50px;
+    left: 0px;
+    border-color: #e64723;
+    color: #e64723;
+}
+
+.left-bottom {
+    content: '<';
+    bottom: 50px;
+    left: 0px;
+    border-color: rgb(55, 85, 237);
+    color: rgb(55, 85, 237);
+}
+
+.right-top {
+    content: '>>';
+    top: 50px;
+    right: 0px;
+    border-color: #e64723;
+    color: #e64723;
+}
+
+.right-bottom {
+    content: '>';
+    bottom: 50px;
+    right: 0px;
+    border-color: rgb(55, 85, 237);
+    color: rgb(55, 85, 237);
+}
+
 .mns {
     position: relative;
     padding: 0;
@@ -451,9 +517,11 @@ dd>li {
     margin: 0;
     padding: 0;
 }
+
 .yomu ::marker {
     display: none;
 }
+
 dd {
     display: block;
     margin-inline-start: 0.5px;
@@ -463,11 +531,13 @@ dd {
     overflow-y: auto;
     margin-right: -0.3rem;
 }
+
 .content-body-inner {
     margin: 0;
     padding: 0;
     width: 100%;
 }
+
 dl dt {
     margin-bottom: 0.3rem;
     font-weight: bold;
@@ -476,7 +546,9 @@ dl dt {
 .pos-desc {
     color: #007200;
 }
-textarea, #search-textbox {
+
+textarea,
+#search-textbox {
     width: 100%;
 }
 
