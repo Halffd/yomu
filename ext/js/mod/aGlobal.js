@@ -41,6 +41,36 @@ var jpu;
  * @type {{}}
  */
 var mod = {}; // Initialize an empty namespace object
+function calcFlex(result) {
+    return Math.round(100 / (result + 1));
+}
+function calcMinus(percentage) {
+    return Math.round(100 / percentage - 1);
+}
+function calculateItemsByPercentage(percentage) {
+    const data = [
+        {percentage: 100, items: 1},
+        {percentage: 50, items: 1},
+        {percentage: 25, items: 3},
+        {percentage: 15, items: 6},
+        {percentage: 10, items: 9},
+        {percentage: 8, items: 11},
+        {percentage: 1, items: 99}
+    ];
+
+    const decimal = percentage / 100; // Convert percentage to decimal
+
+    let items;
+
+    for (let i = 0; i < data.length; i++) {
+        if (decimal >= data[i].percentage / 100) {
+            items = data[i].items;
+            break;
+        }
+    }
+
+    return Math.ceil(items);
+}
 
 /**
  * @param {string | number} key
@@ -131,7 +161,7 @@ var tokenizer = Promise.resolve();;
  */
 async function unconjugate(word) {
     try {
-        if(!aDict?.var("unconj")){
+        if (!aDict?.var("unconj")) {
             return word
         }
         if (tokenizer instanceof Promise) {
@@ -156,6 +186,9 @@ async function unconjugate(word) {
             for (let i = 0; i < lm; i++) {
                 const element = tokens[i].basic_form ?? tokens[i].surface_form;;
                 unconjugatedForm += element;
+            }
+            if(unconjugatedForm.includes('るれる')){
+                unconjugatedForm = unconjugatedForm.replaceAll('るれる','る')
             }
             return unconjugatedForm;
         }

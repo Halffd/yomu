@@ -482,20 +482,43 @@ export class Note {
             //if (cx == -1) return
             if (cx >= 1 || this.aDict?.saving) {
                 let k = localStorage.getItem('keep') ?? ''
+                localStorage.setItem('keepbackup', k)
                 let ks = k.split(' ')
+                let filt = false
                 let is = ks.includes(t)
                 if (!is) {
+                    ks = ks.map(word => {
+                        const lastIndex = word.indexOf(t);
+                        if (lastIndex !== -1) {
+                            filt = true
+                            return word.replace(t, '');
+                        } else {
+                            return word;
+                        }
+                    });
+                    localStorage.setItem('keep', ks.join(' '))
+                    /*ks.some((word, i) => {
+                      const lastIndex = word.indexOf(t);
+                      if (lastIndex !== -1) {
+                          ks.splice(i, 1)
+                          localStorage.setItem('recyclebin', word)
+                          return word;
+                      }
+                  });*/
+                }
+                if (!is && !filt) {
                     ks.push(t)
                     k = ks.join(' ')
                     // elem.style.borderColor = 'green'
                     elem.style.setProperty('--cc', 'aqua')
+                    localStorage.setItem('keep', k)
                 } else {
                     const kf = ks.filter(item => item !== t);
                     k = kf.join(' ')
                     elem.style.setProperty('--cc', 'red')
-                    this.delete('word', t, '==')
+                    if (!filt) this.delete('word', t, '==')
+                    localStorage.setItem('keep', k)
                 }
-                localStorage.setItem('keep', k)
             } else {
                 elem.style.setProperty('--cc', 'lime')
             }
@@ -560,7 +583,7 @@ export class Note {
                     console.error(zx);
                 }
                 if (ain) {
-                    ain.then(()=>{
+                    ain.then(() => {
                         note.addAnki(results, t, read, so, results.length)
                     })
                 }
@@ -996,7 +1019,7 @@ export class Note {
      */
     keep(k1, k2, elem) {
         let v = 1
-        let opt = k1 && k2 ? v+2 : ((k1 || k2) ? v+1 : v)
+        let opt = k1 && k2 ? v + 2 : ((k1 || k2) ? v + 1 : v)
         this.svClk(elem, opt)
     }
     /**
@@ -1065,7 +1088,28 @@ export class Note {
         } catch {
             return null
         }
+        this._bin = oc
         return oc
+    }
+    set bin(value) {
+        if (Array.isArray(value)) {
+            this._bin = value.join(' ');
+            localStorage.setItem('keep', this._bin);
+        } else {
+            localStorage.setItem('keep', value);
+        }
+    }
+    binFix(){
+        localStorage.setItem('keep',JSON.parse(this.bin[0]).join(' '))
+    }
+    binSet(index, value) {
+        this._bin = this.bin
+        if (typeof index === 'number' && index >= 0 && index < this._array.length) {
+            this._bin[index] = value;
+            localStorage.setItem('bin', JSON.stringify(this._array));
+        } else {
+            throw new Error('Invalid index.');
+        }
     }
     get arr() {
         var a = localStorage.getItem("save") ?? '';
