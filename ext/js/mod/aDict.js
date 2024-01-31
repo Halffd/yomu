@@ -223,12 +223,12 @@ export class aDict {
     const o = this.var
     let height
     let width
-    const nSizes = (w = 1.2, h = 1.4) => {
+    const nSizes = (w = 1, h = 1.4) => {
       this.limit = localStorage.getItem('ht')
-      this.wid = localStorage.getItem('wt')
+      this.wid = this.calcWid(w)
       if (this.var('yc')) {
         this.limit = `${parseInt(this.limit.substring(0, this.limit.length - 2)) * h}em`
-        this.wid = `${parseInt(this.wid.substring(0, this.wid.length - 1)) * w}%`
+        // this.wid = `${parseInt(this.wid.substring(0, this.wid.length - 1)) * w}%`
       }
       height = this.limit
       width = this.wid
@@ -287,7 +287,6 @@ export class aDict {
           console.error(error)
         })
     }
-    this.svl = parseInt(localStorage.getItem('svl')) ?? 16
     // Open a database connection
     /*
         this.txtImg(true)
@@ -1220,7 +1219,7 @@ this.txtImg(false)
        * @type {any[]}
        */
       this.terms = []
-      if (fast && window.navigator.onLine) {
+      if (fast) {
         for (ii in spl) {
           rI = 0
           /**
@@ -1234,7 +1233,7 @@ this.txtImg(false)
             continue // Skip the current iteration if the item is in filters
           }
           this.modP
-          if (this.stop || this.prevent(80)) {
+          if (this.stop) {
             this.stop = false
             console.error(this.lmt)
             break
@@ -1344,10 +1343,6 @@ this.txtImg(false)
               // gd = 0
               console.error(ge)
             }
-            if (this.prevent(70)) {
-              console.error(this.lmt)
-              break
-            }
           }
           if (!elem.querySelector('.gloss-content') && !(this.var('fq') || !this.slow) && (this.var('yc') || this.wiki || gd <= 1 || iji >= 0)) {
             try {
@@ -1423,7 +1418,12 @@ this.txtImg(false)
     this.si += tt.length
     elem.classList.value = this.clas
     elem.style.height = this.limit
-    elem.style.flex = this.wid
+    if(this.spll){
+      this.lin = Math.round(this.spll / this.max)
+      this.cl = Math.ceil(parseInt(this.ii) / this.max) 
+
+    }
+    elem.style.flex = this.calcWid()
     const pl = document.querySelectorAll('.vis').length
     elem.setAttribute('pos', `${pl}`)
     elem.setAttribute('w', tt)
@@ -1596,16 +1596,16 @@ this.txtImg(false)
           } catch { }
           elemc.id = 'cur'
 
-          if(ele.target.className.includes('left-top')) {
+          if (ele.target.className.includes('left-top')) {
             this.moveElem(false, -1, elemc);
           }
-          if(ele.target.className.includes('left-bottom')) {
+          if (ele.target.className.includes('left-bottom')) {
             this.moveElem(true, -1, elemc);
           }
-          if(ele.target.className.includes('right-top')) {
+          if (ele.target.className.includes('right-top')) {
             this.moveElem(false, 1, elemc);
           }
-          if(ele.target.className.includes('right-bottom')) {
+          if (ele.target.className.includes('right-bottom')) {
             this.moveElem(true, 1, elemc);
           }
           if (!ist && !ele.button != 2) {
@@ -1881,11 +1881,14 @@ this.txtImg(false)
       let w = []
       let emph = false
       let line = []
+      this.splc = spl
+      this.spll = spl.length
       for (const ii in spl) {
         try {
           if (this.stop) {
             return
           }
+          this.ii = ii
           let tt = spl[ii]
           let y = await this.yomigen(tt)
           if (y) {
@@ -1946,19 +1949,15 @@ this.txtImg(false)
           tt = tt.replace(/[&/\\#,+()$~%.'":*?<>{}]/g, '')
           const rmj = this.var('roma') ? 'hb' : 'kana'
           const moe = await this.web(encodeURI(`https://ichi.moe/cl/qr/?r=${rmj}&q=${tt}`))
-          this.modC.innerHTML = '<iframe class="mo" style="display: none;"></iframe>'
+          let mo = document.createElement('div')
+          mo.innerHTML = moe
           this.modK.setAttribute('txt', spl[ii])
           this.modK.setAttribute('ti', ii)
-          let mo = this.modC.querySelectorAll('.mo')
-          mo = mo[mo.length - 1]
           console.error(mo)
-          mo.contentWindow.document.head.innerHTML = `<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Search Moe</title>
-<link rel="stylesheet" type="text/css" href="./moe.css">`
-          mo.contentWindow.document.body.innerHTML = '<div class="moe">' + moe + '</div>'
-          const mns = mo.contentWindow.document.querySelectorAll('div.gloss-content.scroll-pane > dl')
-          if (av('warn')) console.warn(mns)
+          const mnsa = mo.querySelectorAll('div.gloss-content.scroll-pane > dl')
+          const mns = Array.from(mnsa).filter(element => element.innerHTML.trim() !== "");
+          this.splc = mns
+          this.spll = mns.length
           for (const ii in mns) {
             try {
               if (this.stop) {
@@ -1967,6 +1966,7 @@ this.txtImg(false)
               const ana = true
               if (ana && mns[ii].innerHTML) {
                 try {
+                  this.ii = ii
                   try {
                     mns[ii].querySelector('.sense-info-note.has-tip').remove()
                   } catch { }
@@ -2091,7 +2091,7 @@ this.txtImg(false)
         }
       }
     } catch (error) {
-      if (av('log')) console.log(error)
+      console.error(error)
     }
   }
   setup(ptxt = null) {
@@ -2105,7 +2105,7 @@ this.txtImg(false)
         this.modK.style.borderColor = 'purple'
         this.modK.style.marginTop = '2px'
       } else {
-        this.modK.style.borderColor = 'rgb(0,40,20)'
+        this.modK.style.borderColor = 'gray   '
       }
     }
     this.modK.style.display = 'flex'
@@ -2267,10 +2267,13 @@ this.txtImg(false)
     const l = qs.map((/** @type {string | any[]} */ item) => item.length)
     Y = 0
     // this.sentence(qs, Y)
+    this.splc = c
+    this.spll = l[Y]
     for (const ii in c) {
       if (av('warn')) console.warn(c[ii])
       try {
         if (ii >= 0) {
+          this.ii = ii
           let tts = '' // done ? '' : cc[ii]
           let tt = ''
           if (done) {
@@ -2303,6 +2306,7 @@ this.txtImg(false)
           }
           const isKana = japaneseUtil.isStringPartiallyJapanese(tt)
           if (Y != lY || !document.querySelector('#modK')) {
+            this.spll = l[Y]
             this.sentence(qs, Y)
             this.setup()
           }
@@ -2577,6 +2581,9 @@ this.txtImg(false)
       // b[pos].style.border = '1px dotted red'
       // alert(t,x)
     } else {
+      if(kn == 'c'){
+        this._copyText(b[this.pos].getAttribute('w') ?? '')
+      }
       if (ki == 93) {
         let o = b[this.pos]
         b[b.length - 1].appendChild(o)
@@ -3044,7 +3051,33 @@ this.txtImg(false)
       return false
     }
   }
+  /**
+   * Calculate the width based on the stored value and conditions.
+   * @param {number} [w=1] - The value of parameter w. Defaults to 1 if not provided.
+   * @returns {string | null} The calculated width with percentage as a string, or null if there was an error.
+  */
+  calcWid(w = 1) {
+    const widString = localStorage.getItem('wt');
+    let wid = parseInt(widString, 10);
 
+    if (isNaN(wid)) {
+      console.error('Invalid width value in localStorage');
+      return null;
+    }
+
+    wid = this.var('yc') ? wid + 1 : wid;
+
+    this.max = wid;
+    const calculatedWidth = calcFlex(wid) * w;
+    this.svl = (parseInt(localStorage.getItem('svl')) ?? 4) * this.max
+
+    if (isNaN(calculatedWidth)) {
+      console.error('Calculation error: invalid calculated width');
+      return null;
+    }
+
+    return `${calculatedWidth}%`;
+  }
   w2() {
     try {
       if (document.querySelector('.entry') !== null) {
@@ -3123,10 +3156,10 @@ this.txtImg(false)
  * @param {boolean} shift - Indicates whether the shift key is pressed.
  */
   moveElem(shift, pos = 0, elem = null) {
-    if(elem){
+    if (elem) {
       this.ppos = this.pos;
-      this.pos = pos > 0 ? parseInt(elem.nextSibling.getAttribute('pos')) 
-      : parseInt(elem.previousSibling.getAttribute('pos'));
+      this.pos = pos > 0 ? parseInt(elem.nextSibling.getAttribute('pos'))
+        : parseInt(elem.previousSibling.getAttribute('pos'));
     }
     try {
       debugger;
@@ -3266,8 +3299,7 @@ this.txtImg(false)
         elem.style.flex = 'none'
       } else {
         elem.style.height = localStorage.getItem('ht')
-
-        elem.style.flex = localStorage.getItem('wt')
+        elem.style.flex = this.calcWid() //localStorage.getItem('wt')
       }
     }
     let b = document.querySelectorAll('.vis')
@@ -3387,10 +3419,10 @@ this.txtImg(false)
       createSettingsInputTemplate('lang', 'Select Language', '', '2px solid yellow'),
       createSettingsInputTemplate('freq', 'Minimum Frequency', '', '2px solid orange'),
       createSettingsInputTemplate('ht', 'Height', '', '2px solid yellow'),
-      createSettingsInputTemplate('wt', 'Width', '', '2px solid orange'),
+      createSettingsInputTemplate('wt', 'Columns', '', '2px solid orange'),
       createSettingsInputTemplate('prt', 'Split By', '', '2px solid purple'),
       createSettingsInputTemplate('lim', 'Limit to Split', '', '2px solid purple'),
-      createSettingsInputTemplate('svl', 'Save Words', '', '2px solid purple'),
+      createSettingsInputTemplate('svl', 'Save Lines', '', '2px solid purple'),
       createSettingsInputTemplate('istart', 'Lines Pos', '', '2px solid purple'),
       createSettingsInputTemplate('deck', 'Deck Name', '', '2px solid purple')
     ]
