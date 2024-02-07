@@ -516,7 +516,14 @@ export class Note {
                     const kf = ks.filter(item => item !== t);
                     k = kf.join(' ')
                     elem.style.setProperty('--cc', 'red')
-                    if (!filt) this.delete('word', t, '==')
+                    let d = localStorage.getItem('learned') ?? []
+                    let dl = []
+                    if (typeof d === 'string') {
+                    dl = d.split(' ') ?? []
+                    }
+                    dl.push(t)
+                    localStorage.setItem('learned', dl.join(' '))
+                    // if (!filt) this.delete('word', t, '==')
                     localStorage.setItem('keep', k)
                 }
             } else {
@@ -740,8 +747,16 @@ export class Note {
                 // async saveAdd(t, txt, def = '', fq = [], tags = [], html = '', moe = false, audio = [], image = [], clip = '', yc = null) {
                 await note.saveAdd(cx, wn, st, df, fq, tag, ht, false, snd, img, clip, true, rd, elem)// localStorage.setItem('save', `${save} ${en}`)
             } else {
+                let word = k.innerText
+                let wordel = elem.querySelector(".compounds dt") ?? elem.querySelector(".conj-gloss dt")
+                if(wordel){
+                    word = wordel.textContent
+                    let sp = word.split(' ')
+                    word = sp ? sp[0] : word
+                    rd = sp[1].substring(1,sp[1].length-1)
+                }
                 //try { //df += elem.querySelector('dt').innerText } finally {
-                await note.saveAdd(cx, k.innerText, st, df, undefined, tag, ht, true, snd, img, clip, true, rd, elem) // localStorage.setItem('save', `${save} ${k.innerHTML}`)
+                await note.saveAdd(cx, word, st, df, undefined, tag, ht, true, snd, img, clip, true, rd, elem) // localStorage.setItem('save', `${save} ${k.innerHTML}`)
             }
         } else {
             try {
@@ -1078,6 +1093,17 @@ export class Note {
         } catch {
             return null
         }
+        return oc
+    }
+    get learned() {
+        var a = localStorage.getItem("learned") ?? '';
+        var oc
+        try {
+            oc = a.split(' ')
+        } catch {
+            return null
+        }
+        this._bin = oc
         return oc
     }
     get bin() {

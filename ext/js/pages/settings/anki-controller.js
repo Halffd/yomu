@@ -47,20 +47,20 @@ export class AnkiController {
         /** @type {?Promise<import('anki-controller').AnkiData>} */
         this._getAnkiDataPromise = null;
         /** @type {HTMLElement} */
-        this._ankiErrorMessageNode = querySelectorNotNull(document, '#anki-error-message');
+        this._ankiErrorMessageNode = document.querySelector('#anki-error-message') ?? document.body.appendChild(document.createElement('div'));
         const ankiErrorMessageNodeDefaultContent = this._ankiErrorMessageNode.textContent;
         /** @type {string} */
         this._ankiErrorMessageNodeDefaultContent = typeof ankiErrorMessageNodeDefaultContent === 'string' ? ankiErrorMessageNodeDefaultContent : '';
         /** @type {HTMLElement} */
-        this._ankiErrorMessageDetailsNode = querySelectorNotNull(document, '#anki-error-message-details');
+        this._ankiErrorMessageDetailsNode = document.querySelector('#anki-error-message-details');
         /** @type {HTMLElement} */
-        this._ankiErrorMessageDetailsContainer = querySelectorNotNull(document, '#anki-error-message-details-container');
+        this._ankiErrorMessageDetailsContainer = document.querySelector('#anki-error-message-details-container');
         /** @type {HTMLElement} */
-        this._ankiErrorMessageDetailsToggle = querySelectorNotNull(document, '#anki-error-message-details-toggle');
+        this._ankiErrorMessageDetailsToggle = document.querySelector('#anki-error-message-details-toggle');
         /** @type {HTMLElement} */
-        this._ankiErrorInvalidResponseInfo = querySelectorNotNull(document, '#anki-error-invalid-response-info');
+        this._ankiErrorInvalidResponseInfo = document.querySelector('#anki-error-invalid-response-info');
         /** @type {HTMLElement} */
-        this._ankiCardPrimary = querySelectorNotNull(document, '#anki-card-primary');
+        this._ankiCardPrimary = document.querySelector('#anki-card-primary');
         /** @type {?Error} */
         this._ankiError = null;
         /** @type {?import('core').TokenObject} */
@@ -77,10 +77,10 @@ export class AnkiController {
     /** */
     async prepare() {
         /** @type {HTMLElement} */
-        const ankiApiKeyInput = querySelectorNotNull(document, '#anki-api-key-input');
+        const ankiApiKeyInput = document.querySelector('#anki-api-key-input');
         const ankiCardPrimaryTypeRadios = /** @type {NodeListOf<HTMLInputElement>} */ (document.querySelectorAll('input[type=radio][name=anki-card-primary-type]'));
         /** @type {HTMLElement} */
-        const ankiErrorLog = querySelectorNotNull(document, '#anki-error-log');
+        const ankiErrorLog = document.querySelector('#anki-error-log');
 
         this._setupFieldMenus();
 

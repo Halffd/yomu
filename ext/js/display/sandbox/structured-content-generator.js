@@ -211,7 +211,11 @@ export class StructuredContentGenerator {
             }
             key = `sc${key}`;
             try {
-                element.dataset[key] = value;
+                if (element && element.dataset && Object.prototype.hasOwnProperty.call(element.dataset, key)) {
+                    element.dataset[key] = value;
+                  } else {
+                    console.error("Invalid element or key");
+                  }
             } catch (e) {
                 // DOMException if key is malformed
             }

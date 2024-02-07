@@ -41,7 +41,7 @@
     display: none;
 }
 
-.mns:hover .fq {
+.mns.moving .fq {
     display: inline-flex;
     font-size: 0.72em;
     border-style: solid;
@@ -79,7 +79,7 @@
     /* FontAwesome star content */
     position: absolute;
     bottom: 0;
-    right: 0;
+    left: 0;
 }
 
 .words {
@@ -153,10 +153,10 @@
     border-radius: 25px;
 }
 
-.mns:hover .wset {
+.mns.moving .wset {
     display: block;
-    position: absolute;
-    top: 25%;
+    position: fixed;
+    top: 5%;
     left: 0;
     background-color: #020202;
     font-size: 0.7em;
@@ -169,7 +169,7 @@
     padding: 0;
 }
 
-.mns:hover #particle {
+.mns.moving #particle {
     display: none;
 }
 
@@ -227,11 +227,11 @@ p .reading {
     font-family: ui-monospace;
 }
 
-p .wk {
+p .wk, .flex {
+    display: flex;
     border: 1px solid gray;
     /*height: 18em;*/
-    width: 7.425em;
-    flex: 1 1 15%;
+    flex: 1 1 25%;
 }
 
 .langs {
@@ -411,14 +411,34 @@ dd>li {
     position: relative;
 }
 
-.mns:hover .navigation-button {
-    display: block;
+.mns.moving .navigation-button, .mns.moving .navigation-flex {
+    display: flex;
 }
 .navigation-button {
     display: none;
     position: absolute;
     width: 22px;
     height: 14px;
+}
+.navigation-flex {
+    position: absolute;
+    display: none;
+    width: 50px;
+    height: 70px;
+    bottom: 0;
+    right: 0; 
+    align-items: flex-end;
+    justify-content: flex-end;
+    flex-direction: column;
+    flex: 1 1 20%;
+    opacity: 0.9;
+}
+.flex-button {
+    color: #e2fff3;
+    border: 2px dashed #4cb4a9;
+}
+.direction {
+    position: absolute;
     font-size: 0.6em;
     justify-content: center;
     align-items: center;
@@ -430,7 +450,16 @@ dd>li {
     border-radius: 4px;
     cursor: pointer;
 }
-
+.navigation-button:not(.direction) {
+    position: relative;
+    font-size: 0.8em;
+    background-color: rgb(41, 41, 41);
+    opacity: 0.9;
+    color: rgb(255, 207, 129);
+    border: 1px solid rgb(248, 255, 153);
+    border-radius: 4px;
+    cursor: pointer;
+}
 .left-top {
     content: '<<';
     top: 50px;
@@ -441,7 +470,7 @@ dd>li {
 
 .left-bottom {
     content: '<';
-    bottom: 50px;
+    bottom: 80px;
     left: 0px;
     border-color: rgb(55, 85, 237);
     color: rgb(55, 85, 237);
@@ -457,7 +486,7 @@ dd>li {
 
 .right-bottom {
     content: '>';
-    bottom: 50px;
+    bottom: 80px;
     right: 0px;
     border-color: rgb(55, 85, 237);
     color: rgb(55, 85, 237);

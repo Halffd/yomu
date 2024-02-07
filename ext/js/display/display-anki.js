@@ -21,6 +21,7 @@ import {AnkiNoteBuilder} from '../data/anki-note-builder.js';
 import {AnkiUtil} from '../data/anki-util.js';
 import {PopupMenu} from '../dom/popup-menu.js';
 import {querySelectorNotNull} from '../dom/query-selector.js';
+import {yomiKanjis} from '../mod/aYomi.js';
 import {TemplateRendererProxy} from '../templates/template-renderer-proxy.js';
 import {yomitan} from '../yomitan.js';
 
@@ -539,55 +540,8 @@ export class DisplayAnki {
                             note.fields.Sentence = o.st;
                         }
                         try {
-                            const y = note.fields.Key;
-                            const RGEX_CHINESE = new RegExp(/[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]/);
-                            const iji = RGEX_CHINESE.test(y);
-                            let kx = 0;
-                            const de = document.createElement('div');
-                            de.insertAdjacentHTML('afterbegin', '<div class="dd" style="border: 2px solid rgb(20,100,10)"></div><div class="df" style="border: 1px solid rgb(60,45,45)"></div>');
-                            let dd = '';
-                            let df = '';
-                            if (iji && y.length >= 1) {
-                                for (let i in y.split('')) {
-                                    if (RGEX_CHINESE.test(y[i])) {
-                                        dd += `<span style="font-size: 1.75em">${y[i]}</span>`;
-                                        df += `<span style="font-size: 1.75em">${y[i]}</span>`;
-                                        let result = await this._display._findDictionaryEntries(true, y[i], true, this._display.getOptionsContext());
-                                        let kym = '';
-                                        let oym = '';
-                                        for (let d in result) {
-                                            if (result[d].dictionary.includes('KANJIDIC')) {
-                                                try {
-                                                    dd += `<div>Onyomi: ${result[kx].kunyomi.join(' ')}</br>Kunyomi: ${result[kx].onyomi.join(' ')}</br>${result[kx].definitions.join(', ')}</div>`;
-                                                } catch (error) {
-                                                    console.log(error);
-                                                }
-                                                kx += 1;
-                                            } else {
-                                                try {
-                                                    kym = result[d].kunyomi.length > 0 ? `Onyomi: ${result[d].kunyomi.join(' ')}</br>` : '';
-                                                    oym = result[d].onyomi.length > 0 ? `Kunyomi: ${result[d].onyomi.join(' ')}</br>` : '';
-                                                    df += `<div>${kym}${oym}${result[d].definitions.join(', ')}</div>`;
-                                                } catch (error) {
-                                                    console.log(error);
-                                                }
-                                            }
-                                        }
-                                        // elem.querySelector('dd').innerHTML += `<li>${o}</li>`
-                                    }
-                                }
-                            }
-                            if (de) {
-                                const [dde, dfe] = [de.querySelector('.dd'), de.querySelector('.df')];
-                                if (dde) {
-                                    dde.innerHTML = dd;
-                                }
-                                if (dfe) {
-                                    dfe.innerHTML = df;
-                                }
-                                df = de.innerHTML;
-                                note.fields.ExtraDefinitions += df;
-                            }
+                            let df = await yomiKanjis.bind(this._display, note.fields.Key)()
+                            note.fields.ExtraDefinitions += df;
                         } catch (ne) {
                             console.error(ne);
                         }
