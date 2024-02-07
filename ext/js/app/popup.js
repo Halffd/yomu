@@ -689,9 +689,11 @@ export class Popup extends EventDispatcher {
      */
     async _invoke(action, params) {
         const contentWindow = this._frame.contentWindow;
-        if (this._frameClient === null || !this._frameClient.isConnected() || contentWindow === null) {
-            throw new Error(`Failed to invoke action ${action}: frame state invalid`);
-        }
+        try {
+            if (this._frameClient === null || !this._frameClient.isConnected() || contentWindow === null) {
+                return // throw new Error(`Failed to invoke action ${action}: frame state invalid`);
+            }
+        } catch { }
 
         /** @type {import('display').DirectApiMessage<TName>} */
         const message = {action, params};
@@ -713,7 +715,7 @@ export class Popup extends EventDispatcher {
         try {
             return await this._invoke(action, params);
         } catch (e) {
-            if (!yomitan.isExtensionUnloaded) { throw e; }
+            if (!yomitan.isExtensionUnloaded) { console.warn(e); }
             return void 0;
         }
     }

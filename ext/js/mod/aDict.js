@@ -3,6 +3,7 @@
 import {Display} from "../display/display.js";
 import {Analyze} from './aAnalyze.js';
 import {aAll, getWords, sortArrays, sort_by_property, aId, aModel, aDeck, aIn, aQuery, aTag, api, iDeck, iTag, isIndexInsideElement} from './aUtil.js';
+import {yomiKanjis} from "./aYomi.js";
 /* global aDict, Note, isIndexInsideElement, aDeck, aTag, aAll, aModel, api, aNote, sv, aQuery
 getWords, merge, unconjugate, japaneseUtil
 Analyze */
@@ -794,8 +795,7 @@ this.txtImg(false)
           /**
            * @param {string} text
            */
-          let reg = new RegExp(`.{35,99999999999}`, 'g');
-          let reg2 = new RegExp(`^[A-Za-z]+$`, 'gm');
+          //let reg = new RegExp(`.{35,99999999999}`, 'g'); let reg2 = new RegExp(`^[A-Za-z]+$`, 'gm');
           /**
            * @param {string} text
            */
@@ -815,8 +815,7 @@ this.txtImg(false)
                 srt += `${i + 1}\n00:${startTime.replace('.', ',')} --> 00:${endTime.replace('.', ',')}\n${content.trim()}\n\n`;
               }
             }
-            srt = srt.replace(reg, '')
-            srt = srt.replace(reg2, '')
+            //srt = srt.replace(reg, '');            srt = srt.replace(reg2, '')
             return srt.trim();
           }
           async function getTextFromClipboard() {
@@ -1153,7 +1152,7 @@ this.txtImg(false)
         tlx = this.v.replace(/[&/\\#,+()$~%.'":*?<>{}]/g, '')
       }
       try {
-        txt = txt.join(' ')
+        txt = txt ? txt.join(' ') : this.spl.join('\n')
       } catch { }
       if (av('warn')) console.warn(tlx, txt, this.lang)
       const lto = this.lang == 'ja' ? 'en' : 'pt-BR'
@@ -1418,9 +1417,9 @@ this.txtImg(false)
     this.si += tt.length
     elem.classList.value = this.clas
     elem.style.height = this.limit
-    if(this.spll){
+    if (this.spll) {
       this.lin = Math.round(this.spll / this.max)
-      this.cl = Math.ceil(parseInt(this.ii) / this.max) 
+      this.cl = Math.ceil(parseInt(this.ii) / this.max)
 
     }
     elem.style.flex = this.calcWid()
@@ -1481,9 +1480,13 @@ this.txtImg(false)
       }
     }
     let isPart = this.var('pt') ? ptc : false
-    if (tt.length == txt.length) {
-      isPart = false
-    }
+    /* if (this.saving) {
+      if (!this._i && !(this.kp?.includes(tt) || 
+      typeof this.si === 'object' ? this.si.includes(tt) :
+      this.si.split(',').includes(tt))) {
+        isPart = true
+      }
+    } */
     if ((isPart)) { // (f < this.fval && false) (tt.length < this.min)
       const vis = document.querySelectorAll('.vis')
       const ttt = [tt, 8]
@@ -1525,25 +1528,32 @@ this.txtImg(false)
       w.push(tt)
       line.push(tt)
 
-      // Create the navigation buttons
-      var button1 = document.createElement('button');
-      button1.classList.add('navigation-button', 'left-top');
-      button1.textContent = '<<';
-      var button2 = document.createElement('button');
-      button2.classList.add('navigation-button', 'left-bottom');
-      button2.textContent = '<';
-      var button3 = document.createElement('button');
-      button3.classList.add('navigation-button', 'right-top');
-      button3.textContent = '>>';
-      var button4 = document.createElement('button');
-      button4.classList.add('navigation-button', 'right-bottom');
-      button4.textContent = '>';
+      var navflex = document.createElement('div');
+      navflex.classList.add('navigation-flex');
 
-      elem.appendChild(button1);
-      elem.appendChild(button2);
-      elem.appendChild(button3);
-      elem.appendChild(button4);
+      // Button items with a key property
+      var buttonItems = [
+        {key: 'button1', text: '<<', classNames: ['navigation-button', 'direction', 'left-top'], elem: elem},
+        {key: 'button2', text: '<', classNames: ['navigation-button', 'direction', 'left-bottom'], elem: elem},
+        {key: 'button3', text: '>>', classNames: ['navigation-button', 'direction', 'right-top'], elem: elem},
+        {key: 'button4', text: '>', classNames: ['navigation-button', 'direction', 'right-bottom'], elem: elem},
+        {key: 'del', text: '⌫', classNames: ['navigation-button', 'flex-button'], elem: navflex},
+        {key: 'rm', text: '—', classNames: ['navigation-button', 'flex-button'], elem: navflex},
+        {key: 'copy', text: '©', classNames: ['navigation-button', 'flex-button'], elem: navflex},
+        {key: 'keep', text: '\u{1D54A}', classNames: ['navigation-button', 'flex-button'], elem: navflex},
+      ];
 
+      buttonItems.forEach(function (item) {
+        var button = aDict.prototype.createButton(item.text, item.classNames);
+        button.id = item.key;
+        item.button = button;
+        if (item.elem) {
+          item.elem.appendChild(button);
+        } else {
+          elem.appendChild(item.elem);
+        }
+      });
+      elem.appendChild(navflex)
       elem.insertAdjacentHTML('beforeend', '<span id="particle" class="part" style="font-size: 1.25em;padding:0;margin:0;"></span>')
       if (this.analyze?.ref) {
         try {
@@ -1571,6 +1581,23 @@ this.txtImg(false)
       }
       try {
         if (av('warn')) console.warn(tit)
+        let timeout;
+        let mobi = this.mobile
+        function handleMouseMove() {
+          clearTimeout(timeout);
+          elem.classList.add('moving');
+
+          timeout = setTimeout(() => {
+            elem.classList.remove('moving');
+          }, mobi ? 15000 : 1500); // Adjust the timeout duration as needed
+        }
+        elem.addEventListener('mouseover', () => {
+          elem.addEventListener('mousemove', handleMouseMove);
+        });
+        elem.addEventListener('mouseout', () => {
+          elem.removeEventListener('mousemove', handleMouseMove);
+          elem.classList.remove('moving');
+        });
         elem.addEventListener('dblclick', function (/** @type {Event | undefined} */ ele) {
           if (!ele) ele = window.event
           ele.stopPropagation()
@@ -1580,14 +1607,12 @@ this.txtImg(false)
         elem.addEventListener('click', function (/** @type {Event | undefined} */ ele) {
           if (!ele) ele = window.event
           ele.stopPropagation()
-          if (av('log')) console.dir(ele, ele.target)
-          const elemc = ele.target.closest('.mns')
-          const ist = ele.target.closest('.title')
+          let elem = ele.target
+          if (av('log')) console.dir(ele, elem)
+          const elemc = elem.closest('.mns')
+          const ist = elem.closest('.title')
           const b = document.querySelectorAll('.vis')
           this.pos = parseInt(elemc.getAttribute('pos'))
-          /**
-           * @type {never[]}
-           */
           const ps = []
           this.posr = [this.pos, elemc, ps]
           if (av('warn')) console.warn(elemc, ist, this.pos, b)
@@ -1596,23 +1621,35 @@ this.txtImg(false)
           } catch { }
           elemc.id = 'cur'
 
-          if (ele.target.className.includes('left-top')) {
+          if (elem.className.includes('left-top')) {
             this.moveElem(false, -1, elemc);
           }
-          if (ele.target.className.includes('left-bottom')) {
+          if (elem.className.includes('left-bottom')) {
             this.moveElem(true, -1, elemc);
           }
-          if (ele.target.className.includes('right-top')) {
+          if (elem.className.includes('right-top')) {
             this.moveElem(false, 1, elemc);
           }
-          if (ele.target.className.includes('right-bottom')) {
+          if (elem.className.includes('right-bottom')) {
             this.moveElem(true, 1, elemc);
+          }
+          if (elem.id == 'copy') {
+            this.copy(elemc)
+          }
+          if (elem.id == 'rm') {
+            this.del(true, false, elemc)
+          }
+          if (elem.id == 'del') {
+            this.del(false, true, elemc)
+          }
+          if (elem.id == 'keep') {
+            this.note.keep(false, false, elemc)
           }
           if (!ist && !ele.button != 2) {
             return
           }
-          if (ele.target.closest('.w')) {
-            const x = ele.target.closest('.w')
+          if (elem.closest('.w')) {
+            const x = elem.closest('.w')
             if (x.style.display === 'none') {
               x.style.display = 'block'
             } else {
@@ -1665,7 +1702,7 @@ this.txtImg(false)
         ii = parseInt(ii)
       }
       try {
-        il = spl[ii].length
+        il = spl.length
       } catch {
         try {
           il = spl[0].length
@@ -1696,7 +1733,7 @@ this.txtImg(false)
       }
 
       if (this.var('kanji') || this.var('yc')) { //(!this.slow || this.var('fq') || (this.var('yc') && !this.var('both'))) {
-        const fx = this.dictionary(isKana, elem, tt, 0, tt, spl, tts, elem).then(async () => {
+        const fx = this.dictionary(tt, elem, isKana, ii).then(async () => {
           if (this.fl && this.var('yc')) {
             if (this.var('auto')) {
               await sv(elem, -1)
@@ -1854,7 +1891,7 @@ this.txtImg(false)
       if (results?.length > 0) {
         let yc = await this.yomichan(results)
         const elem = document.createElement('div')
-        let bot = this.yomishow(yc, elem, undefined, undefined, elem, tt, -1)
+        let bot = this.yomishow(yc, elem, undefined, undefined, elem, tt, -1, yc)
         console.warn(bot, yc)
         const y = bot[3].innerHTML + bot[0].innerHTML
         return `<div class="yomi">${y}</div>`
@@ -1947,7 +1984,7 @@ this.txtImg(false)
           ptxt = this.setup()
           if (av('warn')) console.warn(this.modK, this.modP)
           tt = tt.replace(/[&/\\#,+()$~%.'":*?<>{}]/g, '')
-          const rmj = this.var('roma') ? 'hb' : 'kana'
+          const rmj = 'hb' //this.var('roma') ? 'hb' : 'kana'
           const moe = await this.web(encodeURI(`https://ichi.moe/cl/qr/?r=${rmj}&q=${tt}`))
           let mo = document.createElement('div')
           mo.innerHTML = moe
@@ -1968,7 +2005,8 @@ this.txtImg(false)
                 try {
                   this.ii = ii
                   try {
-                    mns[ii].querySelector('.sense-info-note.has-tip').remove()
+                    let rem = mns[ii].querySelector('.sense-info-note.has-tip')
+                    if (rem) rem.remove()
                   } catch { }
                   const comc = mns[ii].querySelector('.conj-via')
                   const mn = mns[ii].querySelectorAll('li')
@@ -2441,7 +2479,6 @@ this.txtImg(false)
     const ps = []
     // txt.value = `${keys[ki]} ${ki}: ${e.key}`
     if (av('log')) console.log(`${this.keys?.[ki]} ${ki}: ${e.key}`)
-    wn(kn, ki)
     if (ki <= 9) {
       let n = ki
       b = document.querySelectorAll('.vis')
@@ -2518,10 +2555,22 @@ this.txtImg(false)
       if (b[this.pos]?.innerText == '' || b[this.pos]?.innerText == ' ') {
         this.pos += 1
       }
+      if(!b[this.pos]){
+        if (this.pos < 0) {
+          this.pos = 0;
+        } else if (this.pos > b.length - 1) {
+          this.pos = b.length - 1
+        }
+      }
       if (e.ctrlKey || e.shiftKey) {
-        this.moveElem(e.shiftKey);
+        this.moveElem(e.shiftKey, undefined, undefined, dir);
       } else {
-        this.cur(b[this.pos])
+        try {
+          this.cur(b[this.pos])
+        } catch {
+          this.pos = 0;
+          return
+        }
       }
       if (av('warn')) console.warn(this.pos, this.posr)
       const ys = document.querySelectorAll('.vis')
@@ -2581,8 +2630,8 @@ this.txtImg(false)
       // b[pos].style.border = '1px dotted red'
       // alert(t,x)
     } else {
-      if(kn == 'c'){
-        this._copyText(b[this.pos].getAttribute('w') ?? '')
+      if (kn == 'c') {
+        this.copy(b[this.pos])
       }
       if (ki == 93) {
         let o = b[this.pos]
@@ -2657,25 +2706,31 @@ this.txtImg(false)
       }
       if (ki == 29) {
         this.note.keep(e.ctrlKey, e.shiftKey, b[this.pos])
+        if (e.shiftKey) {
+          this.del(false, false, b[this.pos])
+        }
       }
       if (kn == 'y') {
-        let y = !o('yc')
-        document.querySelector('.config').style.backgroundColor = y ? 'green' : 'red'
+        let y = !this.var('yc')
+        document.querySelector('.config').style.borderColor = y ? 'green' : 'red'
+        document.querySelector('#n7').textContent = 'Yc: ' + y
         localStorage.setItem('yc', y)
         localStorage.setItem('kanjis', y)
       }
       if (kn == 'u') {
-        let y = !o('kanjis')
-        document.querySelector('.config').style.backgroundColor = y ? 'green' : 'red'
-        localStorage.setItem('kanjis', y)
+        let y = !this.var('kanji')
+        document.querySelector('#n7').textContent = 'Kanjis: ' + y
+        document.querySelector('.config').style.borderColor = y ? 'green' : 'red'
+        localStorage.setItem('kanji', y)
       }
       if (kn == 'i') {
-        let y = !o('slw')
-        document.querySelector('.config').style.backgroundColor = y ? 'green' : 'red'
-        localStorage.setItem('yc', y)
-        localStorage.setItem('qp', y)
+        let y = !this.var('slw')
+        document.querySelector('#n7').textContent = 'Fast: ' + y
+        document.querySelector('.config').style.borderColor = y ? 'green' : 'red'
+        localStorage.setItem('yc', !y)
+        localStorage.setItem('qp', !y)
         localStorage.setItem('slw', y)
-        localStorage.setItem('kanjis', y)
+        localStorage.setItem('kanjis', !y)
       }
       if (ki == 30) {
         /**
@@ -2683,7 +2738,7 @@ this.txtImg(false)
          */
         let si
         try {
-          document.getElementById('modP').remove()
+          if (document.getElementById('modP')) document.getElementById('modP').remove()
         } catch { }
         localStorage.setItem('pt', true)
         localStorage.setItem('roma', true)
@@ -2708,7 +2763,6 @@ this.txtImg(false)
       if (e.key == '' || e.key == ' ') {
         this.expand(b[this.pos])
       }
-      wn(ki)
       if (ki == 21) {
         const elem = b[this.pos]
         try {
@@ -2717,36 +2771,21 @@ this.txtImg(false)
           console.error(err)
         }
       }
+      if (kn === '=') {
+        let elem = document.getElementById('cur')
+        this.del(true, true, elem)
+      }
+      if (kn === '-') {
+        let elem = document.getElementById('cur')
+        this.del(true, false, elem)
+      }
       if (kn === 'delete') {
         let elem = document.getElementById('cur')
-        let w = elem.getAttribute('w') ?? ''
-        let ws = await unconjugate(w)
-        console.warn(w, ws);
-        if (ws) w = ws
-        /**
-         * @type {string[]}
-         */
-        let dl = []
-        let d = localStorage.getItem('deleted') ?? []
-        if (typeof d === 'string') {
-          dl = d.split(' ') ?? []
+        if (e.ctrlKey == false && e.shiftKey == false) {
+          this.del(false, true, elem)
+        } else {
+          this.del(e.ctrlKey, e.shiftKey, elem)
         }
-        dl.push(w)
-        localStorage.setItem('deleted', dl.join(' '))
-        let s = localStorage.getItem('words')
-        if (s) {
-          let r = s?.split(' ').filter(element => element !== w);
-          localStorage.setItem('words', r.join(' '))
-        }
-        let t = localStorage.getItem('keep')
-        if (t) {
-          let r = t?.split(' ').filter(element => element !== w);
-          localStorage.setItem('keep', r.join(' '))
-        }
-        //        aNote.find(w)
-        aNote.delete('word', w, '==')
-        elem?.classList.add('fav')
-        elem.style.setProperty('--cc', 'red')
       }
       if (ki < -999999) {
         if (ki == 103) {
@@ -2781,7 +2820,7 @@ this.txtImg(false)
     document.querySelector('.save').style.color = 'gray'
     if (av('warn')) console.warn(si, ws, ln, cp)
     try { // if(typeof si == 'string'){
-      si = si.split(' ')
+      si = si.split ? si.split(' ') : si
     } catch { }
     if (ws.length > 0) {
       si = merge(si, ws)
@@ -2789,13 +2828,22 @@ this.txtImg(false)
     }
     if (kp) {
       si = si.filter(item => !kp.includes(item));
+      this.kp = kp
       kp = kp.join(' ')
     }
     try {
+      this.sln = ln
+      this.slns = si.reduce((accumulator, currentElement) => {
+        if (typeof currentElement === "string") {
+          return accumulator + currentElement.length;
+        }
+        return accumulator;
+      }, 0);
+      this.slc = si.length - ln
       si = si.slice(si.length - ln)
+      this.sis = si
       si = si.join(' ')
     } catch { }
-    this.si = si
     if (cp) {
       this._copyText(si)
     }
@@ -3065,7 +3113,7 @@ this.txtImg(false)
       return null;
     }
 
-    wid = this.var('yc') ? wid + 1 : wid;
+    wid = this.var('yc') ? wid - 1 : wid;
 
     this.max = wid;
     const calculatedWidth = calcFlex(wid) * w;
@@ -3151,26 +3199,68 @@ this.txtImg(false)
       this.anki._addAnkiNote(0, 'term-kanji')
     }
   }
+  v/**
+ * Represents a button element.
+ * @param {string} text - The text content of the button.
+ * @param {Array<string>} [classNames] - An optional array of class names to apply to the button.
+ * @returns {HTMLButtonElement} The created button element.
+ */
+  createButton(text, classNames) {
+    var button = document.createElement('button');
+    button.textContent = text;
+
+    if (classNames && Array.isArray(classNames)) {
+      classNames.forEach(function (className) {
+        button.classList.add(className);
+      });
+    }
+
+    return button;
+  }
+  get mobile() {
+    const userAgent = navigator.userAgent;
+    return /Mobi/.test(userAgent);
+  }
   /**
  * Moves an element within its parent based on a shift parameter.
  * @param {boolean} shift - Indicates whether the shift key is pressed.
  */
-  moveElem(shift, pos = 0, elem = null) {
+  moveElem(shift, pos = 0, elem = null, dir = null) {
     if (elem) {
       this.ppos = this.pos;
-      this.pos = pos > 0 ? parseInt(elem.nextSibling.getAttribute('pos'))
+      try {
+        this.pos = pos > 0 ? parseInt(elem.nextSibling.getAttribute('pos'))
         : parseInt(elem.previousSibling.getAttribute('pos'));
+      } catch {
+        if(pos > 0){
+          this.pos = parseInt(elem.parentElement.nextSibling.nextSibling.nextSibling.firstChild.getAttribute('pos'))
+        } else {
+          this.pos = parseInt(elem.parentElement.previousSibling.previousSibling.previousSibling.firstChild.getAttribute('pos'))
+        }
+      }
     }
     try {
-      debugger;
       let b = document.querySelectorAll('.vis')
       if (!this.pos || !this.ppos || !b[this.pos] || !b[this.ppos]) {
         //throw new Error('Invalid positions or elements');
       }
-      console.warn(this.pos, this.ppos, {elem});
-      let a = b[this.ppos];
-      let d = elem ?? b[this.pos];
-      let parent = d.parentNode;
+      console.warn(this.pos, this.ppos, {elem}, dir);
+      let a, d, parent
+      if(elem){
+        a = elem;
+        d = b[this.pos]
+        parent = d.parentNode;
+      } else {
+        a = b[this.ppos];
+        d = elem ?? b[this.pos];
+        parent = b[this.pos].parentNode;
+      }
+      console.log(a.getAttribute('pos'), d.getAttribute('pos'));
+      if (dir && dir < 2) {
+        shift = false
+        parent = document.querySelectorAll("#modK")
+        parent = parent[parent.length - 1]
+      }
 
       if (parent) {
         const children = Array.from(b);
@@ -3208,13 +3298,86 @@ this.txtImg(false)
   };
   cur(/** @type {Element} */ c) {
     try {
-      document.querySelector('#cur').id = 'prev';
+      if(document.querySelector('#cur')) document.querySelector('#cur').id = 'prev';
+      else return
     } catch { }
     c.id = 'cur';
     c.scrollIntoView({
       behavior: 'auto',
       block: 'center'
     })
+  }
+  async del(ctrl = false, shift = false, elem) {
+    let w = elem.getAttribute('w') ?? ''
+    if (ctrl) {
+      let ws = this.note.words
+      let filt, ks
+      let t = w
+      let is = this.saving ? this.sis.includes(w) || this.kp.includes(w) : true
+      if (!is) {
+        ks = this.sis.map(word => {
+          const lastIndex = word.indexOf(t);
+          if (lastIndex !== -1) {
+            filt = true
+            ws.splice(ws.indexOf(word), 1)
+            return word.replace(t, '');
+          } else {
+            return word;
+          }
+        });
+        if (filt) {
+          // let wn = ws.splice(this.slc, this.sln, ...ks);
+          localStorage.setItem('wordsbackup', this.note.words.join(' '))
+          localStorage.setItem('words', ws.join(' '))
+        }
+      } else {
+        let wordel = elem.querySelector(".compounds dt") ?? elem.querySelector(".conj-gloss dt")
+        if (wordel) {
+          w = wordel.textContent
+          let sp = w.split(' ')
+          w = sp ? sp[0] : w
+        } else if(this.var('unconj')){
+          let ws = await unconjugate(w)
+          console.warn(w, ws);
+          w = ws
+        }
+        /**
+         * @type {string[]}
+         */
+        let dl = []
+        let d = localStorage.getItem('learned') ?? []
+        if (typeof d === 'string') {
+          dl = d.split(' ') ?? []
+        }
+        if (!dl.includes(w)) {
+          dl.push(w)
+          localStorage.setItem('learned', dl.join(' '))
+        }
+        let s = localStorage.getItem('words')
+        if (s) {
+          let r = s?.split(' ').filter(element => element !== w);
+          localStorage.setItem('words', r.join(' '))
+        }
+        let t = localStorage.getItem('keep')
+        if (t) {
+          let r = t?.split(' ').filter(element => element !== w);
+          localStorage.setItem('keep', r.join(' '))
+        }
+        //        aNote.find(w)
+        // aNote.delete('word', w, '==')
+        elem?.classList.add('fav')
+        elem.style.setProperty('--cc', 'red')
+      }
+    }
+    if (shift) {
+      elem.remove()
+      let bb = document.querySelectorAll('.vis')
+      if (!bb[this.pos]) {
+        this.pos -= 1
+      }
+      this.cur(bb[this.pos])
+    }
+    console.log(w, this.note.bin, this.note.words, this.note.learned);
   }
   /**
  * Moves the position in an array-like structure based on a direction and condition.
@@ -3282,14 +3445,19 @@ this.txtImg(false)
    */
   expand(elem) {
     const elemc = elem.closest('.mns')
+    if(!this.var('yc')){
+      this.dictionary(elemc.getAttribute('w'), elemc, undefined, -10).then(()=>{
+        elemc.scrollIntoView({ block: 'start', behavior: 'smooth' });
+      })
+    }
     const ist = elem.closest('.title')
-    const fv = document.querySelector('.fav')
+    /* const fv = document.querySelector('.fav')
     if (fv) {
       fv.style.flex = 'none'
       fv.style.height = ''
       fv.style.width = ''
       fv.style.setProperty('--cc', 'orange')
-    } // else { }
+    } */ // else { }
     elemc.classList.add('fav')
     elemc.style.setProperty('--cc', 'gray')
     elemc.style.setProperty('--sz', '0.8em');
@@ -3298,7 +3466,7 @@ this.txtImg(false)
         elem.style.height = ''
         elem.style.flex = 'none'
       } else {
-        elem.style.height = localStorage.getItem('ht')
+        elem.style.height = this.limit //localStorage.getItem('ht')
         elem.style.flex = this.calcWid() //localStorage.getItem('wt')
       }
     }
@@ -3561,6 +3729,7 @@ this.txtImg(false)
       {id: 'aut', label: 'AutoSave'},
       {id: 'rd', label: 'Reading'},
       {id: 'yc', label: 'Yomu'},
+      {id: 'ya', label: 'YomuAll'},
       {id: 'fq', label: 'Frequency'},
       {id: 'jd', label: 'JPDB'},
       {id: 'both', label: 'Both'},
@@ -3751,35 +3920,36 @@ this.txtImg(false)
     //this.modP?.insertAdjacentHTML('beforeend', `<p>${}</p>`)
     this.sentence([arr + '</br>    ' + kp], 0)
     this.saving = true
+    this.spl = spl
     this.yomi.bind(this, spl[istart], istart, undefined, true)()
     //this.update(arr)
   }
 
   /**
-   * @param {string | any[] | null | undefined} optionsContext
+   * @param {string | any[] | null | undefined} word
    * @param {any} i
    * @param {{ querySelector: (arg0: string) => { (): any; new (): any; innerText: any; }; children: { style: { color: string; }; }[]; appendChild: (arg0: HTMLElement) => void; innerHTML: string; querySelectorAll: (arg0: string) => any; } | null} elem
    */
-  async dictionary(k = false, optionsContext, i, t = 0, _r = null, _ln = null, _nl = null, elem) {
+  async dictionary(word, elem, k = false, i = 0) {
     if (av('log')) console.dir(elem)
     try {
       const innerText = elem.querySelector('.kj').innerText
-      optionsContext = innerText ? innerText.replace(/[&/\\#,+()$~%.'":*?<>{}【】]/g, '') : optionsContext
+      word = innerText ? innerText.replace(/[&/\\#,+()$~%.'":*?<>{}【】]/g, '') : word
     } catch (error) {
       // Handle the error if needed
       console.error(error)
     }
-    if (av('log')) console.log(optionsContext)
+    if (av('log')) console.log(word)
     /* if (parseInt(this.tr(optionsContext, "０１２３４５６７８９", "0123456789 ")) >= -9999999999) {
             if(av('log')) console.log(parseInt(this.tr(optionsContext, "０１２３４５６７８９", "0123456789 ")))
             num = true
         } */
-    if (optionsContext == ' ' || (this.var('both') && (!this.yomu || this.stop))) {
+    if (word == ' ' || (this.var('both') && (!this.yomu || this.stop))) {
       // this.stop = false
       return false
     }
     let py = false
-    if (this.part.includes(optionsContext)) {
+    if (this.part.includes(word)) {
       py = true
       // return false
     }
@@ -3788,16 +3958,16 @@ this.txtImg(false)
     }
     const REGEX = new RegExp('[\u4E00-\u9FCC\u3400-\u4DB5\uFA0E\uFA0F\uFA11\uFA13\uFA14\uFA1F\uFA21\uFA23\uFA24\uFA27-\uFA29]|[\ud840-\ud868][\udc00-\udfff]|\ud869[\udc00-\uded6\udf00-\udfff]|[\ud86a-\ud86c][\udc00-\udfff]|\ud86d[\udc00-\udf34\udf40-\udfff]|\ud86e[\udc00-\udc1d]/')
     // [\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]/;
-    const ook = REGEX.test(optionsContext)
-    k = ook && optionsContext.length === 1
+    const ook = REGEX.test(word)
+    k = ook && word.length === 1
     if (this.lang != 'ja') {
       k = false
     }
     if (av('log')) console.log(elem, i)
     k = false
     try {
-      if (av('warn')) console.warn('Y:', optionsContext, elem, k, i)
-      const sc = this.most.slice(0, this.known).includes(optionsContext)
+      if (av('warn')) console.warn('Y:', word, elem, k, i)
+      const sc = this.most.slice(0, this.known).includes(word)
       // if(av('log')) console.log(k, optionsContext, i, t, r, ln, this.nl) //(optionsContext,ln,nl)//k, optionsContext, i, t, r, japaneseUtil, sc)
       // if(av('log')) console.dir(results)
       const h = document.createElement('p')
@@ -3822,7 +3992,7 @@ this.txtImg(false)
       const O = []
       let F = ''
       let tt
-      if (av('warn')) console.warn(k, optionsContext, true, optionsContext, performance.now())
+      if (av('warn')) console.warn(k, word, true, word, performance.now())
       const options = this._display?.getOptionsContext() // undefined - nullish
       let bot = document.createElement('div')
       let yc = []
@@ -3831,14 +4001,15 @@ this.txtImg(false)
        * @type {string | never[]}
        */
       var fqs = []
-      var results = await this._display._findDictionaryEntries(k, optionsContext, false, options)
-      if (this.var('yc') || this.var('fq')) {
+      var results = await this._display._findDictionaryEntries(k, word, false, options)
+      if (i < 0 || this.var('yc') || this.var('fq')) {
         yc = await this.yomichan(results)
-        F = this.yomishow(yc, elem, fqs, fq, bot, optionsContext, 0)
+        F = this.yomishow(yc, elem, fqs, fq, bot, word, 0, results)
         tt = tt ?? ''
         // elem.setAttribute('`w',` tt)
-        bot = F[0]
-        fq = F[1]
+        bot = F[3]
+        console.log(bot.textContent);
+        fq = F[0]
         fqs = F
       }
 
@@ -3846,100 +4017,13 @@ this.txtImg(false)
       //console.error(yc, O, fqs)
       if (this.search) {
         try {
-          // elem.querySelector('dd').innerHTML += `</li>`
-          let o = ''
-          if (k) {
-            try {
-              o = `Onyomi: ${results[0].kunyomi.join(' ')}</br>Kunyomi: ${results[0].onyomi.join(' ')}</br>${results[0].definitions.join(', ')}</br>`
-            } catch (error) {
-              if (av('log')) console.log(error)
-            }
-          }
-          if (k) {
-            for (const io in results) {
-              if (io > 0) {
-                o += `${results[io]?.definitions?.join(', ')}`
-                // let REGEXJP = /[\u3040-\u309f\u30a0-\u30ff]/
-                // [\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]/;
-                // let isKanji = REGEX_CHINESE.test(ws[i]);
-              } else {
-                if (results[io]?.frequencies?.length > 0) {
-                  // o += `Freq:`
-                  for (const oi in results[io].frequencies) {
-                    if (av('log')) console.log(`${results[io].frequencies[oi].frequency}/`)
-                  }
-                }
-              }
-            }
-            // o.replaceAll('undefined','')
-            // h.innerHTML += o
-            if (o.length > 0) {
-              O.push(o)
-            }
-          }
           var ue = (/** @type {string} */ str) => {
             return str.replace(/\\u([a-fA-F0-9]{4})/g, function (/** @type {any} */ _g, /** @type {string} */ m1) {
               return String.fromCharCode(parseInt(m1, 16))
             })
           }
-          const y = F[2] ? F[2] : optionsContext
-          /* try {
-                        let en = elem.querySelector('.headword-text-container').cloneNode(true)
-                        //en = y.cloneNode()
-                        //en.querySelector('rt').remove()
-                        //cpn.appendChild(en)
-                        //cpn.querySelector('rt').remove()
-                        for (let r of en.querySelectorAll('rt')) {
-                            r.remove()
-                        }
-                        en.querySelector('.headword-reading').remove()
-                        if(av('warn')) console.warn(en.innerHTML);
-                        en = en.innerText
-                        y = en
-                    } catch { } */
-          let [iji, kx] = [new RegExp(/[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]/).test(y), 1]
-          elem.appendChild(document.createElement('dd'))
-          const de = document.createElement('div')
-          let dd = ''
-          let df = ''
-          const RGEX_CHINESE = new RegExp(/[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]/)
-
-          de.insertAdjacentHTML('afterbegin', '<div class="dd" style="border: 2px solid rgb(20,100,10)"></div><div class="df" style="border: 1px solid rgb(60,45,45)"></div>')
-          if (iji && y.length >= 1) {
-            for (const i in y) {
-              const ijii = RGEX_CHINESE.test(y[i])
-              if (ijii) {
-                dd += `<span style="font-size: 1.75em">${y[i]}</span>`
-                df += `<span style="font-size: 1.75em">${y[i]}</span>`
-                const result = await this._display._findDictionaryEntries(true, y[i], true, y[i])
-                if (av('log')) console.dir(result)
-                let kym = ''
-                let oym = ''
-                for (const d in result) {
-                  if (result[d].dictionary.includes('KANJIDIC')) {
-                    kx = d
-                    try {
-                      dd += `<div>Onyomi: ${result[kx].kunyomi.join(' ')}</br>Kunyomi: ${result[kx].onyomi.join(' ')}</br>${result[kx].definitions.join(', ')}</div>`
-                    } catch (error) {
-                      if (av('log')) console.log(error)
-                    }
-                  } else {
-                    try {
-                      kym = result[d].kunyomi.length > 0 ? `Onyomi: ${result[d].kunyomi.join(' ')}</br>` : ''
-                      oym = result[d].onyomi.length > 0 ? `Kunyomi: ${result[d].onyomi.join(' ')}</br>` : ''
-                      df += `<div>${kym}${oym}${result[d].definitions.join(', ')}</div>`
-                    } catch (error) {
-                      if (av('log')) console.log(error)
-                    }
-                  }
-                }
-                // elem.querySelector('dd').innerHTML += `<li>${o}</li>`
-              }
-            }
-          }
-          de.querySelector('.dd').innerHTML = dd ?? ''
-          de.querySelector('.df').innerHTML = df ?? ''
-          df = de.innerHTML
+          const y = F[2] ? F[2] : word
+                    const de = await yomiKanjis.bind(this._display, word, true)()
           elem.appendChild(de)
         } catch (jkj) {
           if (av('log')) console.log(jkj)
@@ -3950,12 +4034,12 @@ this.txtImg(false)
       if (av('log')) console.dir(this.wiki)
       pw = pw[pw.length - 1]
       if (this.wiki) {
-        const z = optionsContext
+        const z = word
         if (z.length > 0) {
           for (const ik in z) {
             const sk = SE.test(z[ik])
             if (sk) {
-              await this.make(z, ik, h, optionsContext, pw)
+              await this.make(z, ik, h, word, pw)
             }
           }
         }
@@ -3966,12 +4050,12 @@ this.txtImg(false)
           // pw = elem.querySelectorAll('.pw')
           // pw = pw[pw.length - 1]
           // pw.innerHTML += `</br><footer class="w wkt"><p class="ppw" style="background-color: brown; margin: 2px; color: white; font-sdize: 2em;">-- ${z} --</p></br></div>`
-          await this.make([z], 0, h, optionsContext, pw)
+          await this.make([z], 0, h, word, pw)
         }
       }
       if (av('log')) console.log(this.pe)
       if (!this.pe || !this.kan) {
-        const x = optionsContext
+        const x = word
         for (const i in x) {
           const isk = SE.test(x[i])
           // if(i >= 0){
@@ -4013,7 +4097,11 @@ this.txtImg(false)
       let W
 
       W = elem.querySelectorAll('.w')
-      elem.appendChild(bot)
+      if(i >= 0){
+        elem.appendChild(bot)
+      } else {
+        elem.prepend(bot)
+      }
       let di = 0
       for (const d of W) {
         if (!d.querySelector('.kjid')) {
@@ -4122,7 +4210,7 @@ this.txtImg(false)
       }
     }
     if (this.var('tls')) ptxt.appendChild(tlp)
-    if (av('warn')) console.warn(tt, '==>', w)
+    // if (av('warn')) console.warn(tt, '==>', w)
   }
   /**
    * @param {string} w
@@ -5002,7 +5090,9 @@ this.txtImg(false)
         break
     }
   }
-
+  copy(elem) {
+    this._copyText(elem.getAttribute('w') ?? '')
+  }
   /**
    * @param {string} text
    */
@@ -5063,12 +5153,23 @@ this.txtImg(false)
    * @param {number} fq
    * @param {HTMLDivElement} bot
    */
-  yomishow(yc, elem, fqs = [], fq = -1, bot = document.createElement(), tt = '', q = 0) {
+  yomishow(yc, elem, fqs = [], fq = -1, bot = document.createElement(), tt = '', q = 0, yd = null) {
     try {
+      let w = tt
       if (yc) {
         if (av('warn')) console.warn(yc.length, yc)
         try {
+      let i = 0
           for (const y of yc) {
+            let yl
+            if(yd){
+              let yy  = yd[i].headwords[0]
+              yl = yy?.term?.length
+              if(i > 0 && yl != w.length) {
+                break
+              }
+            }
+            i += 1 
             // if(av('warn')) console.warn(performance.now(), y.innerHTML);
             if (this.var('fq')) {
               const fqe = y.querySelectorAll('span.frequency-value')
@@ -5156,22 +5257,28 @@ this.txtImg(false)
                   pn = tt
                 }
               }
-              elem = y
+              if(i < 2){
+                elem = y
+                elem.innerHTML += `<div class="flex"></div>`
+              } else {
+              elem.querySelector('.flex').innerHTML += y.innerHTML
+              }
               const ind = elem.getAttribute('ind')
               //console.error(pn, ind)
               try {
-                if (!this.var('roma')) {
-                  const readingElement = document.querySelector(`[i="${ind}"] .reading`)
-                  if (readingElement) {
-                    try {
+                if (!this.var('roma') || true) {
+                  let readingElement = document.querySelector(`[i="${ind}"] .reading rt`)
+                  try {
+                      if (readingElement) {
                       readingElement.innerHTML = pn || ''
+                    } else {
+                    readingElement = document.querySelector(`[i="${ind}"] .reading`)
+                    console.error('Reading element not found.')
+                    }
                     } catch (error) {
                       console.error('Error:', error)
                     }
-                  } else {
-                    console.error('Reading element not found.')
                   }
-                }
               } catch (error) {
                 console.error(error)
               }
@@ -5179,10 +5286,12 @@ this.txtImg(false)
               //for (const { } of li) {// elem.querySelector('ol.entry-body-section-content').prepend(l)}
               // yc = yc.slice(0, 1)
             }
-            break
+            if(!this.var('ya')){
+              break
+            }
           }
         } catch (yye) {
-          if (av('warn')) console.warn((yye))
+          console.error(yye)
         }
       }
     } catch (ye) {

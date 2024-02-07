@@ -681,7 +681,14 @@ export class Display extends EventDispatcher {
         }
 
         try {
-            const {action, params} = data2;
+            let action, params;
+
+            if (data2 && typeof data2 === 'object') {
+              ({ action, params } = data2);
+            } else {
+              // Handle error or provide default values
+              console.error("Invalid or missing data2 object");
+            }
             const callback = () => {}; // NOP
             invokeApiMapHandler(this._windowApiMap, action, params, [], callback);
         } catch (e) {
@@ -742,7 +749,7 @@ export class Display extends EventDispatcher {
      */
     _authenticateMessageData(message) {
         if (this._frameEndpoint !== null && !this._frameEndpoint.authenticate(message)) {
-            throw new Error('Invalid authentication');
+            return; //throw new Error('Invalid authentication');
         }
         return /** @type {import('frame-client').Message<T>} */ (message).data;
     }
