@@ -16,11 +16,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {context} from '../ctx.js';
 import {yomitan} from '../yomitan.js';
 import {Backend} from './backend.js';
 
 /** Entry point. */
 async function main() {
+    console.warn('bg');
+    context()
     yomitan.prepare(true);
 
     const backend = new Backend();

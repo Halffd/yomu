@@ -130,6 +130,10 @@ export class Note {
             ];
             console.warn(det, req, mode);
             if (det) req = det[0].modeMap.get(mode);
+            if (req.note.PrimaryDefinitionPicture === '') {
+                let img = await this.aDict.txtImg(true)
+                req.note.fields.PrimaryDefinitionPicture = img
+            }
             console.warn(req);
             if (nv('log')) console.log(mode, req, dic, q) // Output: "term-kanji"
             // Call the addAnkiNote function
@@ -519,7 +523,7 @@ export class Note {
                     let d = localStorage.getItem('learned') ?? []
                     let dl = []
                     if (typeof d === 'string') {
-                    dl = d.split(' ') ?? []
+                        dl = d.split(' ') ?? []
                     }
                     dl.push(t)
                     localStorage.setItem('learned', dl.join(' '))
@@ -528,6 +532,19 @@ export class Note {
                 }
             } else {
                 elem.style.setProperty('--cc', 'lime')
+            }
+            const objin = () => {
+                let on = this.obj;
+                let ow = this.find(t, "word");
+                if (ow?.length > 2) {
+                    let ox = ow[0]
+                    for (let i in ox) {
+                        this.nobj(on, i, dateString, unixSeconds, txt)
+                    }
+                } else {
+                    this.nobj(on, ow[1], dateString, unixSeconds, txt)
+                }
+                localStorage.setItem('save', JSON.stringify(on))
             }
             if ((isStringInSet && cx >= 0)) {
                 const bsWithoutString = ww.filter(function (element) {
@@ -540,17 +557,7 @@ export class Note {
                 }
                 note.svDiv(saveDiv, ww.join(' '), flag)
                 if (this.find(t) ? true : false) {
-                    let on = this.obj;
-                    let ow = this.find(t, "word");
-                    if (ow?.length > 2) {
-                        let ox = ow[ow.length - 1]
-                        for (let i in ox) {
-                            this.nobj(on, i, dateString, unixSeconds, txt)
-                        }
-                    } else {
-                        this.nobj(on, ow[1], dateString, unixSeconds, txt)
-                    }
-                    localStorage.setItem('save', JSON.stringify(on))
+                    objin()
                 }
                 return isStringInSet
             } else if (cx < -1) {
@@ -564,6 +571,18 @@ export class Note {
                     localStorage.setItem('exp', b.join(' '))
                 }
             } else if (!isStringInSet) {
+                const options = this.aDict._display.getOptionsContext()
+                const results = await this.aDict._display._findDictionaryEntries(false, t, false, options)
+                if (this.aDict.japaneseUtil.isStringEntirelyKana(t)) {
+                    let l = 0
+                    for (let r of results) {
+                        t = r.headwords[0].term
+                        if (!this.words.includes(t) || (l > 0 && l != t.length)) {
+                            break
+                        }
+                        if (l < 1) l = t.length
+                    }
+                }
                 let fm = fq.reduce((a, b) => a + b, 0)
                 fm /= fq.length
                 const ws = word ? word.split(' ') : []
@@ -580,8 +599,6 @@ export class Note {
                     sound: false,
                     deck: localStorage.getItem('deck') ?? 'aDict'
                 }
-                const options = this.aDict._display.getOptionsContext()
-                const results = await this.aDict._display._findDictionaryEntries(false, t, false, options)
                 if (nv('warn')) console.warn(options, yc, read, results, fq, fq.length)
                 let ain
                 try {
@@ -604,26 +621,31 @@ export class Note {
                     });
                 }
                 fq = fq.join(' ')
-                let oc = {
-                    word: t,
-                    reading: read,
-                    sentence: txt,
-                    definition: def,
-                    frequency: fq,
-                    clipboard: clip?.substring(0, 5) === txt.substring(0, 5) ? '' : clip?.substring(0, 80),
-                    status: cx < 1 ? 1 : cx,
-                    time: dateString,
-                    params: `Yc:${yc} Cx:${cx} Flag:${flag}`
-                }
                 try {
-                    let sv = localStorage.getItem('save') ?? ''
-                    let sj = JSON.parse(sv)
-                    let o = {
-                        ...sj,
-                        [unixSeconds]: oc
+                    let tf = this.find(t)
+                    if (!tf) {
+                        let oc = {
+                            word: t,
+                            reading: read,
+                            sentence: txt,
+                            definition: def,
+                            frequency: fq,
+                            clipboard: clip?.substring(0, 5) === txt.substring(0, 5) ? '' : clip?.substring(0, 80),
+                            status: cx < 1 ? 1 : cx,
+                            time: dateString,
+                            params: `Yc:${yc} Cx:${cx} Flag:${flag}`
+                        }
+                        let sv = localStorage.getItem('save') ?? ''
+                        let sj = JSON.parse(sv)
+                        let o = {
+                            ...sj,
+                            [unixSeconds]: oc
+                        }
+                        if (nv('warn')) console.warn(word, o)
+                        localStorage.setItem('save', JSON.stringify(o));
+                    } else if (tf?.[0].sentence != txt) {
+                        this.obj()
                     }
-                    if (nv('warn')) console.warn(word, o)
-                    localStorage.setItem('save', JSON.stringify(o));
                 } catch (se) {
                     console.error(se);
                 }
@@ -718,8 +740,8 @@ export class Note {
         if (isNaN(cx)) {
             cx = 0
         }
-        const xt = elem.parentElement.getAttribute('txt')
-        let st = xt?.substring(0, 80)
+        const xt = elem.getAttribute('wset') ?? elem.parentElement.getAttribute('txt')
+        let st = xt //?.substring(0, 80)
         if (cx <= 50) {
             const k = elem.querySelector('.kj')
             if (nv('warn')) console.warn(k.innerHTML) // console.dir(kj)
@@ -747,13 +769,18 @@ export class Note {
                 // async saveAdd(t, txt, def = '', fq = [], tags = [], html = '', moe = false, audio = [], image = [], clip = '', yc = null) {
                 await note.saveAdd(cx, wn, st, df, fq, tag, ht, false, snd, img, clip, true, rd, elem)// localStorage.setItem('save', `${save} ${en}`)
             } else {
-                let word = k.innerText
-                let wordel = elem.querySelector(".compounds dt") ?? elem.querySelector(".conj-gloss dt")
-                if(wordel){
-                    word = wordel.textContent
-                    let sp = word.split(' ')
-                    word = sp ? sp[0] : word
-                    rd = sp[1].substring(1,sp[1].length-1)
+                let word = k ? k.innerText : ''
+                let kp = localStorage.getItem('keep') ?? ''
+                let ks = kp.split(' ')
+                let is = ks.includes(word)
+                if (!is) {
+                    let wordel = elem.querySelector(".compounds dt") ?? elem.querySelector(".conj-gloss dt")
+                    if (wordel) {
+                        word = wordel.textContent
+                        let sp = word.split(' ')
+                        word = sp ? sp[0] : word
+                        rd = sp.length > 1 ? sp[1].substring(1, sp[1].length - 1) : rd
+                    }
                 }
                 //try { //df += elem.querySelector('dt').innerText } finally {
                 await note.saveAdd(cx, word, st, df, undefined, tag, ht, true, snd, img, clip, true, rd, elem) // localStorage.setItem('save', `${save} ${k.innerHTML}`)
@@ -1125,8 +1152,8 @@ export class Note {
             localStorage.setItem('keep', value);
         }
     }
-    binFix(){
-        localStorage.setItem('keep',JSON.parse(this.bin[0]).join(' '))
+    binFix() {
+        localStorage.setItem('keep', JSON.parse(this.bin[0]).join(' '))
     }
     binSet(index, value) {
         this._bin = this.bin

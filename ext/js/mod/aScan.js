@@ -1,3 +1,19 @@
+export function cp (/** @type {string} */ text) {
+    const parent = document.body;
+    if (parent === null) {return;}
+
+    let textarea = null;
+    if (textarea === null) {
+        textarea = document.createElement('textarea');
+        this._copyTextarea = textarea;
+    }
+
+    textarea.value = text;
+    parent.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    parent.removeChild(textarea);
+}
 function scan() {
     if (!document.URL.includes("-extension")) {
         console.log("aScan")

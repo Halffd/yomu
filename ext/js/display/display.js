@@ -683,11 +683,16 @@ export class Display extends EventDispatcher {
         try {
             let action, params;
 
-            if (data2 && typeof data2 === 'object') {
+            if (data2) {
               ({ action, params } = data2);
             } else {
               // Handle error or provide default values
-              console.error("Invalid or missing data2 object");
+              try {
+              ({ action, params } = data);
+            } catch(ee){
+                console.error("Invalid or missing data2 object ", data, data2);
+                console.error(ee);
+              }
             }
             const callback = () => {}; // NOP
             invokeApiMapHandler(this._windowApiMap, action, params, [], callback);

@@ -2052,14 +2052,14 @@ export class Backend {
         } catch (e) {
             errors.push(ExtensionError.serialize(e));
         }
-
+        console.warn(clipboardDetails);
         try {
             if (clipboardDetails !== null && clipboardDetails.image) {
                 clipboardImageFileName = await this._injectAnkiNoteClipboardImage(ankiConnect, timestamp, definitionDetails);
             }
         } catch (e) {
             errors.push(ExtensionError.serialize(e));
-        }
+        }   
 
         try {
             if (clipboardDetails !== null && clipboardDetails.text) {

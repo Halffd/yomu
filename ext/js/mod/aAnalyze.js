@@ -128,8 +128,14 @@ export class Analyze {
         this.dic = dic
         this.t = t
         this.txt = document.createElement('textarea')
+        this.btn = document.createElement('button')
         this.txt.placeholder = 'Text to Analyze'
         this.txt.addEventListener('change', this.run.bind(this), false)
+        this.btn.textContent = 'All Learned'
+        this.btn.onclick = function(e){
+            e.stopPropagation()
+            let is = this.dic.at()
+        }.bind(this)
         t.appendChild(this.txt)
         this.tc = this.t.appendChild(document.createElement('div'))
     }
