@@ -73,7 +73,7 @@ export class AnkiNoteBuilder {
         /** @type {Error[]} */
         const allErrors = [];
         let media;
-        if (requirements.length > 0 && mediaOptions !== null) {
+        if (requirements && mediaOptions !== null) {
             let errors;
             ({media, errors} = await this._injectMedia(dictionaryEntry, requirements, mediaOptions));
             for (const error of errors) {

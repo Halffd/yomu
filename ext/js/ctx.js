@@ -1,224 +1,108 @@
-import wanakana from 'wanakana';
-import {DisplayAnki} from './display/display-anki.js';
-import {DisplayAudio} from './display/display-audio.js';
-import {Display} from './display/display.js';
-import {JapaneseUtil} from './language/sandbox/japanese-util.js';
-import {aDict} from './mod/aDict.js';
-
-/**
- *
- * @param {string} text
- */
-function fallbackCopyTextToClipboard(text) {
-    const textArea = document.createElement('textarea');
-    textArea.value = text;
-
-    // Avoid scrolling to bottom
-    textArea.style.top = '0';
-    textArea.style.left = '0';
-    textArea.style.position = 'fixed';
-
-    document.body.appendChild(textArea);
-    textArea.focus();
-    textArea.select();
-
-    try {
-        const successful = document.execCommand('copy');
-        const msg = successful ? 'successful' : 'unsuccessful';
-        console.log('Fallback: Copying text command was ' + msg);
-    } catch (err) {
-        console.error('Fallback: Oops, unable to copy', err);
-    }
-
-    document.body.removeChild(textArea);
+const cp = (text)=>{
+    return
+        navigator.clipboard.writeText(text)
+          .then(() => {
+            console.log('Text copied:', text);
+          })
+          .catch(error => {
+            console.error('Failed to copy text:', error);
+          });
 }
-/**
- * @param {string} text
- */
-function copyTextToClipboard(text) {
-    if (!navigator.clipboard) {
-        fallbackCopyTextToClipboard(text);
-        return;
-    }
-    navigator.clipboard.writeText(text).then(function() {
-        console.log('Async: Copying to clipboard was successful!');
-    }, function(err) {
-        console.error('Async: Could not copy text: ', err);
-    });
-}
-const cp = function(/** @type {string} */ text) {
-    const parent = document.body;
-    if (parent === null) { return; }
-
-    let textarea = null;
-    if (textarea === null) {
-        textarea = document.createElement('textarea');
-        this._copyTextarea = textarea;
-    }
-
-    textarea.value = text;
-    parent.appendChild(textarea);
-    textarea.select();
-    document.execCommand('copy');
-    parent.removeChild(textarea);
-};
-const searchUrbanDict = function(/** @type {any} */ word) {
+const searchUrbanDict = function (/** @type {any} */ word) {
     const query = word;
     cp(word);
     chrome.tabs.create({url: 'http://www.urbandictionary.com/define.php?term=' + query});
 };
-const search = function(/** @type {any} */ word) {
+const search = function (/** @type {any} */ word) {
     const query = word;
     cp(word);
     // copyTextToClipboard(query)
     // document.execCommand('copy')
 };
-const searchJ = function(/** @type {any} */ word) {
+const searchJ = function (/** @type {any} */ word) {
     const query = word;
     cp(word);
     const prp = {url: 'http://www.jisho.org/search/' + query};
     chrome.tabs.create(prp);
 };
-const searchW = function(/** @type {any} */ word) {
+const searchW = function (/** @type {any} */ word) {
     const query = word;
     cp(word);
     // console.log(999999999999999)
     chrome.tabs.create({url: 'https://en.wiktionary.org/w/index.php?go=Go&search=' + query});
     // chrome.tabs.create({ url: "https://en.wiktionary.org/w/index.php?go=Go&search=" + query });
 };
-const searchKD = function(/** @type {any} */ word) {
+const searchKD = function (/** @type {any} */ word) {
     const query = word;
     cp(word);
     chrome.tabs.create({url: 'https://www.kanjidamage.com/kanji/search?q=' + query});
 };
-const searchJP = function(/** @type {any} */ word) {
+const searchJP = function (/** @type {any} */ word) {
     const query = word;
     cp(word);
     chrome.tabs.create({url: 'https://www.kanjipedia.jp/search?kt=1&sk=leftHand&k=' + query});
 };
-const searchM = function(/** @type {any} */ word) {
+const searchM = function (/** @type {any} */ word) {
     const query = word;
     cp(word);
     chrome.tabs.create({url: 'https://ichi.moe/cl/qr/?r=htr&q=' + query});
 };
-const searchY = function(/** @type {any} */ word) {
+const searchY = function (/** @type {any} */ word) {
     const query = word;
     cp(word);
     chrome.tabs.create({url: 'https://www.youtube.com/results?search_query=' + query});
 };
-const searchDL = function(/** @type {any} */ word) {
+const searchDL = function (/** @type {any} */ word) {
     const query = word;
     cp(word);
     chrome.tabs.create({url: 'https://www.deepl.com/translator#ja/en/' + query});
 };
-const searchG = function(/** @type {any} */ word) {
+const searchG = function (/** @type {any} */ word) {
     const query = word;
     cp(word);
     chrome.tabs.create({url: 'https://github.com/search?type=repositories&q=' + query});
 };
-const searchR = function(/** @type {any} */ word) {
+const searchR = function (/** @type {any} */ word) {
     const query = word;
     cp(word);
     chrome.tabs.create({url: 'https://old.reddit.com/search?q=' + query});
 };
-const searchT = function(/** @type {any} */ word) {
+const searchT = function (/** @type {any} */ word) {
     const query = word;
     cp(word);
     chrome.tabs.create({url: 'https://twitter.com/search?src=typed_query&q=' + query});
 };
-const searchWw = function(/** @type {any} */ word) {
+const searchWw = function (/** @type {any} */ word) {
     const query = word;
     cp(word);
     chrome.tabs.create({url: 'https://en.wikipedia.org/wiki/Special:Search?go=Go&search=' + query});
 };
-const searchYu = function(/** @type {any} */ word) {
+const searchYu = function (/** @type {any} */ word) {
     const query = word;
     cp(word);
     chrome.tabs.create({url: 'https://gogen-yurai.jp/?s=' + query});
 };
-console.dir(chrome);
-try {
-    chrome.contextMenus.removeAll();
-} catch { }
-chrome.contextMenus.create({
-    id: 'yomu001',
-    title: 'Search',
-    contexts: ['selection'] // ContextType
-});
-// sr.onClicked.addListener(search);
-chrome.contextMenus.create({
-    id: 'yomu002',
-    title: 'Search in Jisho',
-    contexts: ['selection'] // ContextType
-});
-// sj.onClicked.addListener(searchJ);
-chrome.contextMenus.create({
-    id: 'yomu003',
-    title: 'Search in Wiktionary',
-    contexts: ['selection'] // ContextType
-});
-// chrome.contextMenus.onClicked.addListener(searchW);
-chrome.contextMenus.create({
-    id: 'yomu004',
-    title: 'Search in KanjiDamage',
-    contexts: ['selection'] // ContextType
-});
-// chrome.contextMenus.onClicked.addListener(searchKD);
-chrome.contextMenus.create({
-    id: 'yomu005',
-    title: 'Search in Moe',
-    contexts: ['selection'] // ContextType
-});
-// chrome.contextMenus.onClicked.addListener(searchM);
-chrome.contextMenus.create({
-    id: 'yomu006',
-    title: 'Search in Kanjipedia (JP)',
-    contexts: ['selection'] // ContextType
-});
-// chrome.contextMenus.onClicked.addListener(searchJP);
-chrome.contextMenus.create({
-    id: 'yomu007',
-    title: 'Search in UrbanDictionary',
-    contexts: ['selection'] // ContextType
-});
-chrome.contextMenus.create({
-    id: 'yomu008',
-    title: 'Search in YouTube',
-    contexts: ['selection'] // ContextType
-});
-chrome.contextMenus.create({
-    id: 'yomu009',
-    title: 'Translate in DeepL',
-    contexts: ['selection'] // ContextType
-});
-chrome.contextMenus.create({
-    id: 'yomu010',
-    title: 'Search in Github',
-    contexts: ['selection'] // ContextType
-});
-chrome.contextMenus.create({
-    id: 'yomu011',
-    title: 'Search in Reddit',
-    contexts: ['selection'] // ContextType
-});
-chrome.contextMenus.create({
-    id: 'yomu012',
-    title: 'Search in Twitter',
-    contexts: ['selection'] // ContextType
-});
-chrome.contextMenus.create({
-    id: 'yomu013',
-    title: 'Search in Yurei (JP)',
-    contexts: ['selection'] // ContextType
-});
-chrome.contextMenus.create({
-    id: 'yomu000',
-    title: 'Search in Wikipedia',
-    contexts: ['selection'] // ContextType
-});
+function sendM3U(info, tab) {
+    chrome.tabs.query({currentWindow: true, active: true}).then((tabs) => {
+        if (tabs.length !== 0) {
+            var url = tabs[0].url;
+            if (info) {
+                url = info.linkUrl || info.srcUrl;
+            }
+            console.log("play-url: sending " + url);
+            var content = "#EXTM3U\n" + url;
+            var blob = new Blob([content], {type: 'video/x-mpegurl;charset=utf-8'});
+            // Pass the blob data as a query parameter
+            var extensionUrl = chrome.runtime.getURL("");
+            var blobUrl = extensionUrl + "?blob=" + encodeURIComponent(blob);
+
+            chrome.tabs.update(tabs[0].id, { url: blobUrl });
+        }
+    });
+}
 const tb = true;
 const tbs = 0;
-const ctx = function(/** @type {{ selectionText: any; menuItemId: string; }} */ info, /** @type {any} */ tab) {
+const ctx = function (/** @type {{ selectionText: any; menuItemId: string; }} */ info, /** @type {any} */ tab) {
     // console.dir(info)
     // event//.preventDefault()
     if (tab) {
@@ -228,7 +112,7 @@ const ctx = function(/** @type {{ selectionText: any; menuItemId: string; }} */ 
         // tbs += 1
         // let tb = true
         console.log(`Item ${n} ${tbs} ${sl} ${info.menuItemId} clicked in tab ${this}`);
-        if (true) {
+        if (sl) {
             // info.stopImmediatePropagation();
             switch (n) {
                 case 0:
@@ -274,6 +158,9 @@ const ctx = function(/** @type {{ selectionText: any; menuItemId: string; }} */ 
                 case 7:
                     searchUrbanDict(sl);
                     break;
+                case 20:
+                    sendM3U(info, tab);
+                    break;
                 default:
                     searchY(sl);
                     break;
@@ -281,8 +168,96 @@ const ctx = function(/** @type {{ selectionText: any; menuItemId: string; }} */ 
         }
     }
 };
-chrome.contextMenus.onClicked.addListener(ctx.bind(this));
+export function context() {
+    console.warn('ctx');
+    console.dir(chrome);
+    try {
+        chrome.contextMenus.removeAll();
+    } catch { }
+    chrome.contextMenus.create({
+        id: 'yomu001',
+        title: 'Search',
+        contexts: ['selection'] // ContextType
+    });
+    // sr.onClicked.addListener(search);
+    chrome.contextMenus.create({
+        id: 'yomu002',
+        title: 'Search in Jisho',
+        contexts: ['selection'] // ContextType
+    });
+    // sj.onClicked.addListener(searchJ);
+    chrome.contextMenus.create({
+        id: 'yomu003',
+        title: 'Search in Wiktionary',
+        contexts: ['selection'] // ContextType
+    });
+    // chrome.contextMenus.onClicked.addListener(searchW);
+    chrome.contextMenus.create({
+        id: 'yomu004',
+        title: 'Search in KanjiDamage',
+        contexts: ['selection'] // ContextType
+    });
+    // chrome.contextMenus.onClicked.addListener(searchKD);
+    chrome.contextMenus.create({
+        id: 'yomu005',
+        title: 'Search in Moe',
+        contexts: ['selection'] // ContextType
+    });
+    // chrome.contextMenus.onClicked.addListener(searchM);
+    chrome.contextMenus.create({
+        id: 'yomu006',
+        title: 'Search in Kanjipedia (JP)',
+        contexts: ['selection'] // ContextType
+    });
+    // chrome.contextMenus.onClicked.addListener(searchJP);
+    chrome.contextMenus.create({
+        id: 'yomu007',
+        title: 'Search in UrbanDictionary',
+        contexts: ['selection'] // ContextType
+    });
+    chrome.contextMenus.create({
+        id: 'yomu008',
+        title: 'Search in YouTube',
+        contexts: ['selection'] // ContextType
+    });
+    chrome.contextMenus.create({
+        id: 'yomu009',
+        title: 'Translate in DeepL',
+        contexts: ['selection'] // ContextType
+    });
+    chrome.contextMenus.create({
+        id: 'yomu010',
+        title: 'Search in Github',
+        contexts: ['selection'] // ContextType
+    });
+    chrome.contextMenus.create({
+        id: 'yomu011',
+        title: 'Search in Reddit',
+        contexts: ['selection'] // ContextType
+    });
+    chrome.contextMenus.create({
+        id: 'yomu012',
+        title: 'Search in Twitter',
+        contexts: ['selection'] // ContextType
+    });
+    chrome.contextMenus.create({
+        id: 'yomu013',
+        title: 'Search in Yurei (JP)',
+        contexts: ['selection'] // ContextType
+    });
+    chrome.contextMenus.create({
+        id: 'yomu000',
+        title: 'Search in Wikipedia',
+        contexts: ['selection'] // ContextType
+    });
+    chrome.contextMenus.create({
+        id: "yomu020",
+        title: "Play URL",
+        contexts: ["link", "image", "video"]
+    });
 
+    chrome.contextMenus.onClicked.addListener(ctx.bind(this));
+}
 /* function convertSecondsToSrtFormat(seconds) {
     const date = new Date(seconds * 1000);
     const hours = date.getUTCHours().toString().padStart(2, '0');
@@ -430,189 +405,3 @@ try {
     console.error(err);
 }
 })*/
-let jpdb;
-chrome.commands.onCommand.addListener(function(command) {
-    if (command === 'scan_elements') {
-        const filePath = chrome.extension.getURL('jpdb.json');
-        console.warn(filePath);
-        fetch(filePath)
-            .then((response) => response.json())
-            .then((jsonData) => {
-                jpdb = jsonData;
-                console.log('Jpdb ---', jsonData, jpdb);
-                chrome.tabs.executeScript({
-                    code: `
-          console.log("aScan")
-          var jpdb = JSON.parse('" + encodeToPassToContentScript(${jpdb}) + "');
-          console.log(jpdb)
-function frequency(word) {
-    const entry = jpdb.find(entry => entry[0] === word || entry[2].reading === word);
-    return entry ? entry[2]?.frequency?.value : -1;
-}
-
-function reading(word) {
-    const entry = jpdb.find(entry => entry[0] === word);
-    return entry ? entry[2].reading : null;
-}
-
-var elementsWithText = [];
-var elements = document.querySelectorAll("*");
-for (var i = 0; i < elements.length; i++) {
-    try {
-        var element = elements[i];
-        if (element.innerText.trim().length > 0) {
-            var text = element.innerText;
-            var words = text.split(" ");
-            var newContent = "";
-            for (var j = 0; j < words.length; j++) {
-                try {
-                    var word = words[j];
-                    var furigana = reading(word);
-                    if (furigana) {
-                        newContent += "<ruby>" + word + "<rt>" + furigana + "</rt></ruby> ";
-                    } else {
-                        continue //newContent += word + " ";
-                    }
-                } catch (err) {
-                    console.error(err)
-                }
-            }
-            element.innerHTML = newContent.trim();
-            elementsWithText.push(element);
-        }
-    } catch (error) {
-        console.error(error)
-    }
-}
-console.log("Elements with text:", elementsWithText);`
-                });
-            })
-            .catch((error) => {
-                console.error('Error fetching JSON:', error);
-            });
-    }
-});
-/**
- * @param {any} obj
- */
-function encodeToPassToContentScript(obj) {
-    // Encodes into JSON and quotes \ characters so they will not break
-    //  when re-interpreted as a string literal. Failing to do so could
-    //  result in the injection of arbitrary code and/or JSON.parse() failing.
-    return JSON.stringify(obj).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-}
-// Function to perform actions when <td> elements are present
-/**
- * @param {number} tabId
- * @param {number} frameId
- */
-function performActions(tabId, frameId) {
-    // Display the elements in a fixed popup at the bottom right corner
-    const popup = document.createElement('div');
-    popup.style.position = 'fixed';
-    popup.style.top = '10px';
-    popup.style.right = '10px';
-
-    // Get the absolute URL of the local HTML file
-    const filePath = chrome.extension.getURL('searchPopup.html');
-
-    // Load the local HTML file into the popup
-    fetch(filePath)
-        .then((response) => response.text())
-        .then((html) => {
-            // Set the HTML content of the popup
-            // Add the popup to the document body
-            chrome.tabs.executeScript(tabId, {
-                code: `
-                const popup = document.createElement('div');
-                popup.style.position = 'fixed';
-                popup.style.top = '10px';
-                popup.style.right = '10px';
-                document.body.innerHTML = '0000
-                popup.innerHTML = ${html};
-                console.warn(popup);
-                document.body.appendChild(${popup})
-            `
-            });
-        })
-        .catch((error) => {
-            console.error('Failed to load search.html:', error);
-        });
-    try {
-    // Load the code
-        const japaneseUtil = new JapaneseUtil(wanakana);
-        const display = new Display(tabId, frameId, 'search', japaneseUtil);
-        const displayAudio = new DisplayAudio(display);
-        displayAudio.prepare();
-
-        const displayAnki = new DisplayAnki(display, displayAudio, japaneseUtil);
-        displayAnki.prepare();
-        const aD = new aDict(display, displayAudio, japaneseUtil, displayAnki, null, null, false);
-    } catch (e) {
-        console.error(e);
-    }
-}
-// Function to observe for the presence of <td> elements
-/**
- * @param {any} tabId
- * @param {any} frameId
- */
-function observeForElements(tabId, frameId) {
-    // Create a mutation observer to listen for changes in the DOM
-    const observer = new MutationObserver(function(mutationsList) {
-        for (const mutation of mutationsList) {
-            if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-                const tdElements = document.querySelectorAll('table > tbody > tr > td');
-                console.warn(tdElements.length);
-                if (tdElements.length > 0) {
-                    // Send a message to the background script indicating the presence of <td> elements
-                    chrome.runtime.sendMessage({action: 'tdElementsExist', tabId: tabId, frameId: frameId});
-                    // Disconnect the observer once the elements are found
-                    observer.disconnect();
-                }
-            }
-        }
-    });
-
-    // Start observing changes in the <body> element
-    observer.observe(document.body, {
-        childList: true,
-        subtree: true
-    });
-}
-// Create a listener for the webNavigation.onDOMContentLoaded event
-chrome.webNavigation.onDOMContentLoaded.addListener(function(details) {
-    // Check if the URL matches the desired pattern
-    console.warn(details.url, details);
-    if (details.url.includes('https://killergerbah.github.io/asbplayer/')) {
-        // Inject a content script to check for <td> elements
-        performActions(details.tabId, details.frameId);
-        chrome.tabs.executeScript(details.tabId, {
-            code: `
-        // Function to send a message to the background script
-        function sendTdElementsMessage() {
-          const tdElements = document.querySelectorAll('table > tbody > tr > td');
-          console.log(tdElements.length,tdElements)
-          if (tdElements.length > 1) {
-            // Send a message to the background script indicating the presence of <td> elements
-            chrome.runtime.sendMessage({ action: 'tdElementsExist', tabId: ${details.tabId}, frameId: ${details.frameId} });
-          } else {
-            // If the elements are not found, schedule the function for the next animation frame
-            requestAnimationFrame(sendTdElementsMessage);
-          }
-        }
-        
-        // Call the function to start observing for <td> elements
-        sendTdElementsMessage();
-        `
-        });
-    }
-});
-
-// Listen for messages from the content script
-chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
-    if (message.action === 'tdElementsExist') {
-        // Perform actions when <td> elements are present
-        performActions(message.tabId, message.frameId);
-    }
-});

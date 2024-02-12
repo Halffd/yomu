@@ -2,6 +2,7 @@
 
 import {Display} from "../display/display.js";
 import {Analyze} from './aAnalyze.js';
+import {Note} from "./aNote.js";
 import {aAll, getWords, sortArrays, sort_by_property, aId, aModel, aDeck, aIn, aQuery, aTag, api, iDeck, iTag, isIndexInsideElement} from './aUtil.js';
 import {yomiKanjis} from "./aYomi.js";
 /* global aDict, Note, isIndexInsideElement, aDeck, aTag, aAll, aModel, api, aNote, sv, aQuery
@@ -1238,18 +1239,22 @@ this.txtImg(false)
             break
           }
           if (this.var('moe') && typeof spl[ii] === 'string') {
-            if (spl[ii].length > 300) {
-              const spm = this.splitter(spl[ii], 300)
-              if (av('warn')) console.warn(spm)
-              for (const mm in spm) {
-                rI = 0
-                if (rI > 0) {
-                  if (!fill) this.sentence(spm, mm)
-                }
-                await this.moe(spm, mm, spm.length)
-              }
+            if (false && !this._i && this.saving) {
+              await this.saves(spl[ii])
             } else {
-              await this.moe(spl, ii, spl.length)
+              if (spl[ii].length > 300) {
+                const spm = this.splitter(spl[ii], 300)
+                if (av('warn')) console.warn(spm)
+                for (const mm in spm) {
+                  rI = 0
+                  if (rI > 0) {
+                    if (!fill) this.sentence(spm, mm)
+                  }
+                  await this.moe(spm, mm, spm.length)
+                }
+              } else {
+                await this.moe(spl, ii, spl.length)
+              }
             }
             this._i = true
           } else {
@@ -1376,18 +1381,22 @@ this.txtImg(false)
     }
 
     if (this.hke) {
-      let vv = document.querySelectorAll('.vis')
-      vv = vv[Math.round((vv.length - 1) / 1.25)]
-      vv.scrollIntoView({
-        behavior: 'auto',
-        block: 'center'
-      })
-      const cc = document.getElementById('cur')
-      if (cc) {
-        cc.id = ''
+      try {
+        let vv = document.querySelectorAll('.vis')
+        vv = vv[Math.round((vv.length - 1) / 1.25)]
+        vv.scrollIntoView({
+          behavior: 'auto',
+          block: 'center'
+        })
+        const cc = document.getElementById('cur')
+        if (cc) {
+          cc.id = ''
+        }
+        this.pos = parseInt(vv.getAttribute('i'))
+        vv.id = 'cur'
+      } catch (err) {
+        console.error(err)
       }
-      this.pos = parseInt(vv.getAttribute('i'))
-      vv.id = 'cur'
       this.hke = false
     }
     this.frst = false
@@ -1731,7 +1740,6 @@ this.txtImg(false)
           sv(elem, 100, tt, spl[ii])
         }
       }
-
       if (this.var('kanji') || this.var('yc')) { //(!this.slow || this.var('fq') || (this.var('yc') && !this.var('both'))) {
         const fx = this.dictionary(tt, elem, isKana, ii).then(async () => {
           if (this.fl && this.var('yc')) {
@@ -1742,12 +1750,29 @@ this.txtImg(false)
         })
       }
       if (av('warn')) console.warn([emph, line, w])
+      tt = this.unconj(elem) ?? tt
+      let nf = this.note.find(tt)
+      if (this.at(tt, nf)) {
+        elem.classList.add('fav')
+      }
+      if (this.note.bin.includes(tt)) {
+        elem.style.setProperty('--cc', 'aqua')
+      } else if (this.note.words.includes(tt)) {
+        elem.style.setProperty('--cc', 'green')
+      } else if (nf) {
+        elem.style.setProperty('--cc', 'orange')
+      } else if (this.note.learned.includes(tt)) {
+        elem.style.setProperty('--cc', 'red')
+      }
+      if (nf) {
+        elem.setAttribute('wset', nf?.[0].sentence)
+      }
     }
     return [emph, line, w]
   }
   /**
    * @param {{ stopPropagation: () => void; }} e
-   */
+  */
   words(e, s = null) {
     if (e) e.stopPropagation()
     let sis = localStorage.getItem('words') ?? '' // + ` ${localStorage.getItem('wordbk')}`*/ document.querySelector('.save .w').innerText
@@ -2555,7 +2580,7 @@ this.txtImg(false)
       if (b[this.pos]?.innerText == '' || b[this.pos]?.innerText == ' ') {
         this.pos += 1
       }
-      if(!b[this.pos]){
+      if (!b[this.pos]) {
         if (this.pos < 0) {
           this.pos = 0;
         } else if (this.pos > b.length - 1) {
@@ -3230,9 +3255,9 @@ this.txtImg(false)
       this.ppos = this.pos;
       try {
         this.pos = pos > 0 ? parseInt(elem.nextSibling.getAttribute('pos'))
-        : parseInt(elem.previousSibling.getAttribute('pos'));
+          : parseInt(elem.previousSibling.getAttribute('pos'));
       } catch {
-        if(pos > 0){
+        if (pos > 0) {
           this.pos = parseInt(elem.parentElement.nextSibling.nextSibling.nextSibling.firstChild.getAttribute('pos'))
         } else {
           this.pos = parseInt(elem.parentElement.previousSibling.previousSibling.previousSibling.firstChild.getAttribute('pos'))
@@ -3246,7 +3271,7 @@ this.txtImg(false)
       }
       console.warn(this.pos, this.ppos, {elem}, dir);
       let a, d, parent
-      if(elem){
+      if (elem) {
         a = elem;
         d = b[this.pos]
         parent = d.parentNode;
@@ -3298,7 +3323,7 @@ this.txtImg(false)
   };
   cur(/** @type {Element} */ c) {
     try {
-      if(document.querySelector('#cur')) document.querySelector('#cur').id = 'prev';
+      if (document.querySelector('#cur')) document.querySelector('#cur').id = 'prev';
       else return
     } catch { }
     c.id = 'cur';
@@ -3336,7 +3361,7 @@ this.txtImg(false)
           w = wordel.textContent
           let sp = w.split(' ')
           w = sp ? sp[0] : w
-        } else if(this.var('unconj')){
+        } else if (this.var('unconj')) {
           let ws = await unconjugate(w)
           console.warn(w, ws);
           w = ws
@@ -3445,9 +3470,17 @@ this.txtImg(false)
    */
   expand(elem) {
     const elemc = elem.closest('.mns')
-    if(!this.var('yc')){
-      this.dictionary(elemc.getAttribute('w'), elemc, undefined, -10).then(()=>{
-        elemc.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    if (!this.var('yc')) {
+      let word = elemc.getAttribute('w')
+      let wordel = elem.querySelector(".compounds dt") ?? elem.querySelector(".conj-gloss dt")
+      if (wordel) {
+        word = wordel.textContent
+        let sp = word.split(' ')
+        word = sp ? sp[0] : word
+        // rd = sp[1].substring(1,sp[1].length-1)
+      }
+      this.dictionary(word, elemc, undefined, -10).then(() => {
+        elemc.scrollIntoView({block: 'start', behavior: 'smooth'});
       })
     }
     const ist = elem.closest('.title')
@@ -3480,11 +3513,9 @@ this.txtImg(false)
     this.cache(elem, this.istart, this.pos)
     let ws = elem.getAttribute('wset') ?? null
     if (ws) {
-      this.do = false
-      this._copyText(ws)
-      setTimeout(() => {
-        this.do = true
-      }, 5000);
+      //this.do = false
+      this.sentence([ws], 0)
+      this.moe([ws], 0)
     }
   }
   /**
@@ -3590,7 +3621,7 @@ this.txtImg(false)
       createSettingsInputTemplate('wt', 'Columns', '', '2px solid orange'),
       createSettingsInputTemplate('prt', 'Split By', '', '2px solid purple'),
       createSettingsInputTemplate('lim', 'Limit to Split', '', '2px solid purple'),
-      createSettingsInputTemplate('svl', 'Save Lines', '', '2px solid purple'),
+      createSettingsInputTemplate('svl', 'Save Timespan', '', '2px solid purple'),
       createSettingsInputTemplate('istart', 'Lines Pos', '', '2px solid purple'),
       createSettingsInputTemplate('deck', 'Deck Name', '', '2px solid purple')
     ]
@@ -3901,7 +3932,71 @@ this.txtImg(false)
     })
     return t
   }
+  unconj(elem) {
+    let wordel = elem.querySelector(".compounds dt") ?? elem.querySelector(".conj-gloss dt")
+    if (wordel) {
+      let word = wordel.textContent
+      let sp = word.split(' ')
+      let tt = sp ? sp[0] : word
+      return tt
+    } else {
+      return null
+    }
+  }
+  /**
+ * Check if a specific number of hours have passed between two dates.
+ * @param {Date} date1 - The first date.
+ * @param {Date} date2 - The second date.
+ * @param {number} hours - The specific number of hours to check.
+ * @returns {boolean} - Returns true if the specified hours have passed, false otherwise.
+ */
+  dates(date1, date2, hours) {
+    const timeDifference = Math.abs(date2 - date1);
+    const hoursElapsed = timeDifference / (1000 * 60 * 60);
 
+    return hoursElapsed >= hours;
+  }
+  async saves(txt) {
+    let ts = this.sis ?? txt.split(' ')
+    let p = false
+    let s = ''
+    let c = new Date()
+    let lim = this.int('svl')
+    const regex = /\d{2}\/\d{2}\/\d{2,4} \d{1,2}:\d{2}:\d{2}/g;
+    for (let t of ts) {
+      let n = this.note.find(t)
+      if (n) {
+        n = n[n.length - 1][n[n.length - 1].length - 1];
+        let ds = n[0].time
+        const dates = ds.match(regex);
+
+        ds = dates.map(date => {
+          const [day, month, year, hour, minute, second] = date.split(/[\/: ]/);
+          const formattedDate = `${month}/${day}/${year} ${hour}:${minute}:${second}`;
+          return new Date(formattedDate);
+        });
+        ds = ds[ds.length - 1]
+        console.log(convertedDates);
+        //let note = this.note.obj[n]
+        let dt
+        let ni = parseInt(n) * 1000
+        dt = new Date(ni)
+        p = this.dates(dt, c, lim)
+        if (p) p = this.dates(ds, c, lim)
+        console.log(p, dt, c, lim);
+        if (p) {
+          this.sentence([`${s}</br>${dt}`], 0)
+          if (s == '') {
+            await this.moe([s], 0)
+          }
+          c = dt
+          s = t + ' '
+        } else {
+          s += t + ' '
+        }
+      }
+    }
+  }
   /**
    * @param {any} arr
    */
@@ -4023,7 +4118,7 @@ this.txtImg(false)
             })
           }
           const y = F[2] ? F[2] : word
-                    const de = await yomiKanjis.bind(this._display, word, true)()
+          const de = await yomiKanjis.bind(this._display, word, true)()
           elem.appendChild(de)
         } catch (jkj) {
           if (av('log')) console.log(jkj)
@@ -4097,7 +4192,7 @@ this.txtImg(false)
       let W
 
       W = elem.querySelectorAll('.w')
-      if(i >= 0){
+      if (i >= 0) {
         elem.appendChild(bot)
       } else {
         elem.prepend(bot)
@@ -4148,7 +4243,28 @@ this.txtImg(false)
     }
     return r
   }
+  /**
+   * Check the conditions based on the given parameters.
+   * @param {Note} note - The note object.
+   * @param {string} tt - The target string to check.
+   * @param {Array} [nf] - Optional parameter for additional note information.
+   * @returns {boolean} - Returns true if any of the conditions are met, otherwise false.
+   */
+  at(tt, nf, note = this.note) {
+    nf = nf !== undefined ? nf : note.find(tt);
 
+    if (note.bin.includes(tt)) {
+      return true;
+    } else if (note.words.includes(tt)) {
+      return true;
+    } else if (nf && nf.length > 0) {
+      return true;
+    } else if (note.learned.includes(tt)) {
+      return true;
+    }
+
+    return false;
+  }
   /**
    * @param {string | any[]} w
    * @param {string} to
@@ -5159,17 +5275,17 @@ this.txtImg(false)
       if (yc) {
         if (av('warn')) console.warn(yc.length, yc)
         try {
-      let i = 0
+          let i = 0
           for (const y of yc) {
             let yl
-            if(yd){
-              let yy  = yd[i].headwords[0]
+            if (yd) {
+              let yy = yd[i].headwords[0]
               yl = yy?.term?.length
-              if(i > 0 && yl != w.length) {
+              if (i > 0 && yl != w.length) {
                 break
               }
             }
-            i += 1 
+            i += 1
             // if(av('warn')) console.warn(performance.now(), y.innerHTML);
             if (this.var('fq')) {
               const fqe = y.querySelectorAll('span.frequency-value')
@@ -5257,11 +5373,11 @@ this.txtImg(false)
                   pn = tt
                 }
               }
-              if(i < 2){
+              if (i < 2) {
                 elem = y
                 elem.innerHTML += `<div class="flex"></div>`
               } else {
-              elem.querySelector('.flex').innerHTML += y.innerHTML
+                elem.querySelector('.flex').innerHTML += y.innerHTML
               }
               const ind = elem.getAttribute('ind')
               //console.error(pn, ind)
@@ -5269,16 +5385,16 @@ this.txtImg(false)
                 if (!this.var('roma') || true) {
                   let readingElement = document.querySelector(`[i="${ind}"] .reading rt`)
                   try {
-                      if (readingElement) {
+                    if (readingElement) {
                       readingElement.innerHTML = pn || ''
                     } else {
-                    readingElement = document.querySelector(`[i="${ind}"] .reading`)
-                    console.error('Reading element not found.')
+                      readingElement = document.querySelector(`[i="${ind}"] .reading`)
+                      console.error('Reading element not found.')
                     }
-                    } catch (error) {
-                      console.error('Error:', error)
-                    }
+                  } catch (error) {
+                    console.error('Error:', error)
                   }
+                }
               } catch (error) {
                 console.error(error)
               }
@@ -5286,7 +5402,7 @@ this.txtImg(false)
               //for (const { } of li) {// elem.querySelector('ol.entry-body-section-content').prepend(l)}
               // yc = yc.slice(0, 1)
             }
-            if(!this.var('ya')){
+            if (!this.var('ya')) {
               break
             }
           }
@@ -5369,7 +5485,41 @@ this.txtImg(false)
 
     return null // Return null if no text or image found
   }
+  /**
+   * Retrieves text or image data from the clipboard.
+   * @param {boolean} img - Determines whether to retrieve image data (true) or text data (false).
+   * @returns {Promise<string|ImageData|null>} - A promise that resolves with the retrieved data or null if no data is found. If `img` is true, the resolved value is of type `ImageData`; otherwise, it is a string.
+   * @throws {Error} - If the clipboard API is not available or if an error occurs during the clipboard access.
+   */
+  async img(img = false) {
+    return new Promise((resolve, reject) => {
+      if (!chrome || !chrome.clipboard || typeof chrome.clipboard.getImageData !== 'function' || typeof chrome.clipboard.readText !== 'function') {
+        console.error('Clipboard API is not available.');
+        reject(new Error('Clipboard API is not available.'));
+        return;
+      }
 
+      if (img) {
+        chrome.clipboard.getImageData('png', (imageData) => {
+          if (chrome.runtime.lastError) {
+            console.error('Error accessing image from clipboard:', chrome.runtime.lastError);
+            reject(chrome.runtime.lastError);
+          } else {
+            resolve(imageData);
+          }
+        });
+      } else {
+        chrome.clipboard.readText((text) => {
+          if (chrome.runtime.lastError) {
+            console.error('Error accessing text from clipboard:', chrome.runtime.lastError);
+            reject(chrome.runtime.lastError);
+          } else {
+            resolve(text);
+          }
+        });
+      }
+    });
+  }
   getText() {
     const parent = document.body
     if (parent === null) {return }

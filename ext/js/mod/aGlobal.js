@@ -108,6 +108,7 @@ function vars(aD, displayAnki, aN, someValue, japaneseUtil) {
     };
     console.log(mod);
 }
+
 /**
  * @typedef {Object} kuromoji
  * @description The main namespace object for the Kuromoji library.
