@@ -2676,10 +2676,15 @@ this.txtImg(false)
         } else {
           const P = parseInt(b[this.pos].getAttribute('i'))
           if (av('warn')) console.warn(P)
-          for (const z of document.querySelector(`[ind="${P}"]`).parentElement.children) {
-            z.style.display = 'none'
+          let els = document.querySelector(`[pos="${P}"]`)
+          if (els) {
+            //els.classList.add('')
+            els = els.parentElement.children
+            for (const z of els) {
+              z.style.display = 'none'
+            }
+            document.querySelector(`[pos="${P}"]`).style.display = 'flex'
           }
-          document.querySelector(`[ind="${P}"]`).style.display = 'flex'
         }
       }
 
