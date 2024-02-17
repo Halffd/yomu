@@ -56,7 +56,10 @@
     --cc: rgb(196, 149, 30);
 }
 
-#cur::before {
+.sentence #cur {
+    border: 1px solid red;
+}
+:not(.words)#cur::before {
     content: '';
     position: absolute;
     bottom: 0;
