@@ -948,13 +948,8 @@ this.txtImg(false)
       // setTimeout(runner, 2000)
       // slow()
       // this.wait().then(() => {
-      if (av('warn')) console.warn(!(this.var('slw') || this.var('rd') || this.var('kan') || this.var('fq')), this.var('slw'), this.var('rd'), this.var('kan'), this.var('fq'))
       document.querySelector('.scan-disable.scrollbar').style.display = 'block'
       this.hide(0)
-      if (!(!this.var('slw') || this.var('rd') || this.var('kan') || this.var('fq'))) {
-        // this.hide()
-      }
-      // this.hide(100)
       let fy = true
       this.done = true
 
@@ -1130,6 +1125,11 @@ this.txtImg(false)
     // debugger;
     this.done = false
     this.stop = false
+    if (!this.card) {
+      this.vals().then((v) => {
+        console.log(v);
+      })
+    }
     if (this.first && document.querySelector('.query-parser-segment-reading')) {
       const pd = document.querySelector('#query-parser-content').children
       this.prev = document.createElement('div')
@@ -1239,7 +1239,7 @@ this.txtImg(false)
             break
           }
           if (this.var('moe') && typeof spl[ii] === 'string') {
-            if (false && !this._i && this.saving) {
+            if (!this._i && this.saving) {
               await this.saves(spl[ii])
             } else {
               if (spl[ii].length > 300) {
@@ -1263,8 +1263,27 @@ this.txtImg(false)
         }
         ii = 0
         // let prev
-        if (av('warn')) console.warn(this.var('rd'), ' slowww', this.slow)
-        if (this.var('yc') || this.var('rd') || this.slow) {
+        // console.warn(this.var('rd'), ' slowww', this.slow)
+        this.modY = this.modP.insertAdjacentElement('beforebegin', document.createElement('div'))
+        this.modY.id = 'modY'
+        if (!this.first) {
+          document.querySelector('#query-parser-content').prepend(this.prev)
+        }
+        if (this.var('rd')) {
+          for (const d of document.querySelectorAll('.vis')) {
+            d.style.display = 'none'
+            /*if (d.children) { for (const { } of d.children) {
+              // e.style.display = 'none'
+            }
+          } else {
+          }*/
+          }
+        }
+        this.yomu = false
+        this.modK.style.display = 'flex'
+        const cc = document.querySelector('#query-parser-content').children
+        if (av('warn')) console.warn(cc)
+        if (this.var('qp') || this.slow) {
           await this.wait() // .then(async () => {
           while (document.getElementById('progress-indicator').getAttribute('data-active') == 'true') {
             // this.frst = true
@@ -1272,94 +1291,75 @@ this.txtImg(false)
             // while()
             await new Promise((r) => setTimeout(r, 500))
           }
-        }
-        this.modY = this.modP.insertAdjacentElement('beforebegin', document.createElement('div'))
-        this.modY.id = 'modY'
-        if (!this.first) {
-          document.querySelector('#query-parser-content').prepend(this.prev)
-        }
-        if (this.var('rd') && (!this.var('kan') || !this.var('fq'))) {
-          for (const d of document.querySelectorAll('.mns')) {
-            d.style.display = 'none'
-            /*if (d.children) { for (const { } of d.children) {
-                // e.style.display = 'none'
-              }
-            } else {
-            }*/
+          if (this.var('ps')) {
+            this.parse(cc)
           }
-        }
-        this.yomu = false
-        this.modK.style.display = 'flex'
-        const cc = document.querySelector('#query-parser-content').children
-        if (av('warn')) console.warn(cc)
-        if (this.var('ps')) {
-          this.parse(cc)
-        }
-        if (this.var('yc') && this.var('both')) {
-          // x.style.display = "block";
-          // y.style.display = "block";
-          // runner(spl, ccc, true, mdy)
-        }
-        let ijo = 0
-        let gd = 0
-        const RGEX_CHINESE = new RegExp(/[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]/)
-        let iji = 0
-        let ct
-        let cr
-        for (const elem of document.querySelectorAll('.vis')) {
-          if (this.var('rd')) {
-            if (c[ii].innerHTML.length <= 1) {
-              ii += 1
-            }
-            if (ii > c.length - 1) {
-              ii = c.length - 1
-            }
-            let tts = ''
-            let tt = ''
-            if (av('warn')) console.warn(c[ii], ii)
-            //                                elem = document.querySelectorAll('.vis')
-            // let ew = elem.querySelector('.tit .kj')
-            // ttt = .querySelector('dt').innerHTML.split(' ')
-            // tts = mns[ii].parentElement.parentElement.children[0].children[0].innerText
-            try {
-              cr = c[ii].querySelectorAll('.query-parser-segment-reading')
-              ct = c[ii].querySelectorAll('.query-parser-segment-text')
+          if (this.var('yc') && this.var('both')) {
+            // x.style.display = "block";
+            // y.style.display = "block";
+            // runner(spl, ccc, true, mdy)
+          }
+          let ijo = 0
+          let gd = 0
+          const RGEX_CHINESE = new RegExp(/[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]/)
+          let iji = 0
+          let ct
+          let cr
+          for (const elem of document.querySelectorAll('.vis')) {
+            if (this.var('rd')) {
+              if (c[ii].innerHTML.length <= 1) {
+                ii += 1
+              }
+              if (ii > c.length - 1) {
+                ii = c.length - 1
+              }
+              let tts = ''
+              let tt = ''
+              if (av('warn')) console.warn(c[ii], ii)
+              //                                elem = document.querySelectorAll('.vis')
+              // let ew = elem.querySelector('.tit .kj')
+              // ttt = .querySelector('dt').innerHTML.split(' ')
+              // tts = mns[ii].parentElement.parentElement.children[0].children[0].innerText
               try {
-                for (const tr in cr) {
-                  if (cr[tr].innerHTML) {
-                    tts += cr[tr].innerHTML
+                cr = c[ii].querySelectorAll('.query-parser-segment-reading')
+                ct = c[ii].querySelectorAll('.query-parser-segment-text')
+                try {
+                  for (const tr in cr) {
+                    if (cr[tr].innerHTML) {
+                      tts += cr[tr].innerHTML
+                    }
+                  }
+                } catch (e) { }
+                for (const tr in ct) {
+                  if (ct[tr].innerHTML) {
+                    tt += ct[tr].innerHTML
                   }
                 }
-              } catch (e) { }
-              for (const tr in ct) {
-                if (ct[tr].innerHTML) {
-                  tt += ct[tr].innerHTML
+                iji = 0
+                gd = elem.querySelector('.gloss-definitions').innerText.length
+                for (const t of elem.querySelector('.kj').innerText) {
+                  if (RGEX_CHINESE.test(t)) {
+                    iji += 1
+                  }
                 }
+              } catch (ge) {
+                // gd = 0
+                console.error(ge)
               }
-              iji = 0
-              gd = elem.querySelector('.gloss-definitions').innerText.length
-              for (const t of elem.querySelector('.kj').innerText) {
-                if (RGEX_CHINESE.test(t)) {
-                  iji += 1
-                }
+            }
+            if (!elem.querySelector('.gloss-content') && !(this.var('fq') || !this.slow) && (this.var('yc') || this.wiki || gd <= 1 || iji >= 0)) {
+              try {
+                elem.querySelector('li').classList.add('gloss-content')
+              } catch {
+                elem.children[0].classList.add('gloss-content')
               }
-            } catch (ge) {
-              // gd = 0
-              console.error(ge)
+              // if(av('warn')) console.warn(fo, '-=[[[==> ', k, optionsContext, ijo, tt, spl, tts, elem, cl)
             }
+            ijo += 1
+            ii += 1
           }
-          if (!elem.querySelector('.gloss-content') && !(this.var('fq') || !this.slow) && (this.var('yc') || this.wiki || gd <= 1 || iji >= 0)) {
-            try {
-              elem.querySelector('li').classList.add('gloss-content')
-            } catch {
-              elem.children[0].classList.add('gloss-content')
-            }
-            // if(av('warn')) console.warn(fo, '-=[[[==> ', k, optionsContext, ijo, tt, spl, tts, elem, cl)
-          }
-          ijo += 1
-          ii += 1
+          // const makeNextPromise = (t) => async ()
         }
-        // const makeNextPromise = (t) => async ()
       } else {
         console.error('SlowMode ', c)
         // runner(spl, display.fullQuery, false)
@@ -1450,23 +1450,6 @@ this.txtImg(false)
         tts = this.yomiread(elem, false)
       }
     }
-    const searchString = tt
-    const replacement = `<span class="words" i="${I}"><ruby class="word">${searchString}<rt class="reading">${tts}</rt></ruby></span>`
-    if (!this.saving) {
-      try {
-        if (!ltp) {
-          ltp = document.querySelectorAll('.full.sentence');
-          ltp = ltp[ltp.length - 1];
-        }
-        const ltpChildren = Array.from(ltp.childNodes)
-        const firstChild = ltpChildren[1]
-        const firstChildText = firstChild.innerHTML
-        let result = replace(firstChildText, tt, replacement)
-        firstChild.innerHTML = result
-      } catch (error) {
-        console.error('An error occurred:', error)
-      }
-    }
     // Check if gloss-definitions element exists and has no innerHTML
     let go = true;
     const glossDefinitions = elem.querySelector('.gloss-definitions');
@@ -1488,7 +1471,26 @@ this.txtImg(false)
         break
       }
     }
-    let isPart = this.var('pt') ? ptc : false
+    let isPart = this.var('pt') &&
+      ! !(rI && rI > 0)
+      ? ptc : false
+    const searchString = tt
+    const replacement = `<span class="words" i="${I}"><ruby class="word">${searchString}<rt class="reading">${tts}</rt></ruby></span>`
+    if (!this.saving) {
+      try {
+        if (!ltp) {
+          let ltp = document.querySelectorAll('.full.sentence');
+          ltp = ltp[ltp.length - 1];
+        }
+        const ltpChildren = Array.from(ltp.childNodes)
+        const firstChild = ltpChildren[1]
+        const firstChildText = firstChild.innerHTML
+        let result = replace(firstChildText, tt, replacement)
+        firstChild.innerHTML = result
+      } catch (error) {
+        console.error('An error occurred:', error)
+      }
+    }
     /* if (this.saving) {
       if (!this._i && !(this.kp?.includes(tt) || 
       typeof this.si === 'object' ? this.si.includes(tt) :
@@ -1759,13 +1761,25 @@ this.txtImg(false)
         elem.style.setProperty('--cc', 'aqua')
       } else if (this.note.words.includes(tt)) {
         elem.style.setProperty('--cc', 'green')
+      } else if (this._cards?.includes(tt)) {
+        if (this._saudio.includes(tt)) {
+          elem.style.setProperty('--cc', 'purple')
+        } else if (this._anms.includes(tt)) {
+          elem.style.setProperty('--cc', 'pink')
+        } else if (this._jpws.includes(tt)) {
+          elem.style.setProperty('--cc', 'cyan')
+        } else {
+          elem.style.setProperty('--cc', 'blue')
+        }
       } else if (nf) {
         elem.style.setProperty('--cc', 'orange')
       } else if (this.note.learned.includes(tt)) {
         elem.style.setProperty('--cc', 'red')
       }
       if (nf) {
-        elem.setAttribute('wset', nf?.[0].sentence)
+        let st = nf?.[0].sentence
+        elem.setAttribute('wset', st)
+        elem.insertAdjacentHTML('beforeend', `<span class="wset" style="font-size: 1.05em;padding:0;margin:0;">${st}</span>`)
       }
     }
     return [emph, line, w]
@@ -2461,6 +2475,7 @@ this.txtImg(false)
      * @type {boolean | undefined}
      */
     let ret = false
+
     if (activeElement) {
       ret = activeElement === this.txts ||
         activeElement.tagName === 'INPUT' ||
@@ -2471,7 +2486,7 @@ this.txtImg(false)
      * @type {string}
      */
     var kn = e.key.trim().toLowerCase()
-    if (av('log')) console.log(activeElement.tagName, ret, e.key)
+    // if (av('log')) console.log(activeElement.tagName, ret, e.key)
     if (e.key == '' || e.key == ' ' || e.key == 'arrowup') {
       e.preventDefault()
       if (ret) {
@@ -2496,12 +2511,13 @@ this.txtImg(false)
     if (!this.var('rd')) {
       b = document.querySelectorAll('.mns.nav')
     } else {
-      b = document.querySelectorAll('.sentence .nav')
+      b = document.querySelectorAll('.sentence .words')
     }
     /**
      * @type {(string | number)[]}
      */
     const ps = []
+    let wasd = kn == 'w' || kn == 'a' || kn == 's' || kn == 'd'
     // txt.value = `${keys[ki]} ${ki}: ${e.key}`
     if (av('log')) console.log(`${this.keys?.[ki]} ${ki}: ${e.key}`)
     if (ki <= 9) {
@@ -2530,23 +2546,38 @@ this.txtImg(false)
         b[this.pos].id = 'cur'
       } catch { }
       return
-    } else if (ki <= 13) {
+    } else if (ki <= 13 || wasd) {
       const dir = ki - 10
       this.ppos = this.pos
-      if (av('warn')) console.warn(dir)
+      //if (av('warn')) console.warn(dir)
       let vis
       let mu = false
       if (dir < 0) {
-        let n = dir + 10
-        if (av('log')) console.log(n, b)
-        if (n > 0) {
-          // n -= 1
+        const dirValue = dir;
+        const logEnabled = av('log');
+
+        let n = parseFloat(dirValue) + 10;
+
+        if (!isNaN(n) && n > 0) {
+          n = (n + 1) * 10;
+        } else {
+          console.error("Invalid value of 'n'");
         }
-        n = (parseFloat(n) + 1) * 10
-        if (av('log')) console.log(`${n}%`)
+
+        if (logEnabled) {
+          console.log(`${n}%`);
+        }
+
         try {
-          this.pos = Math.round(n * b[this.pos].parentElement.length / 100)
-        } catch { }
+          if (Array.isArray(b) && b[this.pos] && b[this.pos].parentElement) {
+            const parentLength = b[this.pos].parentElement.length;
+            this.pos = Math.round(n * parentLength / 100);
+          } else {
+            console.error("Invalid 'b' array or missing property");
+          }
+        } catch (error) {
+          console.error("An error occurred:", error);
+        }
       } else if (dir == 0) {
         this.pos = this.mv(-1, this.pos, t, b)
         mu = true
@@ -2555,8 +2586,10 @@ this.txtImg(false)
         mu = true
       } else if (dir == 2) {
         this.pos -= 1
-      } else {
+      } else if (dir == 3) {
         this.pos += 1
+      } else {
+        this.pos += this.wasd(kn)
       }
       if (av('warn')) console.warn(vis)
       if (vis) {
@@ -2566,14 +2599,14 @@ this.txtImg(false)
         this.pos = 0
         if (this.istart > 0 && mu && this.done) {
           this.istart -= 1
-          this.loadMore(this.istart, false)
+          //this.loadMore(this.istart, false)
         }
       }
       if (this.pos >= b.length) {
         this.pos = b.length - 1
         if (this.istart < this.spl.length - 1 && mu && this.done) {
           this.istart += 1
-          this.loadMore(this.istart, true)
+          //this.loadMore(this.istart, true)
         }
       }
       if (av('warn')) console.warn(b[this.pos])
@@ -2786,7 +2819,12 @@ this.txtImg(false)
         }
       }
       if (e.key == '' || e.key == ' ') {
-        this.expand(b[this.pos])
+        if (e.ctrlKey) {
+          let y = b[this.pos].querySelector('.yomi')
+          if (y) y.delete()
+        } else {
+          this.expand(b[this.pos], e.shiftKey)
+        }
       }
       if (ki == 21) {
         const elem = b[this.pos]
@@ -2983,6 +3021,7 @@ this.txtImg(false)
       const result = await this.ankis(1); // Call ankis to populate anms
       this.anm = result
       var anms = getWords(result.notes);
+      this._anms = anms
       return anms;
     })();
   }
@@ -3000,10 +3039,19 @@ this.txtImg(false)
       const result = await this.ankis(5); // Call ankis to populate pops
       this.card = result
       var pops = getWords(result.notes);
+      this._cards = pops
       return pops;
     })();
   }
-
+  async vals() {
+    let r = [
+      await this.cards,
+      await this.jpws,
+      await this.anms,
+      await this.saudio
+    ]
+    return r
+  }
   async ankis(op = 0) {
     // Start the appropriate function based on the op parameter
     switch (op) {
@@ -3142,7 +3190,7 @@ this.txtImg(false)
 
     this.max = wid;
     const calculatedWidth = calcFlex(wid) * w;
-    this.svl = (parseInt(localStorage.getItem('svl')) ?? 4) * this.max
+    this.svl = (parseInt(localStorage.getItem('svl')) ?? 4) //* this.max
 
     if (isNaN(calculatedWidth)) {
       console.error('Calculation error: invalid calculated width');
@@ -3468,9 +3516,10 @@ this.txtImg(false)
   /**
    * @param {Element | { getAttribute: (arg0: string) => number; parentElement: { getAttribute: (arg0: string) => any; }; } | null} elem
    */
-  expand(elem) {
+  expand(elem, shf = false) {
+    if (!elem) return
     const elemc = elem.closest('.mns')
-    if (!this.var('yc')) {
+    if (!shf && !this.var('yc') && !elemc.querySelector('.entry-body')) {
       let word = elemc.getAttribute('w')
       let wordel = elem.querySelector(".compounds dt") ?? elem.querySelector(".conj-gloss dt")
       if (wordel) {
@@ -3621,7 +3670,8 @@ this.txtImg(false)
       createSettingsInputTemplate('wt', 'Columns', '', '2px solid orange'),
       createSettingsInputTemplate('prt', 'Split By', '', '2px solid purple'),
       createSettingsInputTemplate('lim', 'Limit to Split', '', '2px solid purple'),
-      createSettingsInputTemplate('svl', 'Save Timespan', '', '2px solid purple'),
+      createSettingsInputTemplate('svl', 'Save Slice', '', '2px solid purple'),
+      createSettingsInputTemplate('shr', 'Save Timespan', '', '2px solid purple'),
       createSettingsInputTemplate('istart', 'Lines Pos', '', '2px solid purple'),
       createSettingsInputTemplate('deck', 'Deck Name', '', '2px solid purple')
     ]
@@ -3961,40 +4011,48 @@ this.txtImg(false)
     let p = false
     let s = ''
     let c = new Date()
-    let lim = this.int('svl')
+    let lim = this.int('shr')
     const regex = /\d{2}\/\d{2}\/\d{2,4} \d{1,2}:\d{2}:\d{2}/g;
-    for (let t of ts) {
-      let n = this.note.find(t)
-      if (n) {
-        n = n[n.length - 1][n[n.length - 1].length - 1];
-        let ds = n[0].time
-        const dates = ds.match(regex);
+    if (lim > 0) {
+      for (let t of ts) {
+        let n = this.note.find(t)
+        if (n) {
+          let id = n[n.length - 1][n[n.length - 1].length - 1];
+          let ds = n[0].time
+          const dates = ds.match(regex);
 
-        ds = dates.map(date => {
-          const [day, month, year, hour, minute, second] = date.split(/[\/: ]/);
-          const formattedDate = `${month}/${day}/${year} ${hour}:${minute}:${second}`;
-          return new Date(formattedDate);
-        });
-        ds = ds[ds.length - 1]
-        console.log(convertedDates);
-        //let note = this.note.obj[n]
-        let dt
-        let ni = parseInt(n) * 1000
-        dt = new Date(ni)
-        p = this.dates(dt, c, lim)
-        if (p) p = this.dates(ds, c, lim)
-        console.log(p, dt, c, lim);
-        if (p) {
-          this.sentence([`${s}</br>${dt}`], 0)
-          if (s == '') {
-            await this.moe([s], 0)
+          ds = dates.map(date => {
+            const [day, month, year, hour, minute, second] = date.split(/[\/: ]/);
+            const formattedDate = `${month}/${day}/${year} ${hour}:${minute}:${second}`;
+            return new Date(formattedDate);
+          });
+          ds = ds[ds.length - 1]
+          //let note = this.note.obj[n]
+          let dt
+          let ni = parseInt(id) * 1000
+          dt = new Date(ni)
+          //p = this.dates(dt, c, lim)
+          //if (p)
+          p = this.dates(ds, c, lim)
+          console.log(p, ds, c, lim);
+          if (p) {
+            if (s != '') {
+              await this.moe([s], 0)
+            }
+            let cr = ds.toLocaleString('pt-BR')
+            let upd = new Date(ds.getTime());
+            upd.setHours(upd.getHours() + lim);
+            let to = upd.toLocaleString('pt-BR')
+            this.sentence([`${s}<h3>${cr} <---> ${to}</h3>`], 0)
+            c = ds
+            s = t + ' '
+          } else {
+            s += t + ' '
           }
-          c = dt
-          s = t + ' '
-        } else {
-          s += t + ' '
         }
       }
+    } else {
+      await this.moe([txt], 0)
     }
   }
   /**
@@ -4261,6 +4319,10 @@ this.txtImg(false)
       return true;
     } else if (note.learned.includes(tt)) {
       return true;
+    } else if (this._cards) {
+      if (this._cards.includes(tt)) {
+        return true
+      }
     }
 
     return false;
@@ -4415,7 +4477,24 @@ this.txtImg(false)
   a.href = imageBase64 */
     return html //, img]
   }
-
+  wasd(k) {
+    let l = this.max
+    let r = 0
+    let e = document.querySelectorAll('.vis')[this.pos]
+    let p = e.parentElement
+    if (k == 'w') {
+      let int = parseInt(p.lastChild.getAttribute('pos'))
+      r = int - this.pos
+    } else if (k == 'a') {
+      r = -l
+    } else if (k == 's') {
+      let int = parseInt(p.firstChild.getAttribute('pos'))
+      r = int - this.pos
+    } else if (k == 'd') {
+      r = l
+    }
+    return r
+  }
   /**
    * @param {any} w
    * @param {number | undefined} [l]

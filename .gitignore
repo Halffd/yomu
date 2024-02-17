@@ -26,5 +26,7 @@ ext/js/admin/key.json
 .history/
 .history/*
 .vscode/*
+.history
+.cache
 .vscode/
 .tmp.driveupload/
