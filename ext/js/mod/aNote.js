@@ -520,13 +520,13 @@ export class Note {
                     const kf = ks.filter(item => item !== t);
                     k = kf.join(' ')
                     elem.style.setProperty('--cc', 'red')
-                    let d = localStorage.getItem('learned') ?? []
+                    let d = localStorage.getItem('recycle') ?? []
                     let dl = []
                     if (typeof d === 'string') {
                         dl = d.split(' ') ?? []
                     }
                     dl.push(t)
-                    localStorage.setItem('learned', dl.join(' '))
+                    localStorage.setItem('recycle', dl.join(' '))
                     // if (!filt) this.delete('word', t, '==')
                     localStorage.setItem('keep', k)
                 }
@@ -696,7 +696,7 @@ export class Note {
         const fq = []
         let df = ''
         const ht = elem?.innerHTML
-        const tag = ['aDict', `v0.1-${new Date().toISOString().slice(0, 7)}`]
+        const tag = ['aDict', `v0.2-${new Date().toISOString().slice(0, 7)}`]
         if (nv('log')) console.log(elem, tag.join(', '))
         if (cx < 0) {
             img = this.dic.main.txtImg(true)
@@ -726,7 +726,7 @@ export class Note {
             rd = elem.querySelector('.rd').innerText
             rd = this.aDict.japaneseUtil.convertToKana(rd)
         }
-        let fv = document.querySelectorAll('.fav')
+        /*let fv = document.querySelectorAll('.fav')
         if (nv('warn')) console.warn(fv, rd)
         if (fv.length > 0) {
             for (let f of fv) {
@@ -734,7 +734,7 @@ export class Note {
                 f.style.flex = this.aDict.height
                 f.style.setProperty('--cc', 'blue')
             }
-        }
+        }*/
         elem.classList.add('fav')
         const note = this //new Note(this.dic) // Create an instance of the Note class
         if (isNaN(cx)) {
@@ -792,7 +792,38 @@ export class Note {
             await note.saveAdd(cx, tw, st, df, undefined, tag, ht, true, snd, img, clip, undefined, rd, elem)
         }
     }
-
+    duplicates(obj) {
+        // Create an empty object to store unique values
+        var uniqueObj = {};
+      
+        // Iterate over each key-value pair in the original object
+        for (var key in obj) {
+          var value = obj[key];
+      
+          // Check if the value already exists in the unique object
+          var isDuplicate = false;
+          for (var uniqueKey in uniqueObj) {
+            if (uniqueObj.hasOwnProperty(uniqueKey)) {
+              if (uniqueObj[uniqueKey].word === value.word) {
+                isDuplicate = true;
+      uniqueObj[uniqueKey].status += 1
+                // Merge the time and sentence properties
+                uniqueObj[uniqueKey].time += ' ' + value.time;
+                if(uniqueObj[uniqueKey].sentence != value.sentence){ uniqueObj[uniqueKey].sentence += '\n' + value.sentence; }
+      
+                break;
+              }
+            }
+          }
+      
+          // If the value is unique, add the key-value pair to the unique object
+          if (!isDuplicate) {
+            uniqueObj[key] = value;
+          }
+        }
+      
+        return uniqueObj;
+      }      
     /**
      * @param {ArrayLike<any> | { [s: string]: any; }} obj
      * @param {{ appendChild: (arg0: HTMLDivElement) => void; }} bo

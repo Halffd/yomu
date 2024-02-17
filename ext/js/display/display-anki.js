@@ -588,7 +588,7 @@ export class DisplayAnki {
                                     // Create a gain node
                                     const gainNode = audioContext.createGain();
                                     // Set the volume level (0.5 represents 50% volume)
-                                    gainNode.gain.value = 0.2;
+                                    gainNode.gain.value = 0.8;
                                     // Connect the audio buffer source to the gain node
                                     audioSource.connect(gainNode);
                                     // Connect the gain node to the audio context destination
