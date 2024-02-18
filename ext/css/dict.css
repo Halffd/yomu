@@ -73,7 +73,7 @@
 }
 
 .fav::after {
-    font-size: 2.5em;
+    font-size: 2.1em;
     text-rendering: auto;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -201,12 +201,14 @@
     display: inline-block;
     vertical-align: top;
 }
-
+.rd {
+    font-size: 0.8em;
+}
+  
 .reading {
     font-size: 0.62em;
     border-radius: 10px;
-    border:
-        2px solid darkslategrey;
+    border: 2px solid darkslategrey;
     border-left: none;
     border-right: none;
     font-family: ui-monospace;
@@ -323,17 +325,20 @@ dd>div>div>div.conj-gloss>dl {
     margin: 0;
 }
 
-rd {
-    font-size: 0.8rem;
-    font-weight: normal;
+.rd {
+    font-size: 0.8em;
+    font-weight: 100;
 }
-
+li span, .rd {
+    text-wrap: wrap;
+    word-wrap: normal;
+    word-break: break-word;
+}
 ol {
     display: block;
-    list-style-type: decimal;
-    margin: 0;
+    list-style-type: none;
     padding: 0;
-    padding-inline-start: 1.1em;
+    margin: 0;
 }
 
 footer li div table tbody tr td {
