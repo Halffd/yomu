@@ -1091,7 +1091,7 @@ export class Backend {
         if (typeof id !== 'number') {
             throw new Error('Tab does not have an id');
         }
-        await this._waitUntilTabFrameIsReady(id, 0, 30000);
+        await this._waitUntilTabFrameIsReady(id, 0, 10000);
 
         await this._sendMessageTabPromise(
             id,
@@ -2052,14 +2052,14 @@ export class Backend {
         } catch (e) {
             errors.push(ExtensionError.serialize(e));
         }
-        console.warn(clipboardDetails);
+
         try {
             if (clipboardDetails !== null && clipboardDetails.image) {
                 clipboardImageFileName = await this._injectAnkiNoteClipboardImage(ankiConnect, timestamp, definitionDetails);
             }
         } catch (e) {
             errors.push(ExtensionError.serialize(e));
-        }   
+        }
 
         try {
             if (clipboardDetails !== null && clipboardDetails.text) {

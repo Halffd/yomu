@@ -238,15 +238,20 @@ export class aDict {
     }
 
     this.aut = localStorage.getItem('auto') == 'true'
+    if(!(localStorage.getItem('words') && localStorage.getItem('save'))){
+      localStorage.setItem('words', '')
+      localStorage.setItem('save', JSON.stringify({}))
+    }
     const rrb = document.querySelector('.search-button')//('.search-option-pre-label')
     if (rrb) {
-      let rr = rrb.insertAdjacentElement('afterend', document.createElement('button'))
-      rr.textContent += ' |Enable|'
-      rr.addEventListener('click', (e) => (/** @type {{ stopPropagation: () => void; }} */ e) => {
+      let rr = document.createElement('button')
+      rr.textContent = 'Enable'
+      rr.onclick = (e) => {
         e.stopPropagation()
         localStorage.setItem('run', 'true')
         location.reload()
-      })
+      }
+      rrb.insertAdjacentElement('afterend', rr)
     }
     if (!this.var('run')) {
       return
@@ -3310,10 +3315,13 @@ this.txtImg(false)
         this.pos = pos > 0 ? parseInt(elem.nextSibling.getAttribute('pos'))
           : parseInt(elem.previousSibling.getAttribute('pos'));
       } catch {
+        let v = document.querySelectorAll('#modK')
+        let k = v[v.length-1]
         if (pos > 0) {
-          this.pos = parseInt(elem.parentElement.nextSibling.nextSibling.nextSibling.firstChild.getAttribute('pos'))
+          this.pos = parseInt(k.lastChild.getAttribute('pos'))
+            //elem.parentElement.nextSibling.nextSibling.nextSibling.firstChild.getAttribute('pos'))
         } else {
-          this.pos = parseInt(elem.parentElement.previousSibling.previousSibling.previousSibling.firstChild.getAttribute('pos'))
+          this.pos = parseInt(v[0].firstChild.getAttribute('pos'))//elem.parentElement.previousSibling.previousSibling.previousSibling.firstChild.getAttribute('pos'))
         }
       }
     }

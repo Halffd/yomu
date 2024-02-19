@@ -211,7 +211,7 @@ export class StructuredContentGenerator {
             }
             key = `sc${key}`;
             try {
-                if (element && element.dataset && Object.prototype.hasOwnProperty.call(element.dataset, key)) {
+                if (element && element.dataset) {
                     element.dataset[key] = value;
                   } else {
                     console. error("Invalid element or key");
