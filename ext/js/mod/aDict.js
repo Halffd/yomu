@@ -1,5 +1,6 @@
 /* eslint-disable */
 
+import {mobile} from "../ctx.js";
 import {Display} from "../display/display.js";
 import {Analyze} from './aAnalyze.js';
 import {Note} from "./aNote.js";
@@ -3301,8 +3302,8 @@ this.txtImg(false)
     return button;
   }
   get mobile() {
-    const userAgent = navigator.userAgent;
-    return /Mobi/.test(userAgent);
+    this.mobi = mobile()
+    return this.mobi;
   }
   /**
  * Moves an element within its parent based on a shift parameter.
