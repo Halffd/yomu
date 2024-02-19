@@ -1,12 +1,17 @@
-const cp = (text)=>{
+function mobile() {
+    const userAgent = navigator.userAgent;
+    return /Mobi/.test(userAgent);
+}
+export const mob = mobile()
+const cp = (text) => {
     return
-        navigator.clipboard.writeText(text)
-          .then(() => {
+    navigator.clipboard.writeText(text)
+        .then(() => {
             console.log('Text copied:', text);
-          })
-          .catch(error => {
+        })
+        .catch(error => {
             console.error('Failed to copy text:', error);
-          });
+        });
 }
 const searchUrbanDict = function (/** @type {any} */ word) {
     const query = word;
@@ -96,7 +101,7 @@ function sendM3U(info, tab) {
             var extensionUrl = chrome.runtime.getURL("");
             var blobUrl = extensionUrl + "?blob=" + encodeURIComponent(blob);
 
-            chrome.tabs.update(tabs[0].id, { url: blobUrl });
+            chrome.tabs.update(tabs[0].id, {url: blobUrl});
         }
     });
 }
@@ -171,6 +176,9 @@ const ctx = function (/** @type {{ selectionText: any; menuItemId: string; }} */
 export function context() {
     console.warn('ctx');
     console.dir(chrome);
+    if (!mob) {
+        return
+    }
     try {
         chrome.contextMenus.removeAll();
     } catch { }
