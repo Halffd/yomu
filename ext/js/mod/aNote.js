@@ -3,6 +3,7 @@
 import {aDict} from '../mod/aDict.js';
 import {merge, aIn} from './aUtil.js';
 import {wn, av} from './aDict.js';
+import {db, store, retrieve} from './aDb.js'
 
 var nv = (/** @type {string} */ v) => {
     return localStorage.getItem(v) == 'true'
@@ -88,6 +89,7 @@ export class Note {
         this.anki = anki
         this.svClk = this.svClk.bind(this);
         this.saveAdd = this.saveAdd.bind(this);
+        this.url = "https://yomu-d9ca6-default-rtdb.firebaseio.com/save"
     }
 
     /**
@@ -420,18 +422,18 @@ export class Note {
             if (tu) t = tu;
             const note = window.aNote
             const noteMod = Object.create(Note.prototype, {dict: this})
-            const storedDay = parseInt(localStorage.getItem('day'))
+            const storedDay = parseInt(await this.getter('day'))
             const day = aDict.prototype.int('day') ?? -1 //isNaN(storedDay) ? 0 : storedDay
             const unixSeconds = Math.floor(Date.now() / 1000); // Current Unix timestamp
             //const date = new Date(unixSeconds * 1000).getDate();
-            localStorage.setItem('unix', unixSeconds)
+            await this.setter('unix', unixSeconds)
             const d = new Date()
             const currentDate = d.getDate()
             const flag = currentDate !== day ? 1 : 0
-            localStorage.setItem('day', currentDate)
-            let iCur = parseInt(localStorage.getItem('cur'))
+            await this.setter('day', currentDate)
+            let iCur = parseInt(await this.getter('cur'))
             iCur += 1
-            const existingContents = localStorage.getItem('save')// await note.getFileContents();
+            const existingContents = await this.getter('save')// await note.getFileContents();
             if (nv('warn')) console.warn([t, txt, def, fq, tags, html, moe, audio, image, clip])
             let save
             try {
@@ -439,8 +441,7 @@ export class Note {
                 save = JSON.parse(existingContents)
             } catch {
                 save = null
-                localStorage.setItem('savebk', existingContents)
-                localStorage.setItem('save', '')
+                await this.setter('savebk', existingContents)
             }
             // Nullish Coalescing Operator (??)
             // This operator returns the first operand if it is not null or undefined.
@@ -471,7 +472,8 @@ export class Note {
             };
             let dateString = new Date().toLocaleString('pt-BR', options).replaceAll(',', '');
 
-            let word = localStorage.getItem('words').replace(/(\d{1,2}-\d{1,2}-\d{4}-\d{1,2}:\d{1,2}: )|(\w{3} \w{3} \d{2} \d{4} \d{2}:\d{2}:\d{2} \w{3}-\d{4} \(\w{3}\))/g, '')
+            let word = await this.getter('words')
+            word = word.replace(/(\d{1,2}-\d{1,2}-\d{4}-\d{1,2}:\d{1,2}: )|(\w{3} \w{3} \d{2} \d{4} \d{2}:\d{2}:\d{2} \w{3}-\d{4} \(\w{3}\))/g, '')
             // note.setFileContents({ day: date.toString(), lastAccess: d, words: t, sentences: txt, html: html });
 
             let ww
@@ -485,8 +487,8 @@ export class Note {
             if (nv('warn')) console.warn(cx, isStringInSet, ww, w2, t)
             //if (cx == -1) return
             if (cx >= 1 || this.aDict?.saving) {
-                let k = localStorage.getItem('keep') ?? ''
-                localStorage.setItem('keepbackup', k)
+                let k = await this.getter('keep') ?? ''
+                await this.setter('keepbackup', k)
                 let ks = k.split(' ')
                 let filt = false
                 let is = ks.includes(t)
@@ -500,12 +502,12 @@ export class Note {
                             return word;
                         }
                     });
-                    localStorage.setItem('keep', ks.join(' '))
+                    await this.setter('keep', ks.join(' '))
                     /*ks.some((word, i) => {
                       const lastIndex = word.indexOf(t);
                       if (lastIndex !== -1) {
                           ks.splice(i, 1)
-                          localStorage.setItem('recyclebin', word)
+                          await this.setter('recyclebin', word)
                           return word;
                       }
                   });*/
@@ -515,25 +517,25 @@ export class Note {
                     k = ks.join(' ')
                     // elem.style.borderColor = 'green'
                     elem.style.setProperty('--cc', 'aqua')
-                    localStorage.setItem('keep', k)
+                    await this.setter('keep', k)
                 } else {
                     const kf = ks.filter(item => item !== t);
                     k = kf.join(' ')
                     elem.style.setProperty('--cc', 'red')
-                    let d = localStorage.getItem('recycle') ?? []
+                    let d = await this.getter('recycle') ?? []
                     let dl = []
                     if (typeof d === 'string') {
                         dl = d.split(' ') ?? []
                     }
                     dl.push(t)
-                    localStorage.setItem('recycle', dl.join(' '))
+                    await this.setter('recycle', dl.join(' '))
                     // if (!filt) this.delete('word', t, '==')
-                    localStorage.setItem('keep', k)
+                    await this.setter('keep', k)
                 }
             } else {
                 elem.style.setProperty('--cc', 'lime')
             }
-            const objin = () => {
+            const objin = async() => {
                 let on = this.obj;
                 let ow = this.find(t, "word");
                 if (ow?.length > 2) {
@@ -544,7 +546,7 @@ export class Note {
                 } else {
                     this.nobj(on, ow[1], dateString, unixSeconds, txt)
                 }
-                localStorage.setItem('save', JSON.stringify(on))
+                await this.setter('save', JSON.stringify(on))
             }
             if ((isStringInSet && cx >= 0)) {
                 const bsWithoutString = ww.filter(function (element) {
@@ -553,22 +555,22 @@ export class Note {
                 ww = bsWithoutString
                 ww.push(t)
                 if (cx == 0) {
-                    localStorage.setItem('words', ww.join(' '))
+                    await this.setter('words', ww.join(' '))
                 }
                 note.svDiv(saveDiv, ww.join(' '), flag)
                 if (this.find(t) ? true : false) {
-                    objin()
+                    await objin()
                 }
                 return isStringInSet
             } else if (cx < -1) {
-                let b = localStorage.getItem('exp') ?? ''
+                let b = await this.getter('exp') ?? ''
                 b = b.split(' ')
                 isStringInSet = b.includes(t)
                 if (isStringInSet) {
                     if (nv('log')) console.log('In');
                 } else {
                     b.push(t)
-                    localStorage.setItem('exp', b.join(' '))
+                    await this.setter('exp', b.join(' '))
                 }
             } else if (!isStringInSet) {
                 const options = this.aDict._display.getOptionsContext()
@@ -593,11 +595,11 @@ export class Note {
                 //word[word.length-1] = `\n ${word[word.length-1]}`
                 //}
                 word = word.join(' ')
-                localStorage.setItem('words', word)
+                await this.setter('words', word)
                 let so = {
                     st: txt,
                     sound: false,
-                    deck: localStorage.getItem('deck') ?? 'aDict'
+                    deck: await this.getter('deck') ?? 'aDict'
                 }
                 if (nv('warn')) console.warn(options, yc, read, results, fq, fq.length)
                 let ain
@@ -635,7 +637,7 @@ export class Note {
                             time: dateString,
                             params: `Yc:${yc} Cx:${cx} Flag:${flag}`
                         }
-                        let sv = localStorage.getItem('save') ?? ''
+                        let sv = await this.getter('save') ?? ''
                         let sj = JSON.parse(sv)
                         let o = {
                             ...sj,
@@ -643,6 +645,7 @@ export class Note {
                         }
                         if (nv('warn')) console.warn(word, o)
                         localStorage.setItem('save', JSON.stringify(o));
+                        this.put(o, '/save')
                     } else if (tf?.[0].sentence != txt) {
                         this.obj()
                     }
@@ -661,9 +664,12 @@ export class Note {
     /**
      * @param {HTMLDivElement} saveDiv
      */
-    svDiv(saveDiv, sz = null, _flag = '', m = false) {
+    async svDiv(saveDiv, sz = null, _flag = '', m = false) {
         if (!sz) {
-            sz = localStorage.getItem('words') ?? ''
+            sz = await this.getter('words')
+        }
+        if(sz instanceof Promise){
+            sz = await sz
         }
         if (!m) {
             sz = merge(sz.split(' '))
@@ -677,7 +683,7 @@ export class Note {
             s3 = saveDiv.appendChild(document.createElement('div'))
             s3.className = 'w'
         }
-        cache.innerHTML = `${localStorage.getItem('navsave')}: ${localStorage.getItem('navsentence')}`
+        cache.innerHTML = `${await this.getter('navsave')}: ${await this.getter('navsentence')}`
         if (saveDiv) {
             let wordsOnly = sz // .replace(/(\d{1,2}-\d{1,2}-\d{4}-\d{1,2}:\d{1,2}: )|(\w{3} \w{3} \d{2} \d{4} \d{2}:\d{2}:\d{2} \w{3}-\d{4} \(\w{3}\))/g, '');
             wordsOnly = wordsOnly.split(' ')
@@ -770,7 +776,7 @@ export class Note {
                 await note.saveAdd(cx, wn, st, df, fq, tag, ht, false, snd, img, clip, true, rd, elem)// localStorage.setItem('save', `${save} ${en}`)
             } else {
                 let word = k ? k.innerText : ''
-                let kp = localStorage.getItem('keep') ?? ''
+                let kp = await this.getter('keep') ?? ''
                 let ks = kp.split(' ')
                 let is = ks.includes(word)
                 if (!is) {
@@ -795,35 +801,35 @@ export class Note {
     duplicates(obj) {
         // Create an empty object to store unique values
         var uniqueObj = {};
-      
+
         // Iterate over each key-value pair in the original object
         for (var key in obj) {
-          var value = obj[key];
-      
-          // Check if the value already exists in the unique object
-          var isDuplicate = false;
-          for (var uniqueKey in uniqueObj) {
-            if (uniqueObj.hasOwnProperty(uniqueKey)) {
-              if (uniqueObj[uniqueKey].word === value.word) {
-                isDuplicate = true;
-      uniqueObj[uniqueKey].status += 1
-                // Merge the time and sentence properties
-                uniqueObj[uniqueKey].time += ' ' + value.time;
-                if(uniqueObj[uniqueKey].sentence != value.sentence){ uniqueObj[uniqueKey].sentence += '\n' + value.sentence; }
-      
-                break;
-              }
+            var value = obj[key];
+
+            // Check if the value already exists in the unique object
+            var isDuplicate = false;
+            for (var uniqueKey in uniqueObj) {
+                if (uniqueObj.hasOwnProperty(uniqueKey)) {
+                    if (uniqueObj[uniqueKey].word === value.word) {
+                        isDuplicate = true;
+                        uniqueObj[uniqueKey].status += 1
+                        // Merge the time and sentence properties
+                        uniqueObj[uniqueKey].time += ' ' + value.time;
+                        if (uniqueObj[uniqueKey].sentence != value.sentence) {uniqueObj[uniqueKey].sentence += '\n' + value.sentence;}
+
+                        break;
+                    }
+                }
             }
-          }
-      
-          // If the value is unique, add the key-value pair to the unique object
-          if (!isDuplicate) {
-            uniqueObj[key] = value;
-          }
+
+            // If the value is unique, add the key-value pair to the unique object
+            if (!isDuplicate) {
+                uniqueObj[key] = value;
+            }
         }
-      
+
         return uniqueObj;
-      }      
+    }
     /**
      * @param {ArrayLike<any> | { [s: string]: any; }} obj
      * @param {{ appendChild: (arg0: HTMLDivElement) => void; }} bo
@@ -865,9 +871,9 @@ export class Note {
      * @param {any} value
      * @param {any} comparison
      */
-    delete(type, value, comparison) {
+    async delete(type, value, comparison) {
         try {
-            var a = localStorage.getItem("save");
+            var a = await this.getter("save");
             var oc
             try {
                 oc = JSON.parse(a)
@@ -927,11 +933,11 @@ export class Note {
             return this.find()
         }
     }
-    find(query = '', prop = 'word', comparison = '=', oc = null) {
+    async find(query = '', prop = 'word', comparison = '=', oc = null) {
         try {
             if (!oc) {
                 try {
-                    var a = localStorage.getItem("save");
+                    var a = await this.getter("save");
                     oc = JSON.parse(a);
                 } catch {
                     return null;
@@ -1002,9 +1008,9 @@ export class Note {
     /**
    * @param {any} w
    */
-    key(w) {
+    async key(w) {
         try {
-            var a = localStorage.getItem("save");
+            var a = await this.getter("save");
             var oc = JSON.parse(a);
             for (var prop in oc) {
                 if (Object.prototype.hasOwnProperty.call(oc, prop) && oc[prop].word === w) {
@@ -1020,9 +1026,9 @@ export class Note {
     /**
      * @param {any} k
      */
-    move(k, pos = -1) {
+    async move(k, pos = -1) {
         try {
-            var a = localStorage.getItem("save");
+            var a = await this.getter("save");
             var oc
             try {
                 oc = JSON.parse(a)
@@ -1084,6 +1090,78 @@ export class Note {
             // You can choose to re-throw the error or return a default value, if desired
             throw error;
         }
+    }
+    async save(){
+        const jsonStr = localStorage
+        await this.put(jsonStr)
+        await this.put(this.obj, '/save')
+    }
+    async db(url = '') {
+        try {
+            url = this.url + url + '.json'
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            const responseData = await response.json();
+            return responseData;
+        } catch (error) {
+            throw new Error('Failed to perform POST request: ' + error.message);
+        }
+    }
+    /**
+    * Performs a POST request to the Firebase Realtime Database.
+    * @param {string} url - The URL of the database endpoint.
+    * @param {object} data - The data to be sent in the request body.
+    * @returns {Promise<object>} A promise that resolves to the parsed response data.
+    */
+    async post(data, url = '') {
+        //store(o)
+        try {
+            url = this.url + url + '.json'
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            });
+
+            //const responseData = await response.json();
+            return response;
+        } catch (error) {
+            throw new Error('Failed to perform POST request: ' + error.message);
+        }
+    }/**
+    * Performs a POST request to the Firebase Realtime Database.
+    * @param {string} url - The URL of the database endpoint.
+    * @param {object} data - The data to be sent in the request body.
+    * @returns {Promise<object>} A promise that resolves to the parsed response data.
+    */
+    async put(data, url = '') {
+        //store(o)
+        try {
+            url = this.url + url + '.json'
+            const response = await fetch(url, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            });
+
+            //const responseData = await response.json();
+            return response;
+        } catch (error) {
+            throw new Error('Failed to perform POST request: ' + error.message);
+        }
+    }
+    async dbset() {
+        let d = await db()
+        return d
     }
     /**
      * @param {boolean} k1
@@ -1205,5 +1283,29 @@ export class Note {
             return null
         }
         return oc
+    }
+    async getter(key){
+        let val = null
+        try {
+            val = this.db(`/${key}`) 
+        } catch (err) {
+            console.log(err);
+            try {
+                val = localStorage.getItem(key)        
+            } catch (error) {
+                console.error(error);
+            }
+        }
+        return val
+    }
+    async setter(key, value){
+        let val = null
+        try {
+            val = localStorage.setItem(key, value)
+            val = this.put(`/${key}`, value) 
+        } catch (error) {
+            console.error(error);
+        }
+        return val
     }
 }

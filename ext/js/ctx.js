@@ -170,6 +170,7 @@ const ctx = function (/** @type {{ selectionText: any; menuItemId: string; }} */
 export function context() {
     try {
         console.warn('ctx');
+        return
         if (!mob) {
             try {
                 chrome.contextMenus.removeAll();

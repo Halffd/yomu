@@ -38,7 +38,8 @@ export function isIndexInsideElement(node, index) {
  * @param anki
  */
 export async function aIn(t = '', anki = aDict?.cards) {
-    const arr = merge(aNote.get(), await anki, -1, false);
+    const ws = await aNote.getter('words')
+    const arr = merge(ws, await anki, -1, false);
     const r = arr?.res?.includes(t);
     wn(arr, r);
     return r;

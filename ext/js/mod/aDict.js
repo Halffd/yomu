@@ -239,7 +239,7 @@ export class aDict {
     }
 
     this.aut = localStorage.getItem('auto') == 'true'
-    if(!(localStorage.getItem('words') && localStorage.getItem('save'))){
+    if (!(localStorage.getItem('words') && localStorage.getItem('save'))) {
       localStorage.setItem('words', '')
       localStorage.setItem('save', JSON.stringify({}))
     }
@@ -913,6 +913,20 @@ this.txtImg(false)
           document.body.appendChild(element)
           element.click()
           document.body.removeChild(element)
+        }
+        document.getElementById('sync').onclick = (event) => {
+          event.preventDefault(); // Prevent the default context menu from appearing
+          try {
+            aNote.db().then(data => {
+              Object.keys(data).forEach((key) => {
+                localStorage.setItem(key, data[key]);
+              });
+              alert('Import successful!');
+            })
+          } catch (error) {
+            console.error('Error parsing JSON data:', error);
+            alert('Invalid JSON file. Please try again.');
+          }
         }
         document.getElementById('backup').oncontextmenu = (event) => {
           event.preventDefault(); // Prevent the default context menu from appearing
@@ -3317,10 +3331,10 @@ this.txtImg(false)
           : parseInt(elem.previousSibling.getAttribute('pos'));
       } catch {
         let v = document.querySelectorAll('#modK')
-        let k = v[v.length-1]
+        let k = v[v.length - 1]
         if (pos > 0) {
           this.pos = parseInt(k.lastChild.getAttribute('pos'))
-            //elem.parentElement.nextSibling.nextSibling.nextSibling.firstChild.getAttribute('pos'))
+          //elem.parentElement.nextSibling.nextSibling.nextSibling.firstChild.getAttribute('pos'))
         } else {
           this.pos = parseInt(v[0].firstChild.getAttribute('pos'))//elem.parentElement.previousSibling.previousSibling.previousSibling.firstChild.getAttribute('pos'))
         }
@@ -3849,6 +3863,7 @@ this.txtImg(false)
       {id: 'eras', label: 'EraseSt'},
       {id: 'export', label: 'Export', def: 0},
       {id: 'backup', label: 'Backup/Restore', def: 0},
+      {id: 'sync', label: 'Sync', def: 0},
       {id: 'jax', label: 'JAXsubs', def: 0},
       {id: 'exe', label: 'Restart', def: 0}
     ]
