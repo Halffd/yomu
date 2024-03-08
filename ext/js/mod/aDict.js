@@ -928,6 +928,17 @@ this.txtImg(false)
             alert('Invalid JSON file. Please try again.');
           }
         }
+        document.getElementById('sync').oncontextmenu = (event) => {
+          event.preventDefault(); // Prevent the default context menu from appearing
+          try {
+            aNote.save().then(data => {
+              alert('Save successful!');
+            })
+          } catch (error) {
+            console.error('Error parsing JSON data:', error);
+            alert('Invalid JSON file. Please try again.');
+          }
+        }
         document.getElementById('backup').oncontextmenu = (event) => {
           event.preventDefault(); // Prevent the default context menu from appearing
           const fileInput = document.createElement('input');
@@ -1773,7 +1784,7 @@ this.txtImg(false)
       }
       if (av('warn')) console.warn([emph, line, w])
       tt = this.unconj(elem) ?? tt
-      let nf = this.note.find(tt)
+      let nf = await this.note.find(tt)
       if (this.at(tt, nf)) {
         elem.classList.add('fav')
       }
@@ -4044,7 +4055,7 @@ this.txtImg(false)
     const regex = /\d{2}\/\d{2}\/\d{2,4} \d{1,2}:\d{2}:\d{2}/g;
     if (lim > 0) {
       for (let t of ts) {
-        let n = this.note.find(t)
+        let n = await this.note.find(t)
         if (n) {
           let id = n[n.length - 1][n[n.length - 1].length - 1];
           let ds = n[0].time
@@ -4509,18 +4520,33 @@ this.txtImg(false)
   wasd(k) {
     let l = this.max
     let r = 0
+    let pp = this.pos
     let e = document.querySelectorAll('.vis')[this.pos]
     let p = e.parentElement
+    let c = p.children.length
+    let x = c - this.pos
     if (k == 'w') {
-      let int = parseInt(p.lastChild.getAttribute('pos'))
-      r = int - this.pos
-    } else if (k == 'a') {
-      r = -l
-    } else if (k == 's') {
       let int = parseInt(p.firstChild.getAttribute('pos'))
       r = int - this.pos
+      if(int == this.pos) r = int - 1
+    } else if (k == 'a') {
+      if(c > l){
+        r = -l
+      } else {
+        r = -x
+      }
+      if(r == 0) r = -1
+    } else if (k == 's') {
+      let int = parseInt(p.lastChild.getAttribute('pos'))
+      r = int - this.pos
+      if(int == this.pos) r = int + 1
     } else if (k == 'd') {
-      r = l
+      if(c > l){
+        r = l
+      } else {
+        r = x
+      }
+      if(r == 0) r = 1
     }
     return r
   }
