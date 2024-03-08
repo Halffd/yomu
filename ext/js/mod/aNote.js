@@ -87,6 +87,7 @@ export class Note {
          * @type {import("../display/display-anki").DisplayAnki | null}
          */
         this.anki = anki
+        this.vars = {}
         this.svClk = this.svClk.bind(this);
         this.saveAdd = this.saveAdd.bind(this);
         this.url = "https://yomu-d9ca6-default-rtdb.firebaseio.com/save"
@@ -438,7 +439,9 @@ export class Note {
             let save
             try {
                 if (nv('warn')) console.warn(existingContents)
-                save = JSON.parse(existingContents)
+                if(typeof existingContents !== 'object'){
+                    save = JSON.parse(existingContents)
+                }
             } catch {
                 save = null
                 await this.setter('savebk', existingContents)
@@ -535,9 +538,9 @@ export class Note {
             } else {
                 elem.style.setProperty('--cc', 'lime')
             }
-            const objin = async() => {
+            const objin = async () => {
                 let on = this.obj;
-                let ow = this.find(t, "word");
+                let ow = await this.find(t, "word");
                 if (ow?.length > 2) {
                     let ox = ow[0]
                     for (let i in ox) {
@@ -558,7 +561,7 @@ export class Note {
                     await this.setter('words', ww.join(' '))
                 }
                 note.svDiv(saveDiv, ww.join(' '), flag)
-                if (this.find(t) ? true : false) {
+                if (await this.find(t) ? true : false) {
                     await objin()
                 }
                 return isStringInSet
@@ -604,7 +607,7 @@ export class Note {
                 if (nv('warn')) console.warn(options, yc, read, results, fq, fq.length)
                 let ain
                 try {
-                    ain = av("anki") ? aIn(t, this.aDict.jpws) : false
+                    ain = av("anki") ? await aIn(t, await this.aDict.jpws) : false
                 } catch (zx) {
                     console.error(zx);
                 }
@@ -624,7 +627,7 @@ export class Note {
                 }
                 fq = fq.join(' ')
                 try {
-                    let tf = this.find(t)
+                    let tf = await this.find(t)
                     if (!tf) {
                         let oc = {
                             word: t,
@@ -638,7 +641,10 @@ export class Note {
                             params: `Yc:${yc} Cx:${cx} Flag:${flag}`
                         }
                         let sv = await this.getter('save') ?? ''
-                        let sj = JSON.parse(sv)
+                        let sj = sv
+                        if(typeof sv !== 'object'){
+                            sj = JSON.parse(sv)
+                        }
                         let o = {
                             ...sj,
                             [unixSeconds]: oc
@@ -668,7 +674,7 @@ export class Note {
         if (!sz) {
             sz = await this.getter('words')
         }
-        if(sz instanceof Promise){
+        if (sz instanceof Promise) {
             sz = await sz
         }
         if (!m) {
@@ -926,11 +932,11 @@ export class Note {
             console.error(error);
         }
     }
-    get(a = true) {
+    async saveget(a = true) {
         if (a) {
-            return this.find('', 'word', '')
+            return await this.find('', 'word', '')
         } else {
-            return this.find()
+            return await this.find()
         }
     }
     async find(query = '', prop = 'word', comparison = '=', oc = null) {
@@ -938,7 +944,9 @@ export class Note {
             if (!oc) {
                 try {
                     var a = await this.getter("save");
-                    oc = JSON.parse(a);
+                    if(typeof a !== 'object'){
+                        oc = JSON.parse(a);
+                    }
                 } catch {
                     return null;
                 }
@@ -1091,7 +1099,7 @@ export class Note {
             throw error;
         }
     }
-    async save(){
+    async save() {
         const jsonStr = localStorage
         await this.put(jsonStr)
         await this.put(this.obj, '/save')
@@ -1284,25 +1292,35 @@ export class Note {
         }
         return oc
     }
-    async getter(key){
+    async getter(key) {
         let val = null
-        try {
-            val = this.db(`/${key}`) 
-        } catch (err) {
-            console.log(err);
+        return localStorage.getItem(key)
+        if (Object.hasOwn(this.vars, key)) {
+            val = this.vars[key]
+        } else {
             try {
-                val = localStorage.getItem(key)        
-            } catch (error) {
-                console.error(error);
+                val = await this.db(`/${key}`)
+            } catch (err) {
+                console.log(err);
+                try {
+                    val = localStorage.getItem(key)
+                } catch (error) {
+                    console.error(error);
+                }
             }
+            this.vars[key] = val
+        }
+        if (val instanceof Promise) {
+            return await val
         }
         return val
     }
-    async setter(key, value){
+    async setter(key, value) {
         let val = null
         try {
-            val = localStorage.setItem(key, value)
-            val = this.put(`/${key}`, value) 
+            localStorage.setItem(key, value)
+            val = this.put(`/${key}`, value)
+            this.vars[key] = val
         } catch (error) {
             console.error(error);
         }
