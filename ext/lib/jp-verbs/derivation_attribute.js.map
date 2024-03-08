@@ -1,0 +1,1 @@
+{"version":3,"sources":["derivation_attribute.js"],"names":[],"mappings":";AACA,OAAA,QAAA,CACA,OAAA","file":"derivation_attribute.js","sourceRoot":"..\\..\\..\\node_modules\\jp-verbs","sourcesContent":["'use string'\nmodule.exports = {\n  SILENT: 1,\n};\n"]}

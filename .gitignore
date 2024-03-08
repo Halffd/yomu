@@ -13,7 +13,6 @@ dictionaries/
 
 ext/manifest.json
 
-ext/lib/*
 ext/js/admin
 
 ext/legal-npm.html
