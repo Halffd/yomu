@@ -524,7 +524,7 @@ export class DisplayAnki {
                         // vrs.push(JSON.stringify(vrs))
                         console.dir(vrs);
                         // const x = this._display._container;
-                        // x.style.display = "none";
+                        // x.style.dmmmisplay = "none";
                         // console.log(note.fields['Key']);
                         let run = true;
                         if (document.URL.includes('search.html') && document.URL.includes('chrome-extension')) {

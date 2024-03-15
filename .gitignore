@@ -16,7 +16,7 @@ ext/manifest.json
 ext/js/admin
 
 ext/legal-npm.html
-.history
-.cache
+.history/
+.cache/
 .vscode/
 .tmp.driveupload/
