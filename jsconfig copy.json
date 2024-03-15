@@ -1,0 +1,39 @@
+{
+    "compilerOptions": {
+        "module": "ES2022",
+        "target": "ES2022",
+        "checkJs": true,
+        "moduleResolution": "node",
+        "strict": false,
+        "strictNullChecks": false,
+        "noImplicitAny": false,
+        "strictPropertyInitialization": false,
+        "suppressImplicitAnyIndexErrors": false,
+        "skipLibCheck": false,
+        "baseUrl": ".",
+        "paths": {
+            "*": ["./types/ext/*"],
+            "ext/json-schema": ["./types/ext/json-schema"]
+        },
+        "types": [
+            "chrome",
+            "firefox-webext-browser",
+            "handlebars",
+            "jszip",
+            "parse5",
+            "wanakana",
+            "zip.js",
+            "dexie",
+            "ajv"
+        ]
+    },
+    "include": [
+        "ext/**/*.js",
+        "types/ext/**/*.ts",
+        "types/other/globals.d.ts"
+, "temp/aDict copy 2.js", "temp/aDict copy.js", "ext/js/mod/aGlobal.js"    ],
+    "exclude": [
+        "node_modules",
+        "ext/lib"
+    ]
+}

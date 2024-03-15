@@ -395,7 +395,7 @@ export class Note {
      * @param {string | undefined} t
      * @param {string} txt
      */
-    async saveAdd(cx = 0, t, txt, def = '', fq = [], tags = [], html = '', moe = false, audio = [], image = [], clip = '', yc = false, read = '', elem = null) {
+    async saveAdd(cx = 0, t, txt, def = '', fq = [], tags = [], html = '', moe = false, audio = [], image = [], clip = '', yc = false, read = '', elem = null, keys = [false, false]) {
         try {
             const log = {
                 dict: this.dic,
@@ -419,8 +419,8 @@ export class Note {
             console.error(ler)
         }
         try {
-            let tu = await unconjugate(t);
-            if (tu) t = tu;
+            //let tu = await unconjugate(t);
+            //if (tu) t = tu;
             const note = window.aNote
             const noteMod = Object.create(Note.prototype, {dict: this})
             const storedDay = parseInt(await this.getter('day'))
@@ -439,7 +439,7 @@ export class Note {
             let save
             try {
                 if (nv('warn')) console.warn(existingContents)
-                if(typeof existingContents !== 'object'){
+                if (typeof existingContents !== 'object') {
                     save = JSON.parse(existingContents)
                 }
             } catch {
@@ -578,7 +578,7 @@ export class Note {
             } else if (!isStringInSet) {
                 const options = this.aDict._display.getOptionsContext()
                 const results = await this.aDict._display._findDictionaryEntries(false, t, false, options)
-                if (this.aDict.japaneseUtil.isStringEntirelyKana(t)) {
+                if (!keys[0] && this.aDict.japaneseUtil.isStringEntirelyKana(t)) {
                     let l = 0
                     for (let r of results) {
                         t = r.headwords[0].term
@@ -607,7 +607,8 @@ export class Note {
                 if (nv('warn')) console.warn(options, yc, read, results, fq, fq.length)
                 let ain
                 try {
-                    ain = av("anki") ? await aIn(t, await this.aDict.jpws) : false
+                    let js = this.aDict._jpws
+                    ain = av("anki") ? aIn(t, js) : false
                 } catch (zx) {
                     console.error(zx);
                 }
@@ -642,7 +643,7 @@ export class Note {
                         }
                         let sv = await this.getter('save') ?? ''
                         let sj = sv
-                        if(typeof sv !== 'object'){
+                        if (typeof sv !== 'object') {
                             sj = JSON.parse(sv)
                         }
                         let o = {
@@ -704,7 +705,7 @@ export class Note {
     /**
      * @param {{ innerHTML: any; querySelector: (arg0: string) => string; getAttribute: (arg0: string) => string; classList: { add: (arg0: string) => void; }; parentElement: { getAttribute: (arg0: string) => any; }; querySelectorAll: (arg0: string) => any; }} elem
      */
-    async svClk(elem, cx = 0, tw = '', tx = '', _yc = null, clip = '', img = [], snd = []) {
+    async svClk(elem, cx = 0, tw = '', tx = '', _yc = null, clip = '', img = [], snd = [], keys = [false, false]) {
         const fq = []
         let df = ''
         const ht = elem?.innerHTML
@@ -779,29 +780,31 @@ export class Note {
                 // en = cpn.innerText
                 //
                 // async saveAdd(t, txt, def = '', fq = [], tags = [], html = '', moe = false, audio = [], image = [], clip = '', yc = null) {
-                await note.saveAdd(cx, wn, st, df, fq, tag, ht, false, snd, img, clip, true, rd, elem)// localStorage.setItem('save', `${save} ${en}`)
+                await note.saveAdd(cx, wn, st, df, fq, tag, ht, false, snd, img, clip, true, rd, elem, keys)// localStorage.setItem('save', `${save} ${en}`)
             } else {
                 let word = k ? k.innerText : ''
-                let kp = await this.getter('keep') ?? ''
-                let ks = kp.split(' ')
-                let is = ks.includes(word)
-                if (!is) {
-                    let wordel = elem.querySelector(".compounds dt") ?? elem.querySelector(".conj-gloss dt")
-                    if (wordel) {
-                        word = wordel.textContent
-                        let sp = word.split(' ')
-                        word = sp ? sp[0] : word
-                        rd = sp.length > 1 ? sp[1].substring(1, sp[1].length - 1) : rd
+                if (!keys[1]) {
+                    let kp = await this.getter('keep') ?? ''
+                    let ks = kp.split(' ')
+                    let is = ks.includes(word)
+                    if (!is) {
+                        let wordel = elem.querySelector(".compounds dt") ?? elem.querySelector(".conj-gloss dt")
+                        if (wordel) {
+                            word = wordel.textContent
+                            let sp = word.split(' ')
+                            word = sp ? sp[0] : word
+                            rd = sp.length > 1 ? sp[1].substring(1, sp[1].length - 1) : rd
+                        }
                     }
                 }
                 //try { //df += elem.querySelector('dt').innerText } finally {
-                await note.saveAdd(cx, word, st, df, undefined, tag, ht, true, snd, img, clip, true, rd, elem) // localStorage.setItem('save', `${save} ${k.innerHTML}`)
+                await note.saveAdd(cx, word, st, df, undefined, tag, ht, true, snd, img, clip, true, rd, elem, keys) // localStorage.setItem('save', `${save} ${k.innerHTML}`)
             }
         } else {
             try {
                 df += elem.querySelector('dt').innerText
             } catch { }
-            await note.saveAdd(cx, tw, st, df, undefined, tag, ht, true, snd, img, clip, undefined, rd, elem)
+            await note.saveAdd(cx, tw, st, df, undefined, tag, ht, true, snd, img, clip, undefined, rd, elem, keys)
         }
     }
     duplicates(obj) {
@@ -944,7 +947,7 @@ export class Note {
             if (!oc) {
                 try {
                     var a = await this.getter("save");
-                    if(typeof a !== 'object'){
+                    if (typeof a !== 'object') {
                         oc = JSON.parse(a);
                     }
                 } catch {
@@ -1259,6 +1262,17 @@ export class Note {
             return null
         }
         this._bin = oc
+        return oc
+    }
+    get known() {
+        var a = localStorage.getItem("known") ?? '';
+        var oc
+        try {
+            oc = a.split(' ')
+        } catch {
+            return null
+        }
+        this._known = oc
         return oc
     }
     set bin(value) {

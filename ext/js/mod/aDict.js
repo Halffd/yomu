@@ -796,8 +796,8 @@ this.txtImg(false)
         return r
       }
       if (document.getElementById('export')) {
-        document.getElementById('jax').onclick = () => {
-          let tx = getText()
+        document.getElementById('jax').onclick = function () {
+          //let tx = getText()
           if (av('warn')) console.warn(tx);
           /**
            * @param {string} text
@@ -810,6 +810,8 @@ this.txtImg(false)
             const lines = text.trim().split('\n');
             let srt = '';
 
+            let reg = new RegExp(`.{40,99999999999}`, 'g');
+            let reg2 = new RegExp(`^[A-Za-z]+$`, 'gm');
             for (let i = 0; i < lines.length; i++) {
               const line = lines[i].trim();
               const match = line.match(/\[(\d{2}:\d{2}\.\d{3}) -> (\d{2}:\d{2}\.\d{3})\](.*)/);
@@ -822,7 +824,11 @@ this.txtImg(false)
                 srt += `${i + 1}\n00:${startTime.replace('.', ',')} --> 00:${endTime.replace('.', ',')}\n${content.trim()}\n\n`;
               }
             }
-            //srt = srt.replace(reg, '');            srt = srt.replace(reg2, '')
+            let pr = window.prompt("Filter? 1/0")
+            if (parseInt(pr) != 0 || !(parseInt(pr) >= 0)) {
+              srt = srt.replace(reg, '');
+              srt = srt.replace(reg2, '')
+            }
             return srt.trim();
           }
           async function getTextFromClipboard() {
@@ -853,24 +859,8 @@ this.txtImg(false)
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
           }
-          function getText() {
-            const parent = document.body;
-            if (parent === null) {return;}
-
-            let textarea = null;
-            if (textarea === null) {
-              textarea = document.createElement('textarea');
-            }
-            parent.prepend(textarea);
-            textarea.select();
-            document.execCommand('paste');
-            let v = textarea.value
-            parent.removeChild(textarea);
-            if (av('log')) console.dir(v)
-            return v
-          }
           // Usage
-          let text = tx //prompt("Sub")
+          let text = this.getText() // tx //prompt("Sub")
           //navigator.clipboard.readText().then(text => {
           if (text) {
             if (av('log')) console.log('Text from clipboard:', text);
@@ -879,7 +869,7 @@ this.txtImg(false)
             let filename = 'sub.srt';
             downloadFile(filename, srt);
           }
-        }
+        }.bind(this);
         document.getElementById('export').oncontextmenu = async () => {
           const v = document.querySelectorAll('.vis')
           localStorage.setItem('exp', '')
@@ -928,7 +918,7 @@ this.txtImg(false)
             alert('Invalid JSON file. Please try again.');
           }
         }
-        document.getElementById('sync').oncontextmenu = (event) => {
+        document.getElementById('sav').onclick = (event) => {
           event.preventDefault(); // Prevent the default context menu from appearing
           try {
             aNote.save().then(data => {
@@ -1607,17 +1597,6 @@ this.txtImg(false)
         }
       }
       let f = ""
-      if (this.var('token')) {
-        let ff = await this.frequency(tt, this.cc) ?? 0
-        let fj = await this.frequency(tt, this.jpdb) ?? 0
-        f = `${ff} *${fj}`
-        if (fj <= 0) {
-          f = ff
-        } else if (ff <= 0) {
-          f = `*${fj}`
-        }
-      }
-      if (av('warn')) console.warn(f)
       if (typeof ii == 'string') {
         ii = parseInt(ii)
       }
@@ -1733,6 +1712,21 @@ this.txtImg(false)
       }
 
       // Check conditions using meaningful variable names
+      this.modK.appendChild(elem)
+      tt = this.unconj(elem) ?? tt
+      if (this.var('token')) {
+        let ttc = tt // this.unconj(elem)
+        //elem.settAttribute('wuc', ttc)
+        let ff = await this.frequency(ttc, this.cc) ?? 0
+        let fj = await this.frequency(ttc, this.jpdb) ?? 0
+        f = `${ff} *${fj}`
+        if (fj <= 0) {
+          f = ff
+        } else if (ff <= 0) {
+          f = `*${fj}`
+        }
+        elem.querySelector('.fq').innerHTML = f
+      }
       const isFValid = f !== -1 && f < this.fval && this.var('jd');
       const isNotKana = !isKana && this.var('kan');
 
@@ -1753,7 +1747,7 @@ this.txtImg(false)
         }
       }
       if (av('warn')) console.warn(il, spl, ii, spl[ii], splL, I, this.var('yc'), this.var('aut'))
-      this.modK.appendChild(elem)
+      
       if ((this.var('del') || (this.var('scr')))
         && this.new && document.querySelectorAll('.vis')[0]) {
         let bs = document.querySelectorAll('.vis')
@@ -1783,7 +1777,6 @@ this.txtImg(false)
         })
       }
       if (av('warn')) console.warn([emph, line, w])
-      tt = this.unconj(elem) ?? tt
       let nf = await this.note.find(tt)
       if (this.at(tt, nf)) {
         elem.classList.add('fav')
@@ -1806,6 +1799,12 @@ this.txtImg(false)
         elem.style.setProperty('--cc', 'orange')
       } else if (this.note.learned.includes(tt)) {
         elem.style.setProperty('--cc', 'red')
+      } else if(this.note.known.includes(tt)) {
+        elem.style.setProperty('--cc', 'gray')
+      }
+      if(this.note.known.includes(tt) && this.var('kn') && this.analysis){
+        elem.style.display = 'none'
+        elem.className = 'mns'
       }
       if (nf) {
         let st = nf?.[0].sentence
@@ -1818,13 +1817,13 @@ this.txtImg(false)
   /**
    * @param {{ stopPropagation: () => void; }} e
   */
-  words(e, s = null) {
+  words(e, s = null, a = [false, false]) {
     if (e) e.stopPropagation()
     let sis = localStorage.getItem('words') ?? '' // + ` ${localStorage.getItem('wordbk')}`*/ document.querySelector('.save .w').innerText
     let si = s ? s : sis.split(' ')
     let so = localStorage.getItem('keep') ?? ''
     let ss = so.split(' ')
-    this.svs(si, [], undefined, undefined, ss)
+    this.svs(si, [], undefined, undefined, ss, a)
     this.saving = true
     this.hke = true
   }
@@ -2727,6 +2726,9 @@ this.txtImg(false)
       if (kn == 'c') {
         this.copy(b[this.pos])
       }
+      if (kn == 'm') {
+        this.wst(b[this.pos])
+      }
       if (ki == 93) {
         let o = b[this.pos]
         b[b.length - 1].appendChild(o)
@@ -2803,6 +2805,7 @@ this.txtImg(false)
         if (e.shiftKey) {
           this.del(false, false, b[this.pos])
         }
+        this.wst(b[this.pos])
       }
       if (kn == 'y') {
         let y = !this.var('yc')
@@ -2845,13 +2848,13 @@ this.txtImg(false)
         localStorage.setItem('rd', false)
         localStorage.setItem('yc', false)
         localStorage.setItem('freq', -100)
-        if (e.ctrlKey) {
+        if (e.shiftKey && !e.ctrlKey) {
           si = this.jpws.then(() => {
             this.words(null, si.split(' ')) //svs(si.split(' '))
           })
         } else {
           si = localStorage.getItem('words')
-          this.words(null)
+          this.words(null, undefined, [e.ctrlKey, e.shiftKey])
         }
       }
       if (e.key == '' || e.key == ' ') {
@@ -2862,10 +2865,29 @@ this.txtImg(false)
           this.expand(b[this.pos], e.shiftKey)
         }
       }
+      if(kn == 'r'){
+        const elem = b[this.pos]
+        try {
+          sv(elem,undefined,undefined,undefined,undefined,undefined,undefined,undefined,[true, false])
+          this.wst(elem)
+        } catch (err) {
+          console.error(err)
+        }
+      }
+      if(kn == 't'){
+        const elem = b[this.pos]
+        try {
+          sv(elem,undefined,undefined,undefined,undefined,undefined,undefined,undefined,[true, true])
+          this.wst(elem)
+        } catch (err) {
+          console.error(err)
+        }
+      }
       if (ki == 21) {
         const elem = b[this.pos]
         try {
-          sv(elem)
+          sv(elem) //,undefined,undefined,undefined,undefined,undefined,undefined,undefined,[e.ctrlKey,e.shiftKey])
+          this.wst(elem)
         } catch (err) {
           console.error(err)
         }
@@ -2914,19 +2936,17 @@ this.txtImg(false)
       }*/
     }
   }
-  svs(si, ws = [], ln = this.svl, cp = false, kp = null) {
-    this.saving = true
-    document.querySelector('.save').style.color = 'gray'
-    if (av('warn')) console.warn(si, ws, ln, cp)
-    try { // if(typeof si == 'string'){
+  svsl(si, ln, cp, kp) {
+    try {
       si = si.split ? si.split(' ') : si
     } catch { }
     if (ws.length > 0) {
-      si = merge(si, ws)
+      si = [...ws, ...si]// merge(si, ws)
       si = si.split(' ')
     }
     if (kp) {
       si = si.filter(item => !kp.includes(item));
+      kp = kp.slice(kp.length - ln)
       this.kp = kp
       kp = kp.join(' ')
     }
@@ -2947,6 +2967,31 @@ this.txtImg(false)
       this._copyText(si)
     }
     this.fill(si, kp)
+  }
+  svs(si, ws = [], ln = this.svl, cp = false, kp = null, arg = [false, false]) {
+    this.saving = true
+    document.querySelector('.save').style.color = 'gray'
+    if (av('warn')) console.warn(si, ws, ln, cp)
+    if (arg[0] && arg[1]) {
+      this.svsl(localStorage.getItem('known'), ln, cp, localStorage.getItem('learned'))
+    } else if (arg[0]) {
+      this.note.db('/save').then(obj => {
+        try { // if(typeof si == 'string'){
+          let os = obj //this.note?.obj
+          si = ''
+          for (let i in os) {
+            let w = os[i].word
+            if (w) {
+              console.log(w);
+              si += w + ' '
+            }
+          }
+        } catch { }
+        this.svsl(si, ln, cp, kp)
+      })
+    } else {
+      this.svsl(si, ln, cp, kp)
+    }
   }
   /**
    * @param {string} str
@@ -3227,6 +3272,9 @@ this.txtImg(false)
     this.max = wid;
     const calculatedWidth = calcFlex(wid) * w;
     this.svl = (parseInt(localStorage.getItem('svl')) ?? 4) //* this.max
+    if (this.svl < 0) {
+      this.svl *= -this.max
+    }
 
     if (isNaN(calculatedWidth)) {
       console.error('Calculation error: invalid calculated width');
@@ -3411,7 +3459,7 @@ this.txtImg(false)
   cur(/** @type {Element} */ c) {
     try {
       if (document.querySelector('#cur')) document.querySelector('#cur').id = 'prev';
-      else return
+      // else return
     } catch { }
     c.id = 'cur';
     c.scrollIntoView({
@@ -3482,14 +3530,40 @@ this.txtImg(false)
       }
     }
     if (shift) {
-      elem.remove()
-      let bb = document.querySelectorAll('.vis')
-      if (!bb[this.pos]) {
-        this.pos -= 1
+      elem.remove();
+
+      let bb = document.querySelectorAll('.vis');
+      if (bb.length > 0) {
+        let nearestIndex = -1;
+        let nearestDistance = Infinity;
+
+        for (let i = 0; i < bb.length; i++) {
+          let distance = this.pos - i;
+          if (distance >= 0 && distance < nearestDistance) {
+            nearestIndex = i;
+            nearestDistance = distance;
+          }
+        }
+
+        if (nearestIndex !== -1) {
+          // Do something with the nearestIndex
+          console.log(nearestIndex);
+          this.pos = nearestIndex
+        }
       }
       this.cur(bb[this.pos])
     }
     console.log(w, this.note.bin, this.note.words, this.note.learned);
+  }
+  wst(elem) {
+    let ws = elem.getAttribute('wset') ?? null
+    let wss = elem.getAttribute('ws') !== '1' ?? false
+    if (ws && wss) {
+      //this.do = false
+      this.sentence([ws], 0)
+      this.moe([ws], 0, 1)
+      elem.setAttribute('ws', '1')
+    }
   }
   /**
  * Moves the position in an array-like structure based on a direction and condition.
@@ -3559,11 +3633,11 @@ this.txtImg(false)
     if (!elem) return
     const elemc = elem.closest('.mns')
     if (!shf && !this.var('yc') && !elemc.querySelector('.entry-body')) {
-      let word = elemc.getAttribute('w')
       let wordel = elem.querySelector(".compounds dt") ?? elem.querySelector(".conj-gloss dt")
+      let word = elemc.getAttribute('w')
       if (wordel) {
-        word = wordel.textContent
-        let sp = word.split(' ')
+        word = wordel.textContent;
+        let sp = word.split(' ');
         word = sp ? sp[0] : word
         // rd = sp[1].substring(1,sp[1].length-1)
       }
@@ -3599,12 +3673,6 @@ this.txtImg(false)
     }
     elem.scrollIntoView()// {behavior: 'auto',block: 'center'});
     this.cache(elem, this.istart, this.pos)
-    let ws = elem.getAttribute('wset') ?? null
-    if (ws) {
-      //this.do = false
-      this.sentence([ws], 0)
-      this.moe([ws], 0)
-    }
   }
   /**
    * @param {any} k
@@ -3843,6 +3911,7 @@ this.txtImg(false)
       {id: 'run', label: 'Toggle'},
       {id: 'qp', label: 'Query Parser'},
       {id: 'wk', label: 'Wiki'},
+      {id: 'kn', label: 'Del Known'},
       {id: 'kan', label: 'Kanji'},
       {id: 'rl', label: 'Reload'},
       {id: 'pt', label: 'Particle'},
@@ -3859,7 +3928,7 @@ this.txtImg(false)
       {id: 'warn', label: 'Warn'},
       {id: 'token', label: 'Tokenizer'},
       {id: 'kanji', label: 'Kanjis'},
-      {id: 'sav', label: 'Save'},
+      {id: 'sav', label: 'Save', def: 0},
       {id: 'hk', label: 'Split'},
       {id: 'cp', label: 'CopyMonitor'},
       {id: 'anki', label: ' Anki'},
@@ -3915,7 +3984,7 @@ this.txtImg(false)
             label = 'Results'
             break
           case 3:
-            label = 'Save'
+            label = 'Data'
             break
           case 4:
             label = 'Yomi'
@@ -4024,10 +4093,16 @@ this.txtImg(false)
   }
   unconj(elem) {
     let wordel = elem.querySelector(".compounds dt") ?? elem.querySelector(".conj-gloss dt")
+    let cj = elem.querySelector('.conj-gloss > dl > dt')
     if (wordel) {
       let word = wordel.textContent
       let sp = word.split(' ')
       let tt = sp ? sp[0] : word
+      if(cj){
+        tt = cj.textContent
+        tt = tt.split(' ')
+        tt = tt[0]
+      }
       return tt
     } else {
       return null
@@ -4208,7 +4283,7 @@ this.txtImg(false)
 
       // O.push(...yc)
       //console.error(yc, O, fqs)
-      if (this.search) {
+      if (this.search && !elem.querySelector(".kjdd")) {
         try {
           var ue = (/** @type {string} */ str) => {
             return str.replace(/\\u([a-fA-F0-9]{4})/g, function (/** @type {any} */ _g, /** @type {string} */ m1) {
@@ -4359,6 +4434,8 @@ this.txtImg(false)
       return true;
     } else if (note.learned.includes(tt)) {
       return true;
+    } else if(note.known.includes(tt)){
+        return true
     } else if (this._cards) {
       if (this._cards.includes(tt)) {
         return true
@@ -4528,25 +4605,25 @@ this.txtImg(false)
     if (k == 'w') {
       let int = parseInt(p.firstChild.getAttribute('pos'))
       r = int - this.pos
-      if(int == this.pos) r = int - 1
+      if (int == this.pos) r = int - 1
     } else if (k == 'a') {
-      if(c > l){
+      if (c > l) {
         r = -l
       } else {
         r = -x
       }
-      if(r == 0) r = -1
+      if (r == 0) r = -1
     } else if (k == 's') {
       let int = parseInt(p.lastChild.getAttribute('pos'))
       r = int - this.pos
-      if(int == this.pos) r = int + 1
+      if (int == this.pos) r = int + 1
     } else if (k == 'd') {
-      if(c > l){
+      if (c > l) {
         r = l
       } else {
         r = x
       }
-      if(r == 0) r = 1
+      if (r == 0) r = 1
     }
     return r
   }

@@ -1,7 +1,7 @@
 /* The `Analyze` class is a JavaScript class that provides methods for analyzing Japanese text,
 including analyzing the text itself, generating furigana, converting to romaji, analyzing grammar,
 and analyzing word frequency. */
-/* globals aDict lg wn */
+/* globals aDict lg wn token */
 import {wn} from './aDict.js';
 const lg = console.log;
 
@@ -134,13 +134,31 @@ export class Analyze {
         this.btn.textContent = 'All Learned'
         this.btn.onclick = function(e){
             e.stopPropagation()
-            let is = this.dic.at()
+            let es = document.querySelectorAll('.vis')
+            let kn = localStorage.getItem('known') ?? ''
+            kn = kn.split(' ') ?? []
+            for(let elem of es){
+                let w = this.dic.unconj(elem) ?? elem.getAttribute('w')
+                let is = this.dic.at(w)
+                let f = elem.classList.contains('fav');
+                console.warn(`${w} is ${is} & ${f}`);
+                if(!(f && is)){
+                    elem.classList.add('fav')
+                    elem.style.border = '1px solid white'
+                    kn.push(w)
+                }
+            }
+            console.warn(kn);
+            kn = kn.join(' ')
+            localStorage.setItem('known', kn)
         }.bind(this)
         t.appendChild(this.txt)
+        t.appendChild(this.btn)
         this.tc = this.t.appendChild(document.createElement('div'))
     }
     async run(e = null, ta = null) {
         let txt = this.txt
+        this.dic.analysis = true
         let t
         if (e) {
             e.stopPropagation();
@@ -199,14 +217,14 @@ export class Analyze {
 
             for (let i in tokens) {
                 let t = tokens[i]
+                // t = await unconjugate(t)
                 let f1 = await this.dic.frequency(t, this.dic.cc) ?? 0
                 let f2 = await this.dic.frequency(t) ?? 0
                 let f
-                if (f2 > 0 && f2 > 0) {
-                    f = Math.round((f1 + f2) / 2)
-                } else {
-                    f = f1 > 0 ? f1 : f2
-                }
+                //if (f2 > 0 && f2 > 0) { f = Math.round((f1 + f2) / 2)
+                //} else {
+                f = f1 > 0 ? f1 : f2
+                //}
                 wn(i, t)
                 fq[t] = f;
             }

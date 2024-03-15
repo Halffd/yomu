@@ -48,8 +48,8 @@ export async function yomiKanjis(y, el = false) {
     if (iji && y.length >= 1) {
         for (let i = 0; i < y.length; i++) {
             if (RGEX_CHINESE.test(y[i])) {
-                dd += `<span style="font-size: 1.75em">${y[i]}</span>`;
-                df += `<span style="font-size: 1.75em">${y[i]}</span>`;
+                dd += `<span class="kjdd" style="font-size: 1.75em">${y[i]}</span>`;
+                df += `<span class="kjdf" style="font-size: 1.75em">${y[i]}</span>`;
                 try {
                     const result = await this._findDictionaryEntries(true, y[i], true, this.getOptionsContext());
                     let kym = '';
@@ -57,10 +57,10 @@ export async function yomiKanjis(y, el = false) {
 
                     for (let d = 0; d < result.length; d++) {
                         if (result[d].dictionary.includes('KANJIDIC')) {
+                            kx = d;
                             if (result[kx] && result[kx].kunyomi && result[kx].onyomi && result[kx].definitions) {
                                 dd += `<div>Onyomi: ${result[kx].kunyomi.join(' ')}</br>Kunyomi: ${result[kx].onyomi.join(' ')}</br>${result[kx].definitions.join(', ')}</div>`;
                             }
-                            kx++;
                         } else {
                             if (result[d].kunyomi && result[d].onyomi && result[d].definitions) {
                                 kym = result[d].kunyomi.length > 0 ? `Onyomi: ${result[d].kunyomi.join(' ')}</br>` : '';
