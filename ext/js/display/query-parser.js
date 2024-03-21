@@ -297,9 +297,6 @@ export class QueryParser extends EventDispatcher {
             termNode.className = 'query-parser-term';
             termNode.dataset.offset = `${offset}`;
             for (const {text, reading} of term) {
-                if (text.includes('\n')) {
-                    termNode.classList.add('newline');
-                }
                 if (reading.length === 0) {
                     try {
                         if (this._japaneseUtil.isStringEntirelyKana(text)) {
