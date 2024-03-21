@@ -1747,7 +1747,7 @@ this.txtImg(false)
         }
       }
       if (av('warn')) console.warn(il, spl, ii, spl[ii], splL, I, this.var('yc'), this.var('aut'))
-      
+
       if ((this.var('del') || (this.var('scr')))
         && this.new && document.querySelectorAll('.vis')[0]) {
         let bs = document.querySelectorAll('.vis')
@@ -1780,6 +1780,10 @@ this.txtImg(false)
       let nf = await this.note.find(tt)
       if (this.at(tt, nf)) {
         elem.classList.add('fav')
+        if (this.analysis) {
+          elem.style.display = 'none'
+          elem.className = 'mns'
+        }
       }
       if (this.note.bin.includes(tt)) {
         elem.style.setProperty('--cc', 'aqua')
@@ -1799,10 +1803,10 @@ this.txtImg(false)
         elem.style.setProperty('--cc', 'orange')
       } else if (this.note.learned.includes(tt)) {
         elem.style.setProperty('--cc', 'red')
-      } else if(this.note.known.includes(tt)) {
+      } else if (this.note.known.includes(tt)) {
         elem.style.setProperty('--cc', 'gray')
       }
-      if(this.note.known.includes(tt) && this.var('kn') && this.analysis){
+      if (this.note.known.includes(tt) && this.var('kn') && this.analysis) {
         elem.style.display = 'none'
         elem.className = 'mns'
       }
@@ -2795,6 +2799,7 @@ this.txtImg(false)
         localStorage.setItem('kan', false)
         localStorage.setItem('rd', false)
         localStorage.setItem('yc', false)
+        this.toast("F")
       }
       if (ki == 28) {
         const baseUrl = chrome.runtime.getURL('/search.html');
@@ -2813,12 +2818,14 @@ this.txtImg(false)
         document.querySelector('#n7').textContent = 'Yc: ' + y
         localStorage.setItem('yc', y)
         localStorage.setItem('kanjis', y)
+        this.toast('Yc and kanjis: ' + y)
       }
       if (kn == 'u') {
         let y = !this.var('kanji')
         document.querySelector('#n7').textContent = 'Kanjis: ' + y
         document.querySelector('.config').style.borderColor = y ? 'green' : 'red'
         localStorage.setItem('kanji', y)
+        this.toast('Kanjis: ' + y)
       }
       if (kn == 'i') {
         let y = !this.var('slw')
@@ -2828,6 +2835,8 @@ this.txtImg(false)
         localStorage.setItem('qp', !y)
         localStorage.setItem('slw', y)
         localStorage.setItem('kanjis', !y)
+        let vt = `slw ${y} qp ${!y} yc ${!y} kanjis ${!y}`
+        !y ? this.toast("Slow: " + vt) : this.toast(`Fast: ${vt}`);
       }
       if (ki == 30) {
         /**
@@ -2865,19 +2874,19 @@ this.txtImg(false)
           this.expand(b[this.pos], e.shiftKey)
         }
       }
-      if(kn == 'r'){
+      if (kn == 'r') {
         const elem = b[this.pos]
         try {
-          sv(elem,undefined,undefined,undefined,undefined,undefined,undefined,undefined,[true, false])
+          sv(elem, undefined, undefined, undefined, undefined, undefined, undefined, undefined, [true, false])
           this.wst(elem)
         } catch (err) {
           console.error(err)
         }
       }
-      if(kn == 't'){
+      if (kn == 't') {
         const elem = b[this.pos]
         try {
-          sv(elem,undefined,undefined,undefined,undefined,undefined,undefined,undefined,[true, true])
+          sv(elem, undefined, undefined, undefined, undefined, undefined, undefined, undefined, [true, true])
           this.wst(elem)
         } catch (err) {
           console.error(err)
@@ -2936,7 +2945,7 @@ this.txtImg(false)
       }*/
     }
   }
-  svsl(si, ln, cp, kp) {
+  svsl(si, ws, ln, cp, kp) {
     try {
       si = si.split ? si.split(' ') : si
     } catch { }
@@ -2987,10 +2996,10 @@ this.txtImg(false)
             }
           }
         } catch { }
-        this.svsl(si, ln, cp, kp)
+        this.svsl(si, ws, ln, cp, kp)
       })
     } else {
-      this.svsl(si, ln, cp, kp)
+      this.svsl(si, ws, ln, cp, kp)
     }
   }
   /**
@@ -4098,7 +4107,7 @@ this.txtImg(false)
       let word = wordel.textContent
       let sp = word.split(' ')
       let tt = sp ? sp[0] : word
-      if(cj){
+      if (cj) {
         tt = cj.textContent
         tt = tt.split(' ')
         tt = tt[0]
@@ -4434,8 +4443,8 @@ this.txtImg(false)
       return true;
     } else if (note.learned.includes(tt)) {
       return true;
-    } else if(note.known.includes(tt)){
-        return true
+    } else if (note.known.includes(tt)) {
+      return true
     } else if (this._cards) {
       if (this._cards.includes(tt)) {
         return true
@@ -5473,6 +5482,63 @@ this.txtImg(false)
     return r
   }
 
+  /**
+ * Creates a toast notification and appends it to the document body.
+ * @param {string} message - The message to display in the toast.
+ * @param {string} backgroundColor - The background color of the toast.
+ * @param {string} textColor - The text color of the toast.
+ * @param {string} fontWeight - The font weight of the toast text.
+ * @param {number} duration - The duration in milliseconds for the toast to remain visible.
+ */
+  async toast(message = '', duration = 5000, backgroundColor = 'blue', textColor = 'white', fontWeight = 'bolder') {
+    try {
+      // Create the toast container element
+      var toastContainer = document.createElement('div');
+      toastContainer.className = 'toast-container';
+
+      // Create the toast element
+      var toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.innerText = message;
+
+      // Append the toast element to the toast container
+      toastContainer.appendChild(toast);
+
+      // Append the toast container to the body
+      document.body.appendChild(toastContainer);
+
+      // Apply animation using the style property
+      toastContainer.style.position = 'fixed';
+      //toastContainer.style.top = '0';
+      toastContainer.style.right = '50%';
+      // Custom styling for the toast
+      toast.style.backgroundColor = backgroundColor;
+      toast.style.color = textColor;
+      toast.style.fontWeight = fontWeight;
+
+      toastContainer.style.transition = 'transform 1.4s';
+      toastContainer.style.transform = 'translateY(-1000px)';
+
+      await setTimeout(function () {
+        toastContainer.style.transform = 'translateY(50%)';
+        setTimeout(() => {
+          toastContainer.style.transition = 'none'; // Remove the transition animation
+          toastContainer.style.transform = 'translateY(-350px)'; // Set the final transform state
+        }, 500);
+      }, 10);
+
+
+      // Remove the toast element after a specified duration
+      await setTimeout(function () {
+        toastContainer.style.transform = 'translateY(0)';
+        setTimeout(function () {
+          toastContainer.remove();
+        }, 300);
+      }, duration);
+    } catch (error) {
+      console.error('An error occurred while creating the toast:', error);
+    }
+  }
   /**
    * @param {string | any[]} yc
    * @param {HTMLDivElement} elem
