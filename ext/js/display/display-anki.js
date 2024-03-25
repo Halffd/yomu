@@ -256,6 +256,15 @@ export class DisplayAnki {
             eventListeners.addEventListener(node, 'contextmenu', this._onViewNoteButtonContextMenuBind);
             eventListeners.addEventListener(node, 'menuClose', this._onViewNoteButtonMenuCloseBind);
         }
+        for (const node of element.querySelectorAll('.action-button[data-action=copy]')) {
+            eventListeners.addEventListener(node, 'click', function(e){
+                let h = node.closest('.entry-header')
+                let b = node.closest('.entry')
+                let w = aDict.prototype.yomiread(b)
+                console.log(node, h, b);
+                aDict.prototype._copyText(w)
+            }.bind(this));
+        }
     }
 
     /** */
