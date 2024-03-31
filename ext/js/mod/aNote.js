@@ -418,9 +418,30 @@ export class Note {
         } catch (ler) {
             console.error(ler)
         }
+        var results;
         try {
             //let tu = await unconjugate(t);
             //if (tu) t = tu;
+            let lt = t
+           try {
+                const options = this.aDict._display.getOptionsContext()
+                results = await this.aDict._display._findDictionaryEntries(false, t, false, options)
+                if (!keys[0] && this.aDict.japaneseUtil.isStringEntirelyKana(t)) {
+                    let l = 0
+                    for (let r of results) {
+                        t = r.headwords[0].term
+                        if (!this.words.includes(t) || (l > 0 && l != t.length)) {
+                            break
+                        }
+                        if (l < 1) l = t.length
+                    }
+                }
+            } catch (rr) {
+                console.error(rr);
+            }
+            if(lt !== t){
+                this.saveAdd(cx, lt, txt, def, fq, tags, html, moe, audio, image, clip, yc, read, elem, [true, true])
+            }
             const note = window.aNote
             const noteMod = Object.create(Note.prototype, {dict: this})
             const storedDay = parseInt(await this.getter('day'))
@@ -576,18 +597,6 @@ export class Note {
                     await this.setter('exp', b.join(' '))
                 }
             } else if (!isStringInSet) {
-                const options = this.aDict._display.getOptionsContext()
-                const results = await this.aDict._display._findDictionaryEntries(false, t, false, options)
-                if (!keys[0] && this.aDict.japaneseUtil.isStringEntirelyKana(t)) {
-                    let l = 0
-                    for (let r of results) {
-                        t = r.headwords[0].term
-                        if (!this.words.includes(t) || (l > 0 && l != t.length)) {
-                            break
-                        }
-                        if (l < 1) l = t.length
-                    }
-                }
                 let fm = fq.reduce((a, b) => a + b, 0)
                 fm /= fq.length
                 const ws = word ? word.split(' ') : []
@@ -604,7 +613,7 @@ export class Note {
                     sound: false,
                     deck: await this.getter('deck') ?? 'aDict'
                 }
-                if (nv('warn')) console.warn(options, yc, read, results, fq, fq.length)
+                // if (nv('warn')) console.warn(options, yc, read, results, fq, fq.length)
                 let ain
                 try {
                     let js = this.aDict._jpws
@@ -1182,7 +1191,7 @@ export class Note {
     keep(k1, k2, elem) {
         let v = 1
         let opt = k1 && k2 ? v + 2 : ((k1 || k2) ? v + 1 : v)
-        this.svClk(elem, opt)
+        this.svClk(elem, opt, undefined, undefined, undefined, undefined, undefined, undefined, [k2, k1])
     }
     /**
      * @param {{ [x: string]: any; }} obj

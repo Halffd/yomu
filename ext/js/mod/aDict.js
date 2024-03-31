@@ -2805,7 +2805,7 @@ this.txtImg(false)
         const baseUrl = chrome.runtime.getURL('/search.html');
         window.open(baseUrl, '_self')
       }
-      if (ki == 29) {
+      if (kn == "\\" || kn == "|") {
         this.note.keep(e.ctrlKey, e.shiftKey, b[this.pos])
         if (e.shiftKey) {
           this.del(false, false, b[this.pos])
@@ -4614,7 +4614,7 @@ this.txtImg(false)
     if (k == 'w') {
       let int = parseInt(p.firstChild.getAttribute('pos'))
       r = int - this.pos
-      if (int == this.pos) r = int - 1
+      if (int == this.pos || int > this.pos) r = -1
     } else if (k == 'a') {
       if (c > l) {
         r = -l
@@ -4625,7 +4625,7 @@ this.txtImg(false)
     } else if (k == 's') {
       let int = parseInt(p.lastChild.getAttribute('pos'))
       r = int - this.pos
-      if (int == this.pos) r = int + 1
+      if (int == this.pos || int < this.pos) r = 1
     } else if (k == 'd') {
       if (c > l) {
         r = l
