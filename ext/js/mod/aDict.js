@@ -1778,9 +1778,9 @@ this.txtImg(false)
       }
       if (av('warn')) console.warn([emph, line, w])
       let nf = await this.note.find(tt)
-      if (this.at(tt, nf)) {
+      if (this.at(tt, nf) || this.ws) {
         elem.classList.add('fav')
-        if (this.analysis) {
+        if (this.analysis && !this.ws) {
           elem.style.display = 'none'
           elem.className = 'mns'
         }
@@ -2540,6 +2540,10 @@ this.txtImg(false)
       }
     }
     //if (ret) { return }
+    this.shift = e.shiftKey
+    this.ctrl = e.ctrlKey
+    this.alt = e.altKey
+    this.meta = e.metaKey
     let b
     const t = document.querySelectorAll('.mns')
     if (!this.var('rd')) {
@@ -2727,8 +2731,19 @@ this.txtImg(false)
       // b[pos].style.border = '1px dotted red'
       // alert(t,x)
     } else {
-      if (kn == 'c') {
-        this.copy(b[this.pos])
+      if (!e.ctrlKey) {
+        if (kn == 'v') {
+          this.copy(undefined, b[this.pos].parentElement.getAttribute('txt'))
+        }
+        if (kn == 'c') {
+          this.copy(b[this.pos])
+        }
+      }
+      if(kn == 'o'){
+        let d = this.var('del')
+        d = !d
+        localStorage.setItem('del', d)
+        this.toast(`Delete: ${d}`)
       }
       if (kn == 'm') {
         this.wst(b[this.pos])
@@ -3564,13 +3579,15 @@ this.txtImg(false)
     }
     console.log(w, this.note.bin, this.note.words, this.note.learned);
   }
-  wst(elem) {
+  async wst(elem) {
     let ws = elem.getAttribute('wset') ?? null
     let wss = elem.getAttribute('ws') !== '1' ?? false
     if (ws && wss) {
       //this.do = false
-      this.sentence([ws], 0)
-      this.moe([ws], 0, 1)
+      this.ws = true
+      await this.sentence([ws], 0)
+      await this.moe([ws], 0, 1)
+      this.ws = null
       elem.setAttribute('ws', '1')
     }
   }
@@ -5426,8 +5443,18 @@ this.txtImg(false)
         break
     }
   }
-  copy(elem) {
-    this._copyText(elem.getAttribute('w') ?? '')
+  copy(elem = null, t) {
+    let d = false
+    if (this.var("del") && !this.shift) {
+      localStorage.setItem('del', false)
+      d = true
+    }
+    let et = elem ? elem.getAttribute('w') : null
+    this._copyText(et ?? t)
+
+    if (d) {
+      setTimeout(() => {localStorage.setItem('del', true)}, 2000)
+    }
   }
   /**
    * @param {string} text
