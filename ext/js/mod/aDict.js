@@ -1241,6 +1241,11 @@ this.txtImg(false)
        */
       this.terms = []
       if (fast) {
+        let ol = this.var("oneln")
+        this.ssp = spl
+        if(ol && spl){
+          spl = [spl.join(' ')]
+        }
         for (ii in spl) {
           rI = 0
           /**
@@ -1472,6 +1477,7 @@ this.txtImg(false)
       }
     }
     // Check if gloss-definitions element exists and has no innerHTML
+    let ts = [tt]
     let go = true;
     const glossDefinitions = elem.querySelector('.gloss-definitions');
     if (this.var('moe') && !this.var("slw") && !glossDefinitions) {
@@ -1713,7 +1719,8 @@ this.txtImg(false)
 
       // Check conditions using meaningful variable names
       this.modK.appendChild(elem)
-      tt = this.unconj(elem) ?? tt
+      tt = this.unconj(elem)
+      if(tt) ts.push(tt)
       if (this.var('token')) {
         let ttc = tt // this.unconj(elem)
         //elem.settAttribute('wuc', ttc)
@@ -1729,8 +1736,9 @@ this.txtImg(false)
       }
       const isFValid = f !== -1 && f < this.fval && this.var('jd');
       const isNotKana = !isKana && this.var('kan');
+      const isat = this.at(tt) && this.var('known');
 
-      if (isFValid || isNotKana) {
+      if (isFValid || isNotKana || isat) {
         elem.style.display = 'none';
         elem.classList.value = 'mns';
       }
@@ -1777,13 +1785,17 @@ this.txtImg(false)
         })
       }
       if (av('warn')) console.warn([emph, line, w])
+      for(tt of ts){
+    let is = false
       let nf = await this.note.find(tt)
       if (this.at(tt, nf) || this.ws) {
         elem.classList.add('fav')
+        elem.setAttribute("fav", "1")
         if (this.analysis && !this.ws) {
           elem.style.display = 'none'
           elem.className = 'mns'
         }
+        is = true
       }
       if (this.note.bin.includes(tt)) {
         elem.style.setProperty('--cc', 'aqua')
@@ -1815,6 +1827,8 @@ this.txtImg(false)
         elem.setAttribute('wset', st)
         elem.insertAdjacentHTML('beforeend', `<span class="wset" style="font-size: 1.05em;padding:0;margin:0;">${st}</span>`)
       }
+      if(is) break
+    }
     }
     return [emph, line, w]
   }
@@ -2739,6 +2753,9 @@ this.txtImg(false)
           this.copy(b[this.pos])
         }
       }
+      if(kn == 'n'){
+        this.note.show()
+      }
       if(kn == 'o'){
         let d = this.var('del')
         d = !d
@@ -3285,6 +3302,11 @@ this.txtImg(false)
   calcWid(w = 1) {
     const widString = localStorage.getItem('wt');
     let wid = parseInt(widString, 10);
+    if(this.var('zoom')){
+      let zoom = Math.round(-0.02 * window.devicePixelRatio * 100 + 12);
+      wid = zoom
+      localStorage.setItem('wt', zoom)
+    }
 
     if (isNaN(wid)) {
       console.error('Invalid width value in localStorage');
@@ -3954,11 +3976,14 @@ this.txtImg(false)
       {id: 'warn', label: 'Warn'},
       {id: 'token', label: 'Tokenizer'},
       {id: 'kanji', label: 'Kanjis'},
+      {id: 'known', label: 'Known'},
       {id: 'sav', label: 'Save', def: 0},
       {id: 'hk', label: 'Split'},
       {id: 'cp', label: 'CopyMonitor'},
       {id: 'anki', label: ' Anki'},
       {id: 'pre', label: 'Prepend'},
+      {id: 'oneln', label: 'OneLine'},
+      {id: 'zoom', label: 'Zoom'},
       {id: 'del', label: 'Delete'},
       {id: 'slw', label: 'Fast'},
       {id: 'roma', label: 'Romaji'},

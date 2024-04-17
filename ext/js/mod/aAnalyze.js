@@ -138,14 +138,20 @@ export class Analyze {
             let kn = localStorage.getItem('known') ?? ''
             kn = kn.split(' ') ?? []
             for(let elem of es){
-                let w = this.dic.unconj(elem) ?? elem.getAttribute('w')
+                let ww = elem.getAttribute('w')
+                let w = this.dic.unconj(elem) ?? ww
                 let is = this.dic.at(w)
+                let a = elem.getAttribute("fav") ?? false
+                if(a) a = a == '1'
                 let f = elem.classList.contains('fav');
                 console.warn(`${w} is ${is} & ${f}`);
-                if(!(f && is)){
+                if(!(f || a) && !is){
                     elem.classList.add('fav')
                     elem.style.border = '1px solid white'
                     kn.push(w)
+                    if(ww != w){
+                        kn.push(ww)
+                    }
                 }
             }
             console.warn(kn);
