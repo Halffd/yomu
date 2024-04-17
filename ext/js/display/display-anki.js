@@ -482,7 +482,7 @@ export class DisplayAnki {
             if (dict >= 0) {
                 // Handle the case when dict is greater than or equal to 0
                 dictionaryEntry = dictionaryEntryIndex;
-                requirements = req;
+                requirements = req.requirements;
             } else if (typeof dictionaryEntryIndex === 'number') {
                 dictionaryEntries = this._display.dictionaryEntries;
                 dictionaryEntryDetails = this._dictionaryEntryDetails;

@@ -87,6 +87,7 @@ export class Note {
          * @type {import("../display/display-anki").DisplayAnki | null}
          */
         this.anki = anki
+        this.mined = [0,0]
         this.vars = {}
         this.svClk = this.svClk.bind(this);
         this.saveAdd = this.saveAdd.bind(this);
@@ -457,6 +458,7 @@ export class Note {
             iCur += 1
             const existingContents = await this.getter('save')// await note.getFileContents();
             if (nv('warn')) console.warn([t, txt, def, fq, tags, html, moe, audio, image, clip])
+            this.show()
             let save
             try {
                 if (nv('warn')) console.warn(existingContents)
@@ -617,14 +619,14 @@ export class Note {
                 let ain
                 try {
                     let js = this.aDict._jpws
-                    ain = av("anki") ? aIn(t, js) : false
+                    ain = av("anki") ? true : false //aIn(t, js)
                 } catch (zx) {
                     console.error(zx);
                 }
                 if (ain) {
-                    ain.then(() => {
+                    //ain.then(() => {
                         note.addAnki(results, t, read, so, results.length)
-                    })
+                    //})
                 }
                 if (fq.length == 0) {
                     let sum = 0;
@@ -714,7 +716,7 @@ export class Note {
     /**
      * @param {{ innerHTML: any; querySelector: (arg0: string) => string; getAttribute: (arg0: string) => string; classList: { add: (arg0: string) => void; }; parentElement: { getAttribute: (arg0: string) => any; }; querySelectorAll: (arg0: string) => any; }} elem
      */
-    async svClk(elem, cx = 0, tw = '', tx = '', _yc = null, clip = '', img = [], snd = [], keys = [false, false]) {
+    async svClk(elem, cx = 0, tw = '', mode = 0, _yc = null, clip = '', img = [], snd = [], keys = [false, false]) {
         const fq = []
         let df = ''
         const ht = elem?.innerHTML
@@ -723,6 +725,9 @@ export class Note {
         if (cx < 0) {
             img = this.dic.main.txtImg(true)
             await new Promise((r) => setTimeout(r, 3000))
+        }
+        if(mode == 0){
+            this.mined[1] += 1
         }
         try {
             aDict.prototype.cache(elem, cx)
@@ -883,6 +888,9 @@ export class Note {
 
         // Append the container to the document body
         bo.appendChild(container)
+    }
+    show(){
+        this.aDict.toast(`${this.mined[0]} / w${this.mined[1]}`)
     }
     /**
      * @param {string} type
@@ -1189,9 +1197,10 @@ export class Note {
      * @param {Element} elem
      */
     keep(k1, k2, elem) {
+        this.mined[0] += 1
         let v = 1
         let opt = k1 && k2 ? v + 2 : ((k1 || k2) ? v + 1 : v)
-        this.svClk(elem, opt, undefined, undefined, undefined, undefined, undefined, undefined, [k2, k1])
+        this.svClk(elem, opt, undefined, 1, undefined, undefined, undefined, undefined, [k2, k1])
     }
     /**
      * @param {{ [x: string]: any; }} obj
