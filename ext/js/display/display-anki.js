@@ -528,10 +528,10 @@ export class DisplayAnki {
                         const typ = dict >= 0 ? 'Search' : 'Popup';
                         const [t1, t2, t3, t4] = ['aDict', `v0.1-${new Date().toISOString().slice(0, 7)}`, `in${typ}`, mode == 'term-kana' ? 'kanaMode' : 'termMode'];
                         note.tags.push(t1, t2, t3, t4);
-                        console.dir(note);
+                        //console.dir(note);
                         const vrs = [note, [this, dict, dictionaryEntry, dictionaryEntries, dictionaryEntryDetails, dictionaryEntryIndex, details, requirements, mode, button, progressIndicatorVisible, overrideToken]];
                         // vrs.push(JSON.stringify(vrs))
-                        console.dir(vrs);
+                        //console.dir(vrs);
                         // const x = this._display._container;
                         // x.style.dmmmisplay = "none";
                         // console.log(note.fields['Key']);
@@ -572,9 +572,12 @@ export class DisplayAnki {
                     } catch (rr) {
                         console.error(rr, note);
                     }
-                    if (!noteId) {
+                    if (!noteId && !this.rep) {
+                        this.rep = true
                         this._addAnkiNote(dictionaryEntryIndex, 'term-kana', dict, req);
                         return;
+                    } else {
+                        this.rep = false
                     }
                     console.log(o);
                     if (!o || o?.sound) {

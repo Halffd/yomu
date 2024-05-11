@@ -616,6 +616,7 @@ this.txtImg(false)
     this.frst = true
     this.read = true
     this.istart = 0
+    this.options = this._display.getOptionsContext()
     if (this.search || this.page) {
       let ft = true
       let txt = ''
@@ -778,6 +779,37 @@ this.txtImg(false)
       for (const i in bs[1]) {
         bns2.appendChild(bs[1][i])
       }
+      const pb = document.createElement('div')
+      const hb = document.createElement("button")
+      const bd = document.createElement('div')
+      pb.className = 'conftop'
+      bd.classname = 'confborder'
+      hb.className = 'hideconf'
+      //bd.textContent = '_'
+      pb.prepend(hb)
+      pb.prepend(bd)
+      bnct.prepend(pb)
+      let hd = true
+      const hider = function(e){
+        if(e.target.closest('.config').style.height == '30px' || e.target.closest('.config').style.height == ''){
+          e.target.closest('.config').style.height = 'auto'
+        } else {
+          e.target.closest('.config').style.height = '30px'
+          hd = true
+        }
+      }
+      hb.onclick = hider
+      bd.onmouseenter = (e) => {
+        e.target.closest('.config').style.height = 'auto'
+        hd = false
+      }
+      bnct.onmouseleave = (e)=>{
+        if(!hd){
+        e.target.closest('.config').style.height = '30px'
+        hd = true
+        }
+      }
+      
       bnv.prepend(bnct)
       // if(av('warn')) console.warn(ids)//vs, vbs, stt);
       const g = this.g.bind(this)
@@ -798,7 +830,6 @@ this.txtImg(false)
       if (document.getElementById('export')) {
         document.getElementById('jax').onclick = function () {
           //let tx = getText()
-          if (av('warn')) console.warn(tx);
           /**
            * @param {string} text
            */
@@ -806,69 +837,18 @@ this.txtImg(false)
           /**
            * @param {string} text
            */
-          function convertToSrt(text) {
-            const lines = text.trim().split('\n');
-            let srt = '';
-
-            let reg = new RegExp(`.{40,99999999999}`, 'g');
-            let reg2 = new RegExp(`^[A-Za-z]+$`, 'gm');
-            for (let i = 0; i < lines.length; i++) {
-              const line = lines[i].trim();
-              const match = line.match(/\[(\d{2}:\d{2}\.\d{3}) -> (\d{2}:\d{2}\.\d{3})\](.*)/);
-
-              if (match) {
-                const startTime = match[1];
-                const endTime = match[2];
-                const content = match[3];
-
-                srt += `${i + 1}\n00:${startTime.replace('.', ',')} --> 00:${endTime.replace('.', ',')}\n${content.trim()}\n\n`;
-              }
-            }
-            let pr = window.prompt("Filter? 1/0")
-            if (parseInt(pr) != 0 || !(parseInt(pr) >= 0)) {
-              srt = srt.replace(reg, '');
-              srt = srt.replace(reg2, '')
-            }
-            return srt.trim();
-          }
-          async function getTextFromClipboard() {
-            try {
-              const text = await navigator.clipboard.readText();
-              return text;
-            } catch (error) {
-              console.error('Failed to read text from clipboard:', error);
-              return null;
-            }
-          }
-
+          this.subStart(true)
+        }.bind(this);
+        document.getElementById('jaxuf').onclick = function () {
+          //let tx = getText()
           /**
-           * @param {string} filename
-           * @param {BlobPart} text
+           * @param {string} text
            */
-          function downloadFile(filename, text) {
-            const blob = new Blob([text], {type: 'text/plain'});
-            const url = URL.createObjectURL(blob);
-
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = filename;
-
-            document.body.appendChild(link);
-            link.click();
-
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-          }
-          // Usage
-          let text = this.getText() // tx //prompt("Sub")
-          //navigator.clipboard.readText().then(text => {
-          if (text) {
-            if (av('log')) console.log('Text from clipboard:', text);
-            let srt = convertToSrt(text);
-            if (av('log')) console.log(srt);
-            let filename = 'sub.srt';
-            downloadFile(filename, srt);
-          }
+          //let reg = new RegExp(`.{35,99999999999}`, 'g'); let reg2 = new RegExp(`^[A-Za-z]+$`, 'gm');
+          /**
+           * @param {string} text
+           */
+          this.subStart(false)
         }.bind(this);
         document.getElementById('export').oncontextmenu = async () => {
           const v = document.querySelectorAll('.vis')
@@ -1105,6 +1085,17 @@ this.txtImg(false)
         this.modC = document.body.appendChild(document.createElement('footer'))
         // this.t = this.modK.appendChild(document.createElement("div"))
       }
+      let ret = (i) => {
+        let str = localStorage.getItem(i) ?? '';
+        return str.split(' ') ?? [];
+      }
+      this._saudio = ret('saudio')
+      this._mined = ret('mined')
+      this._jpws = ret('jpws')
+      this._anms = ret('anms')
+      this.pop = ret('pops')
+      this._cards = ret('cards')
+
       this.new = true
       nSizes()
       let qp = document.querySelector('#query-parser-content')
@@ -1146,11 +1137,11 @@ this.txtImg(false)
     // debugger;
     this.done = false
     this.stop = false
-    if (!this.card) {
-      this.vals().then((v) => {
-        console.log(v);
-      })
-    }
+    //if (!this.card) {
+    this.vals().then((v) => {
+      console.log(v);
+    })
+    //}
     if (this.first && document.querySelector('.query-parser-segment-reading')) {
       const pd = document.querySelector('#query-parser-content').children
       this.prev = document.createElement('div')
@@ -1243,7 +1234,7 @@ this.txtImg(false)
       if (fast) {
         let ol = this.var("oneln")
         this.ssp = spl
-        if(ol && spl){
+        if (ol && spl) {
           spl = [spl.join(' ')]
         }
         for (ii in spl) {
@@ -1720,7 +1711,8 @@ this.txtImg(false)
       // Check conditions using meaningful variable names
       this.modK.appendChild(elem)
       tt = this.unconj(elem)
-      if(tt) ts.push(tt)
+      if (tt) ts.push(tt)
+
       if (this.var('token')) {
         let ttc = tt // this.unconj(elem)
         //elem.settAttribute('wuc', ttc)
@@ -1785,50 +1777,61 @@ this.txtImg(false)
         })
       }
       if (av('warn')) console.warn([emph, line, w])
-      for(tt of ts){
-    let is = false
-      let nf = await this.note.find(tt)
-      if (this.at(tt, nf) || this.ws) {
-        elem.classList.add('fav')
-        elem.setAttribute("fav", "1")
-        if (this.analysis && !this.ws) {
-          elem.style.display = 'none'
-          elem.className = 'mns'
+      /*this._display._findDictionaryEntries(false, tt, false, this.options).then(async (results) => {
+        let ttt = results[0].headwords[0].term
+        ts.push(ttt)*/
+        let is = false
+        for (tt of ts) {
+          if (this._mined) {
+            if (this._mined.includes(tt)) {
+              elem.classList.add('mined')
+            }
+          }
+
+          let nf = await this.note.find(tt)
+          console.warn(tt, this.at(tt, nf), this.ws);
+          if ((this.at(tt, nf) || this.ws) && !is) {
+            elem.classList.add('fav')
+            elem.setAttribute("fav", "1")
+            if (this.analysis && !this.ws) {
+              elem.style.display = 'none'
+              elem.className = 'mns'
+            }
+            is = true
+          }
+          if (this.note.bin.includes(tt)) {
+            elem.style.setProperty('--cc', 'aqua')
+          } else if (this.note.words.includes(tt)) {
+            elem.style.setProperty('--cc', 'green')
+          } else if (this._cards?.includes(tt)) {
+            if (this._saudio.includes(tt)) {
+              elem.style.setProperty('--cc', 'purple')
+            } else if (this._anms.includes(tt)) {
+              elem.style.setProperty('--cc', 'pink')
+            } else if (this._jpws.includes(tt)) {
+              elem.style.setProperty('--cc', 'cyan')
+            } else {
+              elem.style.setProperty('--cc', 'blue')
+            }
+          } else if (nf) {
+            elem.style.setProperty('--cc', 'orange')
+          } else if (this.note.learned.includes(tt)) {
+            elem.style.setProperty('--cc', 'red')
+          } else if (this.note.known.includes(tt)) {
+            elem.style.setProperty('--cc', 'gray')
+          }
+          if (this.note.known.includes(tt) && this.var('kn') && this.analysis) {
+            elem.style.display = 'none'
+            elem.className = 'mns'
+          }
+          if (nf) {
+            let st = nf?.[0].sentence
+            elem.setAttribute('wset', st)
+            elem.insertAdjacentHTML('beforeend', `<span class="wset" style="font-size: 1.05em;padding:0;margin:0;">${st}</span>`)
+          }
+          //if (is) break
         }
-        is = true
-      }
-      if (this.note.bin.includes(tt)) {
-        elem.style.setProperty('--cc', 'aqua')
-      } else if (this.note.words.includes(tt)) {
-        elem.style.setProperty('--cc', 'green')
-      } else if (this._cards?.includes(tt)) {
-        if (this._saudio.includes(tt)) {
-          elem.style.setProperty('--cc', 'purple')
-        } else if (this._anms.includes(tt)) {
-          elem.style.setProperty('--cc', 'pink')
-        } else if (this._jpws.includes(tt)) {
-          elem.style.setProperty('--cc', 'cyan')
-        } else {
-          elem.style.setProperty('--cc', 'blue')
-        }
-      } else if (nf) {
-        elem.style.setProperty('--cc', 'orange')
-      } else if (this.note.learned.includes(tt)) {
-        elem.style.setProperty('--cc', 'red')
-      } else if (this.note.known.includes(tt)) {
-        elem.style.setProperty('--cc', 'gray')
-      }
-      if (this.note.known.includes(tt) && this.var('kn') && this.analysis) {
-        elem.style.display = 'none'
-        elem.className = 'mns'
-      }
-      if (nf) {
-        let st = nf?.[0].sentence
-        elem.setAttribute('wset', st)
-        elem.insertAdjacentHTML('beforeend', `<span class="wset" style="font-size: 1.05em;padding:0;margin:0;">${st}</span>`)
-      }
-      if(is) break
-    }
+      //})
     }
     return [emph, line, w]
   }
@@ -1843,7 +1846,6 @@ this.txtImg(false)
     let ss = so.split(' ')
     this.svs(si, [], undefined, undefined, ss, a)
     this.saving = true
-    this.hke = true
   }
   snav(i, e = null) {
     if (e) {
@@ -2753,10 +2755,10 @@ this.txtImg(false)
           this.copy(b[this.pos])
         }
       }
-      if(kn == 'n'){
+      if (kn == 'n') {
         this.note.show()
       }
-      if(kn == 'o'){
+      if (kn == 'o') {
         let d = this.var('del')
         d = !d
         localStorage.setItem('del', d)
@@ -2906,11 +2908,29 @@ this.txtImg(false)
           this.expand(b[this.pos], e.shiftKey)
         }
       }
+      if(!e.ctrlKey){
+      if (kn == 'g') {
+        e.preventDefault()
+        e.stopPropagation()
+        this.txts.value = ''
+        this.txts.textContent = '';
+        this.txts.focus();
+        this.txts.scrollIntoView()
+      }
+      if (kn == 'f') {
+        e.preventDefault()
+        e.stopPropagation()
+        this.txts.focus();
+        this.txts.scrollIntoView()
+      }
+    }
       if (kn == 'r') {
         const elem = b[this.pos]
         try {
           sv(elem, undefined, undefined, undefined, undefined, undefined, undefined, undefined, [true, false])
-          this.wst(elem)
+          if(this.var('wsw')){
+            this.wst(elem)
+          }
         } catch (err) {
           console.error(err)
         }
@@ -2919,7 +2939,9 @@ this.txtImg(false)
         const elem = b[this.pos]
         try {
           sv(elem, undefined, undefined, undefined, undefined, undefined, undefined, undefined, [true, true])
-          this.wst(elem)
+          if(this.var('wsw')){
+            this.wst(elem)
+          }
         } catch (err) {
           console.error(err)
         }
@@ -2928,11 +2950,14 @@ this.txtImg(false)
         const elem = b[this.pos]
         try {
           sv(elem) //,undefined,undefined,undefined,undefined,undefined,undefined,undefined,[e.ctrlKey,e.shiftKey])
-          this.wst(elem)
+          if(this.var('wsw')){
+            this.wst(elem)
+          }
         } catch (err) {
           console.error(err)
         }
       }
+      if(!e.ctrlKey && !e.shiftKey){
       if (kn === '=') {
         let elem = document.getElementById('cur')
         this.del(true, true, elem)
@@ -2941,6 +2966,7 @@ this.txtImg(false)
         let elem = document.getElementById('cur')
         this.del(true, false, elem)
       }
+    }
       if (kn === 'delete') {
         let elem = document.getElementById('cur')
         if (e.ctrlKey == false && e.shiftKey == false) {
@@ -3087,6 +3113,7 @@ this.txtImg(false)
         })
     })();
   }
+
   get jpdb() {
     return (async () => {
       if (typeof this._jpdb !== 'undefined' && this._jpdb !== null) {
@@ -3110,31 +3137,45 @@ this.txtImg(false)
    */
   query(q) {
     return (async () => {
-      //if (!this._jpws) {
       const result = await aQuery(q); // Call ankis to populate jpws
       this.q = result
       this._query = getWords(result.notes);
-      //}
       return this._query;
     })();
   }
   get saudio() {
     return (async () => {
-      //if (!this._jpws) {
       const result = await aQuery(`"note:JP Mining Note" -SentenceAudio:[* -tag:inSearch`); // Call ankis to populate jpws
       this.saudios = result
       this._saudio = getWords(result.notes);
-      //}
+      this._saudioP = true
+      localStorage.setItem("saudio", pops.join(' '))
       return this._saudio;
+    })();
+  }
+  get mined() {
+    return (async () => {
+      const result = await aQuery("PrimaryDefinitionPicture:<* -SentenceAudio:[*"); // Call ankis to populate jpws
+      this.mineds = result
+      this._mined = getWords(result.notes);
+      if (!this._saudioP) {
+        await this.waitFor((/** @type {any} */ _) => this.saudio !== undefined)
+      }
+      if (!this.popP) {
+        await this.waitFor((/** @type {any} */ _) => this.pop !== undefined)
+      }
+      this._mined = [...new Set([...this._mined, ...this.pop, ...this._saudio])]
+      console.warn('mined----------- ', this._saudio && this.pop, this._mined);
+      localStorage.setItem("mined", this._mined.join(' '))
+      return this._mined;
     })();
   }
   get jpws() {
     return (async () => {
-      //if (!this._jpws) {
       const result = await this.ankis(4); // Call ankis to populate jpws
       this.jpmn = result
       this._jpws = getWords(result.notes);
-      //}
+      localStorage.setItem("jpws", this._jpws.join(' '))
       return this._jpws;
     })();
   }
@@ -3144,6 +3185,7 @@ this.txtImg(false)
       this.anm = result
       var anms = getWords(result.notes);
       this._anms = anms
+      localStorage.setItem("anms", anms.join(' '))
       return anms;
     })();
   }
@@ -3151,8 +3193,11 @@ this.txtImg(false)
   get pops() {
     return (async () => {
       const result = await this.ankis(3); // Call ankis to populate pops
-      this.pop = result
+      this._pop = result
       var pops = getWords(result.notes);
+      this.pop = pops
+      localStorage.setItem("pops", pops.join(' '))
+      this.popP = true
       return pops;
     })();
   }
@@ -3160,19 +3205,31 @@ this.txtImg(false)
     return (async () => {
       const result = await this.ankis(5); // Call ankis to populate pops
       this.card = result
-      var pops = getWords(result.notes);
-      this._cards = pops
-      return pops;
+      var cards = getWords(result.notes);
+      this._cards = cards
+      localStorage.setItem("cards", cards.join(' '))
+      return cards;
     })();
   }
   async vals() {
-    let r = [
-      await this.cards,
-      await this.jpws,
-      await this.anms,
-      await this.saudio
-    ]
-    return r
+    try {
+      const r = await Promise.all([
+        this.cards,
+        this.jpws,
+        this.anms,
+        this.saudio,
+        this.pops,
+        this.mined
+      ]);
+
+      // 'r' will be an array containing the resolved values of all promises
+      // You can access the individual results using array indexing, e.g., r[0], r[1], etc.
+      return r
+      // Your code to handle the results here...
+    } catch (error) {
+      // Handle the error (e.g., log, display an error message, etc.)
+      console.error(error);
+    }
   }
   async ankis(op = 0) {
     // Start the appropriate function based on the op parameter
@@ -3302,7 +3359,7 @@ this.txtImg(false)
   calcWid(w = 1) {
     const widString = localStorage.getItem('wt');
     let wid = parseInt(widString, 10);
-    if(this.var('zoom')){
+    if (this.var('zoom')) {
       let zoom = Math.round(-0.02 * window.devicePixelRatio * 100 + 12);
       wid = zoom
       localStorage.setItem('wt', zoom)
@@ -3719,7 +3776,7 @@ this.txtImg(false)
     } else if (this.pos > b.length - 1) {
       this.pos = b.length - 1
     }
-    elem.scrollIntoView()// {behavior: 'auto',block: 'center'});
+    elem.scrollIntoView({behavior: 'auto', block: 'start'});
     this.cache(elem, this.istart, this.pos)
   }
   /**
@@ -3982,6 +4039,7 @@ this.txtImg(false)
       {id: 'cp', label: 'CopyMonitor'},
       {id: 'anki', label: ' Anki'},
       {id: 'pre', label: 'Prepend'},
+      {id: 'wsw', label: 'WordSentence'},
       {id: 'oneln', label: 'OneLine'},
       {id: 'zoom', label: 'Zoom'},
       {id: 'del', label: 'Delete'},
@@ -3995,7 +4053,8 @@ this.txtImg(false)
       {id: 'export', label: 'Export', def: 0},
       {id: 'backup', label: 'Backup/Restore', def: 0},
       {id: 'sync', label: 'Sync', def: 0},
-      {id: 'jax', label: 'JAXsubs', def: 0},
+      {id: 'jax', label: 'JAXsubs-JP', def: 0},
+      {id: 'jaxuf', label: 'JAXsubs-EN', def: 0},
       {id: 'exe', label: 'Restart', def: 0}
     ]
 
@@ -5034,7 +5093,71 @@ this.txtImg(false)
         </li>`
     }
   }
-
+  subStart(f = true){
+    function convertToSrt(text, f = true) {
+      const lines = text.trim().split('\n');
+      let srt = '';
+  
+      let reg = new RegExp(`.{40,99999999999}`, 'g');
+      let reg2 = new RegExp(`^[A-Za-z]+$`, 'gm');
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        const match = line.match(/\[(\d{2}:\d{2}\.\d{3}) -> (\d{2}:\d{2}\.\d{3})\](.*)/);
+  
+        if (match) {
+          const startTime = match[1];
+          const endTime = match[2];
+          const content = match[3];
+  
+          srt += `${i + 1}\n00:${startTime.replace('.', ',')} --> 00:${endTime.replace('.', ',')}\n${content.trim()}\n\n`;
+        }
+      }
+      let pr = f //window.prompt("Filter? 1/0")
+      if (pr) {
+        srt = srt.replace(reg, '');
+        srt = srt.replace(reg2, '')
+      }
+      return srt.trim();
+    }
+    async function getTextFromClipboard() {
+      try {
+        const text = await navigator.clipboard.readText();
+        return text;
+      } catch (error) {
+        console.error('Failed to read text from clipboard:', error);
+        return null;
+      }
+    }
+  
+    /**
+     * @param {string} filename
+     * @param {BlobPart} text
+     */
+    function downloadFile(filename, text) {
+      const blob = new Blob([text], {type: 'text/plain'});
+      const url = URL.createObjectURL(blob);
+  
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+  
+      document.body.appendChild(link);
+      link.click();
+  
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
+    // Usage
+  let text = this.getText() // tx //prompt("Sub")
+  //navigator.clipboard.readText().then(text => {
+  if (text) {
+    if (av('log')) console.log('Text from clipboard:', text);
+    let srt = convertToSrt(text, f);
+    if (av('log')) console.log(srt);
+    let filename = 'sub.srt';
+    downloadFile(filename, srt);
+  }
+}
   /**
    * @param {any} word
    */
@@ -5542,7 +5665,7 @@ this.txtImg(false)
  * @param {string} fontWeight - The font weight of the toast text.
  * @param {number} duration - The duration in milliseconds for the toast to remain visible.
  */
-  async toast(message = '', duration = 5000, backgroundColor = 'blue', textColor = 'white', fontWeight = 'bolder') {
+  async toast(message = '', duration = 5000, backgroundColor = 'darkblue', textColor = 'white', fontWeight = 'bolder') {
     try {
       // Create the toast container element
       var toastContainer = document.createElement('div');
@@ -5561,27 +5684,25 @@ this.txtImg(false)
 
       // Apply animation using the style property
       toastContainer.style.position = 'fixed';
-      //toastContainer.style.top = '0';
       toastContainer.style.right = '50%';
-      // Custom styling for the toast
+      toastContainer.style.zIndex = '9999';
       toast.style.backgroundColor = backgroundColor;
       toast.style.color = textColor;
       toast.style.fontWeight = fontWeight;
 
-      toastContainer.style.transition = 'transform 1.4s';
-      toastContainer.style.transform = 'translateY(-1000px)';
+      toastContainer.style.transition = 'transform 2.5s';
+      toastContainer.style.transform = 'translateY(-150vh)';
 
-      await setTimeout(function () {
+      setTimeout(function () {
         toastContainer.style.transform = 'translateY(50%)';
         setTimeout(() => {
           toastContainer.style.transition = 'none'; // Remove the transition animation
-          toastContainer.style.transform = 'translateY(-350px)'; // Set the final transform state
+          toastContainer.style.transform = 'translateY(-100vh)'; // Set the final transform state
         }, 500);
       }, 10);
 
-
       // Remove the toast element after a specified duration
-      await setTimeout(function () {
+      setTimeout(function () {
         toastContainer.style.transform = 'translateY(0)';
         setTimeout(function () {
           toastContainer.remove();

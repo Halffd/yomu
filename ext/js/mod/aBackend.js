@@ -1,3 +1,9 @@
+
+export function comm(){
+    chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
+        console.log("Message received from frontend:", message);
+      });
+}
 /**
  * Represents a backend class that uses a Web Worker to handle fetch requests.
  */

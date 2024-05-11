@@ -3,7 +3,7 @@
 import {aDict} from '../mod/aDict.js';
 import {merge, aIn} from './aUtil.js';
 import {wn, av} from './aDict.js';
-import {db, store, retrieve} from './aDb.js'
+import {store, retrieve, dbinit} from './aDb.js'
 
 var nv = (/** @type {string} */ v) => {
     return localStorage.getItem(v) == 'true'
@@ -87,7 +87,7 @@ export class Note {
          * @type {import("../display/display-anki").DisplayAnki | null}
          */
         this.anki = anki
-        this.mined = [0,0]
+        this.mined = [0, 0, [], []]
         this.vars = {}
         this.svClk = this.svClk.bind(this);
         this.saveAdd = this.saveAdd.bind(this);
@@ -424,7 +424,7 @@ export class Note {
             //let tu = await unconjugate(t);
             //if (tu) t = tu;
             let lt = t
-           try {
+            try {
                 const options = this.aDict._display.getOptionsContext()
                 results = await this.aDict._display._findDictionaryEntries(false, t, false, options)
                 if (!keys[0] && this.aDict.japaneseUtil.isStringEntirelyKana(t)) {
@@ -440,7 +440,7 @@ export class Note {
             } catch (rr) {
                 console.error(rr);
             }
-            if(lt !== t){
+            if (lt !== t) {
                 this.saveAdd(cx, lt, txt, def, fq, tags, html, moe, audio, image, clip, yc, read, elem, [true, true])
             }
             const note = window.aNote
@@ -625,7 +625,7 @@ export class Note {
                 }
                 if (ain) {
                     //ain.then(() => {
-                        note.addAnki(results, t, read, so, results.length)
+                    note.addAnki(results, t, read, so, results.length)
                     //})
                 }
                 if (fq.length == 0) {
@@ -726,8 +726,10 @@ export class Note {
             img = this.dic.main.txtImg(true)
             await new Promise((r) => setTimeout(r, 3000))
         }
-        if(mode == 0){
+        let tx = elem.getAttribute('w') ?? ''
+        if (mode == 0 && !this.mined[3].includes(tx)) {
             this.mined[1] += 1
+            this.mined[3].push(tx)
         }
         try {
             aDict.prototype.cache(elem, cx)
@@ -889,8 +891,8 @@ export class Note {
         // Append the container to the document body
         bo.appendChild(container)
     }
-    show(){
-        this.aDict.toast(`${this.mined[0]} / w${this.mined[1]}`)
+    show() {
+        this.aDict.toast(`${this.mined[0]} / w${this.mined[1]}`, 2700)
     }
     /**
      * @param {string} type
@@ -948,6 +950,7 @@ export class Note {
                 }
             }
             localStorage.setItem('save', JSON.stringify(oc));
+
         } catch (error) {
             console.error(error);
         }
@@ -1125,20 +1128,55 @@ export class Note {
         await this.put(this.obj, '/save')
     }
     async db(url = '') {
+        return await this.request(null, 'GET', url)
+    }
+
+
+    /**
+     * Performs a request to the Firebase Realtime Database.
+     * @param {object} data - The data to be sent in the request body.
+     * @param {string} method - The HTTP method of the request (GET, POST, etc.).
+     * @param {string} url - The URL of the database endpoint.
+     * @returns {Promise<object>} A promise that resolves to the parsed response data.
+     */
+    async request(data, method, url = '') {
         try {
-            url = this.url + url + '.json'
-            const response = await fetch(url, {
-                method: 'GET',
+            url = this.url + url + '.json';
+
+            const options = {
+                method: method,
                 headers: {
                     'Content-Type': 'application/json',
-                }
-            });
+                },
+            };
 
-            const responseData = await response.json();
-            return responseData;
+            if (method !== 'GET' && method !== 'HEAD') {
+                options.body = JSON.stringify(data);
+            }
+
+            const response = await fetch(url, options);
+
+            if (method === 'GET') {
+                const responseData = await response.json();
+                return responseData;
+            }
+
+            return response;
         } catch (error) {
-            throw new Error('Failed to perform POST request: ' + error.message);
+            throw new Error('Failed to perform request: ' + error.message);
         }
+    }
+    async post(data, url = '') {
+        return await this.request(data, 'POST', url)
+    }
+    /**
+    * Performs a delete request to the Firebase Realtime Database.
+    * @param {string} url - The URL of the database endpoint.
+    * @param {object} data - The data to be sent in the request body.
+    * @returns {Promise<object>} A promise that resolves to the parsed response data.
+    */
+    async del(url = '') {
+        return await this.request(null, 'DELETE', url)
     }
     /**
     * Performs a POST request to the Firebase Realtime Database.
@@ -1146,46 +1184,8 @@ export class Note {
     * @param {object} data - The data to be sent in the request body.
     * @returns {Promise<object>} A promise that resolves to the parsed response data.
     */
-    async post(data, url = '') {
-        //store(o)
-        try {
-            url = this.url + url + '.json'
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data),
-            });
-
-            //const responseData = await response.json();
-            return response;
-        } catch (error) {
-            throw new Error('Failed to perform POST request: ' + error.message);
-        }
-    }/**
-    * Performs a POST request to the Firebase Realtime Database.
-    * @param {string} url - The URL of the database endpoint.
-    * @param {object} data - The data to be sent in the request body.
-    * @returns {Promise<object>} A promise that resolves to the parsed response data.
-    */
     async put(data, url = '') {
-        //store(o)
-        try {
-            url = this.url + url + '.json'
-            const response = await fetch(url, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data),
-            });
-
-            //const responseData = await response.json();
-            return response;
-        } catch (error) {
-            throw new Error('Failed to perform POST request: ' + error.message);
-        }
+        return await this.request(data, 'PUT', url)
     }
     async dbset() {
         let d = await db()
@@ -1197,7 +1197,11 @@ export class Note {
      * @param {Element} elem
      */
     keep(k1, k2, elem) {
-        this.mined[0] += 1
+        let t = elem.getAttribute('w') ?? ''
+        if (!this.bin.includes(t) && !this.mined[2].includes(t)) {
+            this.mined[0] += 1
+            this.mined[2].push(t)
+        }
         let v = 1
         let opt = k1 && k2 ? v + 2 : ((k1 || k2) ? v + 1 : v)
         this.svClk(elem, opt, undefined, 1, undefined, undefined, undefined, undefined, [k2, k1])
@@ -1262,9 +1266,12 @@ export class Note {
     }
     get learned() {
         var a = localStorage.getItem("learned") ?? '';
+        var b = localStorage.getItem('alllearned') ?? ''
         var oc
         try {
             oc = a.split(' ')
+            let c = b.split(' ')
+            oc = [...oc, ...c]
         } catch {
             return null
         }

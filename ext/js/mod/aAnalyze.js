@@ -135,7 +135,7 @@ export class Analyze {
         this.btn.onclick = function(e){
             e.stopPropagation()
             let es = document.querySelectorAll('.vis')
-            let kn = localStorage.getItem('known') ?? ''
+            let kn = localStorage.getItem('alllearned') ?? ''
             kn = kn.split(' ') ?? []
             for(let elem of es){
                 let ww = elem.getAttribute('w')
@@ -156,7 +156,7 @@ export class Analyze {
             }
             console.warn(kn);
             kn = kn.join(' ')
-            localStorage.setItem('known', kn)
+            localStorage.setItem('alllearned', kn)
         }.bind(this)
         t.appendChild(this.txt)
         t.appendChild(this.btn)
