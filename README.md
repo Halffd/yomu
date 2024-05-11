@@ -21,20 +21,20 @@ In addition, we are beginning to make important bug fixes and minor enhancements
 Since the owner requested forks be uniquely named, we have chosen a new name, _yomitan_. (_-tan_ is an honorific used for anthropomorphic moe characters.) While we've made some substantial changes, the majority of the extension's functionality is thanks to hard work of foosoft and numerous other open source contributors from 2016-2023.
 
 Fork Additional Features:
-  Custom Search
-    Display every word definition
-    Display each kanji meaning
-    Show results from wiktionary, kanjidamage, kanjipedia and ichi.moe
-    Filter searched words by frequency or kanji
-    Save word on click
-    Hotkeys (arrows to navigate, space to expand, 0-9 to jump to, enter to save and add to anki)
-    Reading mode (No definitions, arrows to show meanings)
-    Particles filtering
-    Automaticly add(before or after previous) from clipboard
-    Customize search page hiding elements
-    Analyze texts
-  Anki auto copy to clipoard and play completion sound
-  Anki additional note kanji info
+  * Custom Search
+      * Display every word definition
+      * Display each kanji meaning
+      * Show results from wiktionary, kanjidamage, kanjipedia and ichi.moe
+      * Filter searched words by frequency or kanji
+      * Save word on click
+      * Hotkeys (arrows to navigate, space to expand, 0-9 to jump to, enter to save and add to anki)
+      * Reading mode (No definitions, arrows to show meanings)
+      * Particles filtering
+      * Automaticly add(before or after previous) from clipboard
+      * Customize search page hiding elements
+      * Analyze texts
+  * Anki auto copy to clipoard and play completion sound
+  * Anki additional note kanji info
 
 
 ## Contributing
