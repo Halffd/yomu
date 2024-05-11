@@ -651,9 +651,12 @@ export class DisplayAnki {
                     } catch (rr) {
                         console.error(rr, note);
                     }
-                    if (!noteId) {
+                    if (!noteId && !this.rep) {
+                        this.rep = true
                         this._addAnkiNote(dictionaryEntryIndex, 'term-kana', dict, req);
                         return;
+                    } else {
+                        this.rep = false
                     }
                     console.log(o);
                     if (!o || o?.sound) {

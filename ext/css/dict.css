@@ -11,7 +11,9 @@
 :root {
     height: 100%;
 }
-
+::-webkit-scrollbar {
+    display: none;
+}
 .tls rt {
     font-size: 1.08em;
     margin: 4px;
@@ -71,7 +73,18 @@
     border-color: transparent transparent crimson transparent;
     /* Adjust the arrow color */
 }
-
+.mined::before {
+    font-size: 2.1em;
+    text-rendering: auto;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    color: aqua; /*var(--cc);*/
+    content: '🂢';
+    /* FontAwesome star content */
+    position: absolute;
+    bottom: 0;
+    left: -40px;
+}
 .fav::after {
     font-size: 2.1em;
     text-rendering: auto;
@@ -513,10 +526,39 @@ dd>li {
     flex: none;
     width: fit-content;
 }
-
+.conftop {
+    display: flex;
+}
+.conftop>div, .confborder {
+    flex: 10%;
+    border: 8px solid #2f3380;
+    /*background-color: #191a2f;*/
+}
+.hideconf {
+    font-size: large;
+    border: red;
+    width: fit-content;
+    margin: 2px;
+    flex: 90%;
+    text-align: center;
+}
+.hideconf::after {
+    content: '>';
+    writing-mode: vertical-lr;
+    -webkit-transform: rotate(90deg);
+    -moz-transform: rotate(90deg);
+}
+/*.config:hover {
+    height: auto;
+    overflow: visible;
+    text-overflow: inherit;
+}*/
 .config {
     border: 4px solid green;
     text-wrap: wrap;
+    overflow: hidden;
+    text-overflow: clip;
+    height: 30px;
 }
 
 .conf {
@@ -597,7 +639,6 @@ body {
     color: var(--text-color);
     height: 100%;
     overflow: hidden;
-    padding-right: 0.5em;
 }
 
 #query-parser-mode-container {

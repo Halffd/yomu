@@ -50,6 +50,6 @@ function localsize() {
     console.log(`Size of Local Storage value ${valueBytes} bytes, ${o}`);
     let sortedArray = sortObjectItemsByValue(o);
     console.log(sortedArray);
-    calculateStorageUsage(valueBytes, totalBytes)
+    console.log(calculateStorageUsage(valueBytes, totalBytes))
     return sortedArray
 }

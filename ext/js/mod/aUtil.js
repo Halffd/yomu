@@ -193,6 +193,7 @@ export async function aDeck(deckName, sort = '') {
         } catch (error) {
             console.error(error);
         }
+        await setTimeout(() => {}, 1400);
     }
 }
 /**
@@ -224,6 +225,7 @@ export async function aQuery(q, sort = '') {
         } catch (error) {
             console.error(error);
         }
+        await setTimeout(() => {}, 800);
     }
 }
 
@@ -256,6 +258,7 @@ export async function aAll(sort = '') {
         } catch (error) {
             console.error(error);
         }
+        await setTimeout(() => {}, 900);
     }
 }
 /**
@@ -287,6 +290,7 @@ export async function aTag(tag, sort = '') {
         } catch (error) {
             console.error(error);
         }
+        await setTimeout(() => {}, 1200);
     }
 }
 
@@ -319,6 +323,7 @@ export async function aModel(m, sort = '') {
         } catch (error) {
             console.error(error);
         }
+        await setTimeout(() => {}, 1000);
     }
     return null;
 }

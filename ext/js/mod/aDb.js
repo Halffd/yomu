@@ -3,7 +3,7 @@
 /**
  * Handles storing and retrieving data using Firebase.
  */
-export async function db() {
+export async function dbinit() {
   try {
     // Replace with your Firebase project configuration
     const firebaseConfig = await (await fetch('js/admin/key.json')).json()
