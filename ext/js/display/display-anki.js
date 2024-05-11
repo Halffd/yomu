@@ -543,14 +543,14 @@ export class DisplayAnki {
                         // console.log(run, document.URL);
                         if (dict < 0 && (!run || !(document.URL.includes('search.html') && document.URL.includes('chrome-extension')))) {
                             try {
-                                note.fields.ExtraDefinitions += this.getText();
+                                note.fields.ExtraDefinitions += aDict.prototype.getText();
                             } catch { }
                             // this._display._copyText(note.fields['Key']);
                         }
                         if (o) {
                             note.fields.Sentence = o.st;
                         }
-                        if (aDict.prototype.mobile) {
+                        if(aDict.prototype.mobile){
                             aDict.prototype._copyText(note.fields.Key)
                         }
                         try {
@@ -623,82 +623,6 @@ export class DisplayAnki {
                         } catch (error) {
                             console.error('Error reading file:', error);
                         }
-                        // console.log(run, document.URL);
-                        if (dict < 0 && (!run || !(document.URL.includes('search.html') && document.URL.includes('chrome-extension')))) {
-                            note.fields.ExtraDefinitions += this.getText();
-                            // this._display._copyText(note.fields['Key']);
-                        }
-                        if (o) {
-                            note.fields.Sentence = o.st;
-                        }
-                        try {
-                            let df = await yomiKanjis.bind(this._display, note.fields.Key)()
-                            note.fields.ExtraDefinitions += df;
-                        } catch (ne) {
-                            console.error(ne);
-                        }
-                        // this._display._copyHostSelection()
-                    } catch (noe) {
-                        console.warn(noe);
-                    }
-                    try {
-                        if (o) {
-                            note.deckName = o.deck;
-                        }
-                        console.warn(o);
-                        noteId = await yomitan.api.addAnkiNote(note);
-                        addNoteOkay = true;
-                    } catch (rr) {
-                        console.error(rr, note);
-                    }
-                    if (!noteId && !this.rep) {
-                        this.rep = true
-                        this._addAnkiNote(dictionaryEntryIndex, 'term-kana', dict, req);
-                        return;
-                    } else {
-                        this.rep = false
-                    }
-                    console.log(o);
-                    if (!o || o?.sound) {
-                        try {
-                            // const response = await fetch('sound.txt');
-                            // const text = await response.text();
-                            // const base64AudioData = text.trim(); // Assuming the Base64 string is the entire content of the file
-
-                            // Use the base64Data as needed
-                            // Convert the Base64 data to ArrayBuffer
-                            const binaryAudioData = window.atob(base64AudioData);
-                            const arrayBuffer = new ArrayBuffer(binaryAudioData.length);
-                            const view = new Uint8Array(arrayBuffer);
-                            for (let i = 0; i < binaryAudioData.length; i++) {
-                                view[i] = binaryAudioData.charCodeAt(i);
-                            }
-                            // Create an audio context
-                            const audioContext = new AudioContext();
-                            // Decode the audio data
-                            audioContext.decodeAudioData(arrayBuffer)
-                                .then((decodedData) => {
-                                    // Create an audio buffer source
-                                    const audioSource = audioContext.createBufferSource();
-                                    // Create a gain node
-                                    const gainNode = audioContext.createGain();
-                                    // Set the volume level (0.5 represents 50% volume)
-                                    gainNode.gain.value = 0.8;
-                                    // Connect the audio buffer source to the gain node
-                                    audioSource.connect(gainNode);
-                                    // Connect the gain node to the audio context destination
-                                    gainNode.connect(audioContext.destination);
-                                    // Set the audio buffer
-                                    audioSource.buffer = decodedData;
-                                    // Start playing the audio
-                                    audioSource.start();
-                                })
-                                .catch((error) => {
-                                    console.error('Error decoding audio data:', error);
-                                });
-                        } catch (error) {
-                            console.error('Error reading file:', error);
-                        }
                     }
                 } catch (e) {
                     allErrors.length = 0;
@@ -712,25 +636,6 @@ export class DisplayAnki {
                         if (this._suspendNewCards) {
                             try {
                                 await yomitan.api.suspendAnkiCardsForNote(noteId);
-                            } catch (e) {
-                                allErrors.push(e instanceof Error ? e : new Error(`${e}`));
-                            }
-                        }
-                        if (button && dict < 0) {button.disabled = true;}
-                        if (typeof dictionaryEntryIndex === 'number') {this._updateViewNoteButton(dictionaryEntryIndex, [noteId], true);}
-                    }
-                } catch (e) {
-                    allErrors.length = 0;
-                    allErrors.push(e instanceof Error ? e : new Error(`${e}`));
-                }
-
-                if (addNoteOkay) {
-                    if (noteId === null) {
-                        allErrors.push(new Error('Note could not be added'));
-                    } else {
-                        if (this._suspendNewCards) {
-                            try {
-                                await this._display.application.api.suspendAnkiCardsForNote(noteId);
                             } catch (e) {
                                 allErrors.push(toError(e));
                             }
@@ -757,6 +662,7 @@ export class DisplayAnki {
             this._hideErrorNotification(true);
         }
     }
+
 
     /**
      * @param {import('anki-note-builder').Requirement[]} requirements
@@ -917,48 +823,7 @@ export class DisplayAnki {
         }
         return results;
     }
-    /**
- * Retrieves the text from the clipboard.
- * @returns {Promise<string>} A promise that resolves to the text from the clipboard.
- */
-    async getText() {
-        /**
-         * Query the active tab and retrieve its ID.
-         * @param {chrome.tabs.QueryInfo} queryInfo - The query parameters for the tabs.
-         * @returns {Promise<chrome.tabs.Tab[]>} A promise that resolves to an array of tabs that match the query.
-         */
-        const [tab] = await chrome.tabs.query({active: true, currentWindow: true});
-        const tabId = tab.id;
 
-        return new Promise((resolve) => {
-            /**
-             * Execute a script in a targeted tab.
-             * @param {chrome.scripting.InjectDetails} details - The script injection details.
-             * @param {function} callback - The callback function to be executed after script execution.
-             */
-            chrome.scripting.executeScript(
-                {
-                    target: {tabId},
-                    function: async () => {
-                        /**
-                         * Read the text from the clipboard.
-                         * @returns {Promise<string>} A promise that resolves to the text from the clipboard.
-                         */
-                        const clipboardText = await navigator.clipboard.readText();
-                        return clipboardText;
-                    },
-                },
-                /**
-                 * Handle the result of the script execution.
-                 * @param {chrome.scripting.ExecuteScriptResult[]} result - The result of the script execution.
-                 */
-                (result) => {
-                    const [response] = result;
-                    resolve(response.result);
-                }
-            );
-        });
-    }
     /**
      * @param {import('dictionary').DictionaryEntry} dictionaryEntry
      * @param {import('display-anki').CreateMode} mode
