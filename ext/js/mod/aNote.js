@@ -78,7 +78,7 @@ export class Note {
         /**
          * @type {any}
          */
-        this.dic = u
+        this.dic = u;
         /**
          * @type {aDict | null}
          */

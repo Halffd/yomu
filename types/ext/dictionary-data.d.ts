@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023  Yomitan Authors
+ * Copyright (C) 2023-2024  Yomitan Authors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,6 +29,8 @@ export type Index = {
     url?: string;
     description?: string;
     attribution?: string;
+    sourceLanguage?: string;
+    targetLanguage?: string;
     frequencyMode?: 'occurrence-based' | 'rank-based';
     tagMeta?: IndexTagMeta;
 };
@@ -90,6 +92,11 @@ export type KanjiV3 = [
 ];
 
 export type TermGlossary = (
+    TermGlossaryContent |
+    TermGlossaryDeinflection
+);
+
+export type TermGlossaryContent = (
     TermGlossaryString |
     TermGlossaryText |
     TermGlossaryImage |
@@ -97,13 +104,23 @@ export type TermGlossary = (
 );
 
 export type TermGlossaryString = string;
+
 export type TermGlossaryText = {type: 'text', text: string};
+
 export type TermGlossaryImage = {type: 'image'} & TermImage;
+
 export type TermGlossaryStructuredContent = {type: 'structured-content', content: StructuredContent.Content};
+
+export type TermGlossaryDeinflection = [
+    uninflected: string,
+    inflectionRuleChain: string[],
+];
 
 export type TermImage = StructuredContent.ImageElementBase & {
     // Compatibility properties
     verticalAlign?: undefined;
+    border?: undefined;
+    borderRadius?: undefined;
     sizeUnits?: undefined;
 };
 

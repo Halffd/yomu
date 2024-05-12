@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023  Yomitan Authors
+ * Copyright (C) 2023-2024  Yomitan Authors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,9 +30,6 @@ export type RejectionReason = SafeAny;
 
 /** This type is used as an explicit way of permitting the `object` type. */
 export type SerializableObject = {[key: string]: unknown};
-
-/** This type is used as an explicit way of permitting the `object` type. */
-export type SerializableObjectAny = {[key: string]: SafeAny};
 
 /** This type is used as an explicit way of permitting the `object` type. */
 export type UnknownObject = {[key: string | symbol]: unknown};

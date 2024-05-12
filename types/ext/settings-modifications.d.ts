@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023  Yomitan Authors
+ * Copyright (C) 2023-2024  Yomitan Authors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -68,10 +68,15 @@ export type Modification = (
 );
 
 export type ScopedRead = Read & OptionsScope;
+
 export type ScopedModificationSet = ModificationSet & OptionsScope;
+
 export type ScopedModificationDelete = ModificationDelete & OptionsScope;
+
 export type ScopedModificationSwap = ModificationSwap & OptionsScope;
+
 export type ScopedModificationSplice = ModificationSplice & OptionsScope;
+
 export type ScopedModificationPush = ModificationPush & OptionsScope;
 
 export type ScopedModification = (
@@ -83,14 +88,22 @@ export type ScopedModification = (
 );
 
 export type ModificationSetResult = unknown;
+
 export type ModificationDeleteResult = true;
+
 export type ModificationSwapResult = true;
+
 export type ModificationSpliceResult = unknown[];
+
 export type ModificationPushResult = number;
 
+// There is some redundancy with this type currently due to the `unknown`s used in it.
+// For now, this is fine, but the types could be improved in the future.
 export type ModificationResult = (
+    // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
     ModificationSetResult |
     ModificationDeleteResult |
+    // eslint-disable-next-line @typescript-eslint/no-duplicate-type-constituents
     ModificationSwapResult |
     ModificationSpliceResult |
     ModificationPushResult

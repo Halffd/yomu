@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023  Yomitan Authors
+ * Copyright (C) 2023-2024  Yomitan Authors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -135,6 +135,8 @@ export type KanjiDictionaryEntry = {
     readonly tags: Tag[];
     readonly stats: KanjiStatGroups;
     readonly frequencies: KanjiFrequency[];
+    readonly frequencyHarmonic: number;
+    readonly frequencyAverage: number;
     url: string;
     readonly cloze: Cloze;
 };
@@ -172,7 +174,7 @@ export type TermDictionaryEntry = {
     source: string | null;
     rawSource: string | null;
     sourceTerm?: string | null;
-    reasons: string[];
+    inflectionRuleChainCandidates: Dictionary.InflectionRuleChainCandidate[];
     score: number;
     isPrimary?: boolean;
     readonly sequence: number;
@@ -190,6 +192,8 @@ export type TermDictionaryEntry = {
     readonly termTags?: Tag[];
     readonly definitions?: TermDefinition[];
     readonly frequencies: TermFrequency[];
+    readonly frequencyHarmonic: number;
+    readonly frequencyAverage: number;
     readonly pitches: TermPitchAccent[];
     readonly phoneticTranscriptions: TermPhoneticTranscription[];
     sourceTermExactMatchCount: number;
@@ -300,5 +304,6 @@ export type Cloze = {
     sentence: string;
     prefix: string;
     body: string;
+    bodyKana: string;
     suffix: string;
 };
