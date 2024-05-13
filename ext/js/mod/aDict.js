@@ -5629,10 +5629,6 @@ this.txtImg(false)
   async yomichan(dictionaryEntries) {
     const r = []
     for (let i = 0, ii = dictionaryEntries.length; i < ii; ++i) {
-      if (i > 0) {
-        // await promiseTimeout(1);
-        //   if (this._setContentToken !== token) { return; }
-      }
       const dictionaryEntry = dictionaryEntries[i]
       const entry = (
         dictionaryEntry.type === 'term'
@@ -5648,9 +5644,6 @@ this.txtImg(false)
       e.appendChild(entry)
       r.push(e)
       this.eP.appendChild(e)
-      // if (focusEntry === i) {
-      // this._focusEntry(i, 0, false);
-      // }
       this._display._elementOverflowController.addElements(entry)
     }
     if (av('warn')) console.warn(r, dictionaryEntries)
@@ -5690,7 +5683,7 @@ this.txtImg(false)
       toast.style.color = textColor;
       toast.style.fontWeight = fontWeight;
 
-      toastContainer.style.transition = 'transform 2.5s';
+      toastContainer.style.transition = 'transform 2.2s';
       toastContainer.style.transform = 'translateY(-150vh)';
 
       setTimeout(function () {
