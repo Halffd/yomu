@@ -24,6 +24,7 @@ import {ExtensionContentController} from './common/extension-content-controller.
 import {DictionaryController} from './settings/dictionary-controller.js';
 import {DictionaryImportController} from './settings/dictionary-import-controller.js';
 import {GenericSettingController} from './settings/generic-setting-controller.js';
+import {LanguagesController} from './settings/languages-controller.js';
 import {ModalController} from './settings/modal-controller.js';
 import {RecommendedPermissionsController} from './settings/recommended-permissions-controller.js';
 import {ScanInputsSimpleController} from './settings/scan-inputs-simple-controller.js';
@@ -107,4 +108,51 @@ async function main() {
     }
 }
 
-await main();
+await Application.main(true, async (application) => {
+    const documentFocusController = new DocumentFocusController();
+    documentFocusController.prepare();
+
+    const extensionContentController = new ExtensionContentController();
+    extensionContentController.prepare();
+
+    /** @type {HTMLElement} */
+    const statusFooterElement = querySelectorNotNull(document, '.status-footer-container');
+    const statusFooter = new StatusFooter(statusFooterElement);
+    statusFooter.prepare();
+
+    void setupEnvironmentInfo(application.api);
+    void checkNeedsCustomTemplatesWarning();
+
+    const preparePromises = [];
+
+    const modalController = new ModalController();
+    modalController.prepare();
+
+    const settingsController = new SettingsController(application);
+    await settingsController.prepare();
+
+    const dictionaryController = new DictionaryController(settingsController, modalController, statusFooter);
+    preparePromises.push(dictionaryController.prepare());
+
+    const dictionaryImportController = new DictionaryImportController(settingsController, modalController, statusFooter);
+    preparePromises.push(dictionaryImportController.prepare());
+
+    const genericSettingController = new GenericSettingController(settingsController);
+    preparePromises.push(setupGenericSettingsController(genericSettingController));
+
+    const simpleScanningInputController = new ScanInputsSimpleController(settingsController);
+    preparePromises.push(simpleScanningInputController.prepare());
+
+    const recommendedPermissionsController = new RecommendedPermissionsController(settingsController);
+    preparePromises.push(recommendedPermissionsController.prepare());
+
+    const languagesController = new LanguagesController(settingsController);
+    preparePromises.push(languagesController.prepare());
+
+    await Promise.all(preparePromises);
+
+    document.documentElement.dataset.loaded = 'true';
+
+    const settingsDisplayController = new SettingsDisplayController(settingsController, modalController);
+    settingsDisplayController.prepare();
+});

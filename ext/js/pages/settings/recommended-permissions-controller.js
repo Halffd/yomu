@@ -16,7 +16,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {EventListenerCollection} from '../../core.js';
+import {EventListenerCollection} from '../../core/event-listener-collection.js';
+import {toError} from '../../core/to-error.js';
+import {getAllPermissions, setPermissionsGranted} from '../../data/permissions-util.js';
+import {querySelectorNotNull} from '../../dom/query-selector.js';
 
 export class RecommendedPermissionsController {
     /**
@@ -25,8 +28,8 @@ export class RecommendedPermissionsController {
     constructor(settingsController) {
         /** @type {import('./settings-controller.js').SettingsController} */
         this._settingsController = settingsController;
-        /** @type {?NodeListOf<HTMLInputElement>} */
-        this._originToggleNodes = null;
+        /** @type {HTMLInputElement} */
+        this._originToggleNode = querySelectorNotNull(document, '#recommended-permissions-toggle');
         /** @type {EventListenerCollection} */
         this._eventListeners = new EventListenerCollection();
         /** @type {?HTMLElement} */
@@ -35,11 +38,8 @@ export class RecommendedPermissionsController {
 
     /** */
     async prepare() {
-        this._originToggleNodes = document.querySelectorAll('.recommended-permissions-toggle');
         this._errorContainer = document.querySelector('#recommended-permissions-error');
-        for (const node of this._originToggleNodes) {
-            node.addEventListener('change', this._onOriginToggleChange.bind(this), false);
-        }
+        this._originToggleNode.addEventListener('change', this._onOriginToggleChange.bind(this), false);
 
         this._settingsController.on('permissionsChanged', this._onPermissionsChanged.bind(this));
         await this._updatePermissions();
@@ -53,12 +53,8 @@ export class RecommendedPermissionsController {
     _onPermissionsChanged({permissions}) {
         this._eventListeners.removeAllEventListeners();
         const originsSet = new Set(permissions.origins);
-        if (this._originToggleNodes !== null) {
-            for (const node of this._originToggleNodes) {
-                const {origin} = node.dataset;
-                node.checked = typeof origin === 'string' && originsSet.has(origin);
-            }
-        }
+        const {origin} = this._originToggleNode.dataset;
+        this._originToggleNode.checked = typeof origin === 'string' && originsSet.has(origin);
     }
 
     /**
@@ -78,6 +74,7 @@ export class RecommendedPermissionsController {
     async _updatePermissions() {
         const permissions = await this._settingsController.permissionsUtil.getAllPermissions();
         this._onPermissionsChanged({permissions});
+        this._setWelcomePageText();
     }
 
     /**
@@ -98,5 +95,22 @@ export class RecommendedPermissionsController {
         if (!added) { return false; }
         await this._updatePermissions();
         return true;
+    }
+
+    /** */
+    _setWelcomePageText() {
+        /** @type {HTMLElement | null} */
+        this._textIfEnabled = document.querySelector('#permissions-enabled');
+        /** @type {HTMLElement | null} */
+        this._textIfDisabled = document.querySelector('#permissions-disabled');
+        if (this._textIfEnabled && this._textIfDisabled) {
+            if (this._originToggleNode.checked) {
+                this._textIfEnabled.hidden = false;
+                this._textIfDisabled.hidden = true;
+            } else {
+                this._textIfEnabled.hidden = true;
+                this._textIfDisabled.hidden = false;
+            }
+        }
     }
 }

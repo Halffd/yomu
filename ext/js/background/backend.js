@@ -899,10 +899,10 @@ export class Backend {
     // Command handlers
 
     /**
-     * @param {undefined|{mode: 'existingOrNewTab'|'newTab', query?: string}} params
+     * @param {undefined|{mode: 'existingOrNewTab'|'newTab'|'popup', query?: string}} params
      */
     async _onCommandOpenSearchPage(params) {
-        /** @type {'existingOrNewTab'|'newTab'} */
+        /** @type {'existingOrNewTab'|'newTab'|'popup'} */
         let mode = 'existingOrNewTab';
         let query = '';
         if (typeof params === 'object' && params !== null) {
@@ -958,6 +958,8 @@ export class Backend {
             case 'newTab':
                 await this._createTab(queryUrl);
                 return;
+            case 'popup':
+                return;
         }
     }
 
@@ -969,10 +971,10 @@ export class Backend {
     }
 
     /**
-     * @param {undefined|{mode: 'existingOrNewTab'|'newTab'}} params
+     * @param {undefined|{mode: 'existingOrNewTab'|'newTab'|'popup'}} params
      */
     async _onCommandOpenSettingsPage(params) {
-        /** @type {'existingOrNewTab'|'newTab'} */
+        /** @type {'existingOrNewTab'|'newTab'|'popup'} */
         let mode = 'existingOrNewTab';
         if (typeof params === 'object' && params !== null) {
             mode = this._normalizeOpenSettingsPageMode(params.mode, mode);
@@ -2542,7 +2544,7 @@ export class Backend {
     }
 
     /**
-     * @param {'existingOrNewTab'|'newTab'} mode
+     * @param {'existingOrNewTab'|'newTab'|'popup'} mode
      */
     async _openSettingsPage(mode) {
         const manifest = chrome.runtime.getManifest();
@@ -2671,13 +2673,14 @@ export class Backend {
 
     /**
      * @param {unknown} mode
-     * @param {'existingOrNewTab'|'newTab'} defaultValue
-     * @returns {'existingOrNewTab'|'newTab'}
+     * @param {'existingOrNewTab'|'newTab'|'popup'} defaultValue
+     * @returns {'existingOrNewTab'|'newTab'|'popup'}
      */
     _normalizeOpenSettingsPageMode(mode, defaultValue) {
         switch (mode) {
             case 'existingOrNewTab':
             case 'newTab':
+            case 'popup':
                 return mode;
             default:
                 return defaultValue;

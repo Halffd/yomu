@@ -556,7 +556,19 @@ export class OptionsUtil {
             this._updateVersion20,
             this._updateVersion21,
             this._updateVersion22,
-            this._updateVersion23
+            this._updateVersion23,
+            this._updateVersion24,
+            this._updateVersion25,
+            this._updateVersion26,
+            this._updateVersion27,
+            this._updateVersion28,
+            this._updateVersion29,
+            this._updateVersion30,
+            this._updateVersion31,
+            this._updateVersion32,
+            this._updateVersion33,
+            this._updateVersion34,
+            this._updateVersion35
         ];
         if (typeof targetVersion === 'number' && targetVersion < result.length) {
             result.splice(targetVersion);
@@ -1154,6 +1166,149 @@ export class OptionsUtil {
             }
         }
     }
+
+    /**
+     * - Added dictionaries[].useDeinflections.
+     * @type {import('options-util').UpdateFunction}
+     */
+    async _updateVersion24(options) {
+        await this._applyAnkiFieldTemplatesPatch(options, '/data/templates/anki-field-templates-upgrade-v24.handlebars');
+
+        for (const {options: profileOptions} of options.profiles) {
+            if (Array.isArray(profileOptions.dictionaries)) {
+                for (const dictionary of profileOptions.dictionaries) {
+                    dictionary.useDeinflections = true;
+                }
+            }
+        }
+    }
+
+    /**
+     * - Change 'viewNote' action to 'viewNotes'.
+     * @type {import('options-util').UpdateFunction}
+     */
+    async _updateVersion25(options) {
+        for (const profile of options.profiles) {
+            if ('inputs' in profile.options && 'hotkeys' in profile.options.inputs) {
+                for (const hotkey of profile.options.inputs.hotkeys) {
+                    if (hotkey.action === 'viewNote') {
+                        hotkey.action = 'viewNotes';
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * - Added general.language.
+     * - Modularized text preprocessors.
+     * @type {import('options-util').UpdateFunction}
+     */
+    _updateVersion26(options) {
+        const textPreprocessors = [
+            'convertHalfWidthCharacters',
+            'convertNumericCharacters',
+            'convertAlphabeticCharacters',
+            'convertHiraganaToKatakana',
+            'convertKatakanaToHiragana',
+            'collapseEmphaticSequences'
+        ];
+
+        for (const {options: profileOptions} of options.profiles) {
+            profileOptions.general.language = 'ja';
+
+            for (const preprocessor of textPreprocessors) {
+                delete profileOptions.translation[preprocessor];
+            }
+        }
+    }
+
+    /**
+     * - Updated handlebars.
+     * @type {import('options-util').UpdateFunction}
+     */
+    async _updateVersion27(options) {
+        await this._applyAnkiFieldTemplatesPatch(options, '/data/templates/anki-field-templates-upgrade-v27.handlebars');
+    }
+
+    /**
+     *  - Removed whitespace in URL handlebars template.
+     *  @type {import('options-util').UpdateFunction}
+     */
+    async _updateVersion28(options) {
+        await this._applyAnkiFieldTemplatesPatch(options, '/data/templates/anki-field-templates-upgrade-v28.handlebars');
+    }
+
+    /**
+     *  - Added new handlebar for different pitch accent graph style.
+     *  @type {import('options-util').UpdateFunction}
+     */
+    async _updateVersion29(options) {
+        await this._applyAnkiFieldTemplatesPatch(options, '/data/templates/anki-field-templates-upgrade-v29.handlebars');
+    }
+
+    /**
+     *  - Added scanning.inputs[].options.scanOnTouchTap.
+     *  - Set touch settings to be more sensible.
+     *  @type {import('options-util').UpdateFunction}
+     */
+    async _updateVersion30(options) {
+        for (const profile of options.profiles) {
+            for (const input of profile.options.scanning.inputs) {
+                input.options.scanOnTouchTap = true;
+                input.options.scanOnTouchPress = false;
+                input.options.scanOnTouchRelease = false;
+            }
+        }
+    }
+
+    /**
+     *  - Added anki.duplicateBehavior
+     *  @type {import('options-util').UpdateFunction}
+     */
+    _updateVersion31(options) {
+        for (const {options: profileOptions} of options.profiles) {
+            profileOptions.anki.duplicateBehavior = 'new';
+        }
+    }
+
+    /**
+     *  - Added profilePrevious and profileNext to hotkeys.
+     *  @type {import('options-util').UpdateFunction}
+     */
+    async _updateVersion32(options) {
+        for (const profile of options.profiles) {
+            profile.options.inputs.hotkeys.push(
+                {action: 'profilePrevious', key: 'Minus', modifiers: ['alt'], scopes: ['popup', 'search'], enabled: true},
+                {action: 'profileNext', key: 'Equal', modifiers: ['alt'], scopes: ['popup', 'search'], enabled: true}
+            );
+        }
+    }
+
+    /**
+     * - Updated handlebars to fix escaping when using `definition.cloze` or text-based `getMedia`.
+     * @type {import('options-util').UpdateFunction}
+     */
+    async _updateVersion33(options) {
+        await this._applyAnkiFieldTemplatesPatch(options, '/data/templates/anki-field-templates-upgrade-v33.handlebars');
+    }
+
+    /**
+     *  - Added dynamic handlebars for single dictionaries.
+     *  @type {import('options-util').UpdateFunction}
+     */
+    async _updateVersion34(options) {
+        await this._applyAnkiFieldTemplatesPatch(options, '/data/templates/anki-field-templates-upgrade-v34.handlebars');
+    }
+
+    /**
+     *  - Added dynamic handlebars for first dictionary entry only.
+     *  @type {import('options-util').UpdateFunction}
+     */
+    async _updateVersion35(options) {
+        await this._applyAnkiFieldTemplatesPatch(options, '/data/templates/anki-field-templates-upgrade-v35.handlebars');
+    }
+
 
     /**
      * @param {string} url

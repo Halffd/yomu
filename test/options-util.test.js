@@ -603,7 +603,7 @@ function createOptionsUpdatedTestData1() {
             }
         ],
         profileCurrent: 0,
-        version: 23,
+        version: 35,
         global: {
             database: {
                 prefixWildcardsSupported: false

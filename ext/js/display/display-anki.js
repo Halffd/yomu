@@ -358,6 +358,7 @@ export class DisplayAnki {
 
     /** */
     async _updateDictionaryEntryDetails() {
+        if (!this._display.getOptions()?.anki.enable) { return; }
         const {dictionaryEntries} = this._display;
         /** @type {?import('core').TokenObject} */
         const token = {};

@@ -22,6 +22,7 @@ import {querySelectorNotNull} from '../../dom/query-selector.js';
 import {yomitan} from '../../yomitan.js';
 import {ExtensionContentController} from '../common/extension-content-controller.js';
 import {AnkiController} from './anki-controller.js';
+import {AnkiDeckGeneratorController} from './anki-deck-generator-controller.js';
 import {AnkiTemplatesController} from './anki-templates-controller.js';
 import {AudioController} from './audio-controller.js';
 import {BackupController} from './backup-controller.js';
@@ -177,4 +178,96 @@ async function main() {
     }
 }
 
-await main();
+    const preparePromises = [];
+
+    const modalController = new ModalController();
+    modalController.prepare();
+
+    const settingsController = new SettingsController(application);
+    await settingsController.prepare();
+
+    const persistentStorageController = new PersistentStorageController(application);
+    preparePromises.push(persistentStorageController.prepare());
+
+    const storageController = new StorageController(persistentStorageController);
+    storageController.prepare();
+
+    const dictionaryController = new DictionaryController(settingsController, modalController, statusFooter);
+    preparePromises.push(dictionaryController.prepare());
+
+    const dictionaryImportController = new DictionaryImportController(settingsController, modalController, statusFooter);
+    dictionaryImportController.prepare();
+
+    const genericSettingController = new GenericSettingController(settingsController);
+    preparePromises.push(setupGenericSettingController(genericSettingController));
+
+    const audioController = new AudioController(settingsController, modalController);
+    preparePromises.push(audioController.prepare());
+
+    const profileController = new ProfileController(settingsController, modalController);
+    preparePromises.push(profileController.prepare());
+
+    const settingsBackup = new BackupController(settingsController, modalController);
+    preparePromises.push(settingsBackup.prepare());
+
+    const ankiController = new AnkiController(settingsController);
+    preparePromises.push(ankiController.prepare());
+
+    const ankiDeckGeneratorController = new AnkiDeckGeneratorController(application, settingsController, modalController, ankiController);
+    preparePromises.push(ankiDeckGeneratorController.prepare());
+
+    const ankiTemplatesController = new AnkiTemplatesController(settingsController, modalController, ankiController);
+    preparePromises.push(ankiTemplatesController.prepare());
+
+    const popupPreviewController = new PopupPreviewController(settingsController);
+    popupPreviewController.prepare();
+
+    const scanInputsController = new ScanInputsController(settingsController);
+    preparePromises.push(scanInputsController.prepare());
+
+    const simpleScanningInputController = new ScanInputsSimpleController(settingsController);
+    preparePromises.push(simpleScanningInputController.prepare());
+
+    const nestedPopupsController = new NestedPopupsController(settingsController);
+    preparePromises.push(nestedPopupsController.prepare());
+
+    const permissionsToggleController = new PermissionsToggleController(settingsController);
+    preparePromises.push(permissionsToggleController.prepare());
+
+    const secondarySearchDictionaryController = new SecondarySearchDictionaryController(settingsController);
+    preparePromises.push(secondarySearchDictionaryController.prepare());
+
+    const languagesController = new LanguagesController(settingsController);
+    preparePromises.push(languagesController.prepare());
+
+    const translationTextReplacementsController = new TranslationTextReplacementsController(settingsController);
+    preparePromises.push(translationTextReplacementsController.prepare());
+
+    const sentenceTerminationCharactersController = new SentenceTerminationCharactersController(settingsController);
+    preparePromises.push(sentenceTerminationCharactersController.prepare());
+
+    const keyboardShortcutController = new KeyboardShortcutController(settingsController);
+    preparePromises.push(keyboardShortcutController.prepare());
+
+    const extensionKeyboardShortcutController = new ExtensionKeyboardShortcutController(settingsController);
+    preparePromises.push(extensionKeyboardShortcutController.prepare());
+
+    const popupWindowController = new PopupWindowController(application.api);
+    popupWindowController.prepare();
+
+    const mecabController = new MecabController(application.api);
+    mecabController.prepare();
+
+    const collapsibleDictionaryController = new CollapsibleDictionaryController(settingsController);
+    preparePromises.push(collapsibleDictionaryController.prepare());
+
+    const sortFrequencyDictionaryController = new SortFrequencyDictionaryController(settingsController);
+    preparePromises.push(sortFrequencyDictionaryController.prepare());
+
+    await Promise.all(preparePromises);
+
+    document.documentElement.dataset.loaded = 'true';
+
+    const settingsDisplayController = new SettingsDisplayController(settingsController, modalController);
+    settingsDisplayController.prepare();
+});
