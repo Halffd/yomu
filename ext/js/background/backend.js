@@ -1903,13 +1903,13 @@ export class Backend {
                     () => {} // NOP
                 );
 
-            if (timeout !== null) {
+            /*if (timeout !== null) {
                 timer = setTimeout(() => {
                     timer = null;
                     cleanup();
                     reject(new Error('Timeout'));
                 }, timeout);
-            }
+            }*/
         });
     }
 

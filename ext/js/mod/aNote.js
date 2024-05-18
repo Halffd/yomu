@@ -4,6 +4,8 @@ import {aDict} from '../mod/aDict.js';
 import {merge, aIn} from './aUtil.js';
 import {wn, av} from './aDict.js';
 import {store, retrieve, dbinit} from './aDb.js'
+import {convertToKana} from '../language/ja/japanese-wanakana.js';
+import {isStringEntirelyKana} from '../language/ja/japanese.js';
 
 var nv = (/** @type {string} */ v) => {
     return localStorage.getItem(v) == 'true'
@@ -427,7 +429,7 @@ export class Note {
             try {
                 const options = this.aDict._display.getOptionsContext()
                 results = await this.aDict._display._findDictionaryEntries(false, t, false, options)
-                if (!keys[0] && this.aDict.japaneseUtil.isStringEntirelyKana(t)) {
+                if (!keys[0] && isStringEntirelyKana(t)) {
                     let l = 0
                     for (let r of results) {
                         t = r.headwords[0].term
@@ -753,7 +755,7 @@ export class Note {
         }
         if (!kj) {
             rd = elem.querySelector('.rd').innerText
-            rd = this.aDict.japaneseUtil.convertToKana(rd)
+            rd = convertToKana(rd)
         }
         /*let fv = document.querySelectorAll('.fav')
         if (nv('warn')) console.warn(fv, rd)
