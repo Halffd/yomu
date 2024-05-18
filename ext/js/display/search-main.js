@@ -19,12 +19,17 @@
 import {Application} from '../application.js';
 import {DocumentFocusController} from '../dom/document-focus-controller.js';
 import {HotkeyHandler} from '../input/hotkey-handler.js';
+import {aDict} from '../mod/aDict.js';
+import {Note} from '../mod/aNote.js';
+import {AnkiController} from '../pages/settings/anki-controller.js';
+import {SettingsController} from '../pages/settings/settings-controller.js';
 import {DisplayAnki} from './display-anki.js';
 import {DisplayAudio} from './display-audio.js';
 import {Display} from './display.js';
 import {SearchActionPopupController} from './search-action-popup-controller.js';
 import {SearchDisplayController} from './search-display-controller.js';
 import {SearchPersistentStateController} from './search-persistent-state-controller.js';
+
 
 await Application.main(true, async (application) => {
     const documentFocusController = new DocumentFocusController('#search-textbox');
@@ -38,7 +43,13 @@ await Application.main(true, async (application) => {
 
     const hotkeyHandler = new HotkeyHandler();
     hotkeyHandler.prepare(application.crossFrame);
-
+    let control;
+    try {
+        const settingsController = new SettingsController();
+        control = new AnkiController(settingsController);
+    } catch {
+        control = null;
+    }
     const display = new Display(application, 'search', documentFocusController, hotkeyHandler);
     await display.prepare();
 
@@ -48,6 +59,17 @@ await Application.main(true, async (application) => {
     const displayAnki = new DisplayAnki(display, displayAudio);
     displayAnki.prepare();
 
+    const aN = new Note();
+    if (display) {
+        const aD = new aDict(display, displayAudio, japaneseUtil, displayAnki, control, mecab, true, aN);
+        aN.dic = aD.util;
+        aN.anki = displayAnki;
+        aN.aDict = aD;
+        const sv = aN.svClk.bind(aN);
+        display.setDict(aD);
+        window.vars(aD, displayAnki, aN, sv, japaneseUtil);
+    }
+    //const searchDisplayController = new SearchDisplayController(tabId, frameId, display, displayAudio, japaneseUtil, searchPersistentStateController);
     const searchDisplayController = new SearchDisplayController(display, displayAudio, searchPersistentStateController);
     await searchDisplayController.prepare();
 

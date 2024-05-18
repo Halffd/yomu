@@ -19,6 +19,7 @@
 import {EventDispatcher} from '../core/event-dispatcher.js';
 import {EventListenerCollection} from '../core/event-listener-collection.js';
 import {getActiveModifiers, isInputElementFocused} from '../dom/document-util.js';
+import {canRun} from '../mod/aUtil.js';
 
 /**
  * Class which handles hotkey events and actions.
@@ -171,6 +172,9 @@ export class HotkeyHandler extends EventDispatcher {
      * @param {KeyboardEvent} event
      */
     _onKeyDown(event) {
+        if(canRun(0)){
+            return
+        }
         let hotkeyInfo = this._hotkeys.get(event.code);
         const modifierKeycodes = ['ControlLeft', 'ControlRight', 'ShiftLeft', 'ShiftRight', 'AltLeft', 'AltRight', 'MetaLeft', 'MetaRight'];
         if (modifierKeycodes.includes(event.code)) {

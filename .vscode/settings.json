@@ -1,6 +1,6 @@
 {
     "markdown.extension.toc.levels": "1..3",
-    "[javascript][json][jsonc]": {
+    "[javascript]": {
         "editor.codeActionsOnSave": {
             "source.addMissingImports": "explicit",
             "source.organizeImports": "explicit",
@@ -22,13 +22,16 @@
     "editor.insertSpaces": true,
     "eslint.validate": [
         "javascript",
-        "typescript",
-        "json",
-        "jsonc"
+        "typescript"
     ],
     "files.eol": "\n",
-    "files.trimTrailingWhitespace": true,
     "html-validate.validate": [
         "html"
-    ]
+    ],
+    "docwriter.style": "JSDoc",
+    "docwriter.progress.trackFunctions": true,
+    "docwriter.progress.trackClasses": true,
+    "docwriter.progress.trackTypes": true,
+    "docwriter.hotkey.windows": "Alt + .",
+    "CodeGPT.apiKey": "Custom"
 }

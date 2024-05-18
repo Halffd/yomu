@@ -25,7 +25,10 @@ import {getDynamicTemplates} from '../data/anki-template-util.js';
 import {invalidNoteId, isNoteDataValid} from '../data/anki-util.js';
 import {PopupMenu} from '../dom/popup-menu.js';
 import {querySelectorNotNull} from '../dom/query-selector.js';
+import {aDict} from '../mod/aDict.js';
+import {yomiKanjis} from '../mod/aYomi.js';
 import {TemplateRendererProxy} from '../templates/template-renderer-proxy.js';
+import {base64AudioData} from './sound.js';
 
 export class DisplayAnki {
     /**
@@ -258,6 +261,15 @@ export class DisplayAnki {
             eventListeners.addEventListener(node, 'click', this._onViewNotesButtonClickBind);
             eventListeners.addEventListener(node, 'contextmenu', this._onViewNotesButtonContextMenuBind);
             eventListeners.addEventListener(node, 'menuClose', this._onViewNotesButtonMenuCloseBind);
+        }
+        for (const node of element.querySelectorAll('.action-button[data-action=copy]')) {
+            eventListeners.addEventListener(node, 'click', function(e){
+                let h = node.closest('.entry-header')
+                let b = node.closest('.entry')
+                let w = aDict.prototype.yomiread(b)
+                console.log(node, h, b);
+                aDict.prototype._copyText(w)
+            }.bind(this));
         }
     }
 
@@ -508,74 +520,201 @@ export class DisplayAnki {
         void this._addAnkiNote(index, mode);
     }
 
-    /**
-     * @param {number} dictionaryEntryIndex
-     * @param {import('display-anki').CreateMode} mode
+     /**
+     * Add an Anki note.
+     * @param {number | import('dictionary').DictionaryEntry} dictionaryEntryIndex The index of the dictionary entry.
+     * @param {import('display-anki').CreateMode} mode The create mode for the Anki note.
+     * @param {number} [dict=-1] Optional dictionary value (default: -1).
+     * @param {any[] | null} [req=null] Optional array of requirements or null (default: null).
+     * @param {{ st: string } | null} [o=null] Optional object with an 'st' property or null (default: null).
+     * @returns {Promise<void>} - A promise that resolves when the Anki note is added.
      */
-    async _addAnkiNote(dictionaryEntryIndex, mode) {
-        const dictionaryEntries = this._display.dictionaryEntries;
-        const dictionaryEntryDetails = this._dictionaryEntryDetails;
-        if (!(
-            dictionaryEntryDetails !== null &&
-            dictionaryEntryIndex >= 0 &&
-            dictionaryEntryIndex < dictionaryEntries.length &&
-            dictionaryEntryIndex < dictionaryEntryDetails.length
-        )) {
-            return;
-        }
-        const dictionaryEntry = dictionaryEntries[dictionaryEntryIndex];
-        const details = dictionaryEntryDetails[dictionaryEntryIndex].modeMap.get(mode);
-        if (typeof details === 'undefined') { return; }
+     async _addAnkiNote(dictionaryEntryIndex, mode, dict = -1, req = null, o = null) {
+        let dictionaryEntries;
+        let dictionaryEntryDetails;
+        let dictionaryEntry;
+        let details;
+        let requirements;
+        let button;
+        let allErrors = [];
+        let progressIndicatorVisible;
+        let overrideToken;
 
-        const {requirements} = details;
-
-        const button = this._adderButtonFind(dictionaryEntryIndex, mode);
-        if (button === null || button.disabled) { return; }
-
-        this._hideErrorNotification(true);
-
-        /** @type {Error[]} */
-        const allErrors = [];
-        const progressIndicatorVisible = this._display.progressIndicatorVisible;
-        const overrideToken = progressIndicatorVisible.setOverride(true);
         try {
-            const {note, errors, requirements: outputRequirements} = await this._createNote(dictionaryEntry, mode, requirements);
-            allErrors.push(...errors);
+            if (dict >= 0) {
+                // Handle the case when dict is greater than or equal to 0
+                dictionaryEntry = dictionaryEntryIndex;
+                requirements = req.requirements;
+            } else if (typeof dictionaryEntryIndex === 'number') {
+                dictionaryEntries = this._display.dictionaryEntries;
+                dictionaryEntryDetails = this._dictionaryEntryDetails;
+                if (!(
+                    dictionaryEntryDetails !== null &&
+                    dictionaryEntryIndex >= 0 &&
+                    dictionaryEntryIndex < dictionaryEntries.length &&
+                    dictionaryEntryIndex < dictionaryEntryDetails.length
+                )) {
+                    return;
+                }
+                dictionaryEntry = dictionaryEntries[dictionaryEntryIndex];
+                details = dictionaryEntryDetails[dictionaryEntryIndex].modeMap.get(mode);
+                if (typeof details === 'undefined') {return;}
 
-            const error = this._getAddNoteRequirementsError(requirements, outputRequirements);
-            if (error !== null) { allErrors.push(error); }
+                ({requirements} = details);
 
-            let noteId = null;
-            let addNoteOkay = false;
-            try {
-                noteId = await this._display.application.api.addAnkiNote(note);
-                addNoteOkay = true;
-            } catch (e) {
-                allErrors.length = 0;
-                allErrors.push(toError(e));
+                button = this._adderButtonFind(dictionaryEntryIndex, mode);
+                if (button === null || button.disabled) {return;}
+
+                this._hideErrorNotification(true);
+
+                /** @type {Error[]} */
+                allErrors = [];
+                progressIndicatorVisible = this._display.progressIndicatorVisible;
+                overrideToken = progressIndicatorVisible.setOverride(true);
             }
-
-            if (addNoteOkay) {
-                if (noteId === null) {
-                    allErrors.push(new Error('Note could not be added'));
-                } else {
-                    if (this._suspendNewCards) {
+        } catch (error) {
+            console.error(error);
+        }
+        try {
+            if (typeof dictionaryEntry === 'object' && requirements) {
+                const {note, errors, requirements: outputRequirements} = await this._createNote(dictionaryEntry, mode, requirements);
+                allErrors.push(...errors);
+                if (requirements) {
+                    const error = this._getAddNoteRequirementsError(requirements, outputRequirements);
+                    if (error !== null) {allErrors.push(error);}
+                }
+                let noteId = null;
+                let addNoteOkay = false;
+                try {
+                    try {
+                        const typ = dict >= 0 ? 'Search' : 'Popup';
+                        const [t1, t2, t3, t4] = ['aDict', `v0.1-${new Date().toISOString().slice(0, 7)}`, `in${typ}`, mode == 'term-kana' ? 'kanaMode' : 'termMode'];
+                        note.tags.push(t1, t2, t3, t4);
+                        //console.dir(note);
+                        const vrs = [note, [this, dict, dictionaryEntry, dictionaryEntries, dictionaryEntryDetails, dictionaryEntryIndex, details, requirements, mode, button, progressIndicatorVisible, overrideToken]];
+                        // vrs.push(JSON.stringify(vrs))
+                        //console.dir(vrs);
+                        // const x = this._display._container;
+                        // x.style.dmmmisplay = "none";
+                        // console.log(note.fields['Key']);
+                        let run = true;
+                        if (document.URL.includes('search.html') && document.URL.includes('chrome-extension')) {
+                            run = localStorage.getItem('run') === 'true' ? true : false ?? true;
+                        }
+                        // console.log(run, document.URL);
+                        if (dict < 0 && (!run || !(document.URL.includes('search.html') && document.URL.includes('chrome-extension')))) {
+                            try {
+                                note.fields.ExtraDefinitions += aDict.prototype.getText();
+                            } catch { }
+                            // this._display._copyText(note.fields['Key']);
+                        }
+                        if (o) {
+                            note.fields.Sentence = o.st;
+                        }
+                        if(aDict.prototype.mobile){
+                            aDict.prototype._copyText(note.fields.Key)
+                        }
                         try {
-                            await this._display.application.api.suspendAnkiCardsForNote(noteId);
-                        } catch (e) {
-                            allErrors.push(toError(e));
+                            let df = await yomiKanjis.bind(this._display, note.fields.Key)()
+                            note.fields.ExtraDefinitions += df;
+                        } catch (ne) {
+                            console.error(ne);
+                        }
+                        // this._display._copyHostSelection()
+                    } catch (noe) {
+                        console.warn(noe);
+                    }
+                    try {
+                        if (o) {
+                            note.deckName = o.deck;
+                        }
+                        console.warn(o);
+                        noteId = await this._display.application.api.addAnkiNote(note);
+                        addNoteOkay = true;
+                    } catch (e) {
+                        console.error(e);
+                        allErrors.length = 0;
+                        allErrors.push(toError(e));
+                    }
+                    if (!noteId && !this.rep) {
+                        this.rep = true
+                        this._addAnkiNote(dictionaryEntryIndex, 'term-kana', dict, req);
+                        return;
+                    } else {
+                        this.rep = false
+                    }
+                    console.log(o);
+                    if (!o || o?.sound) {
+                        try {
+                            // const response = await fetch('sound.txt');
+                            // const text = await response.text();
+                            // const base64AudioData = text.trim(); // Assuming the Base64 string is the entire content of the file
+
+                            // Use the base64Data as needed
+                            // Convert the Base64 data to ArrayBuffer
+                            const binaryAudioData = window.atob(base64AudioData);
+                            const arrayBuffer = new ArrayBuffer(binaryAudioData.length);
+                            const view = new Uint8Array(arrayBuffer);
+                            for (let i = 0; i < binaryAudioData.length; i++) {
+                                view[i] = binaryAudioData.charCodeAt(i);
+                            }
+                            // Create an audio context
+                            const audioContext = new AudioContext();
+                            // Decode the audio data
+                            audioContext.decodeAudioData(arrayBuffer)
+                                .then((decodedData) => {
+                                    // Create an audio buffer source
+                                    const audioSource = audioContext.createBufferSource();
+                                    // Create a gain node
+                                    const gainNode = audioContext.createGain();
+                                    // Set the volume level (0.5 represents 50% volume)
+                                    gainNode.gain.value = 0.8;
+                                    // Connect the audio buffer source to the gain node
+                                    audioSource.connect(gainNode);
+                                    // Connect the gain node to the audio context destination
+                                    gainNode.connect(audioContext.destination);
+                                    // Set the audio buffer
+                                    audioSource.buffer = decodedData;
+                                    // Start playing the audio
+                                    audioSource.start();
+                                })
+                                .catch((error) => {
+                                    console.error('Error decoding audio data:', error);
+                                });
+                        } catch (error) {
+                            console.error('Error reading file:', error);
                         }
                     }
-                    // Now that this dictionary entry has a duplicate in Anki, show the "add duplicate" buttons.
-                    this._updateButtonForDuplicate(button);
+                } catch (e) {
+                    allErrors.length = 0;
+                    allErrors.push(e instanceof Error ? e : new Error(`${e}`));
+                }
 
-                    this._updateViewNoteButton(dictionaryEntryIndex, [noteId], true);
+                if (addNoteOkay) {
+                    if (noteId === null) {
+                        allErrors.push(new Error('Note could not be added'));
+                    } else {
+                        if (this._suspendNewCards) {
+                            try {
+                                await yomitan.api.suspendAnkiCardsForNote(noteId);
+                            } catch (e) {
+                                allErrors.push(toError(e));
+                            }
+                        }
+                        // Now that this dictionary entry has a duplicate in Anki, show the "add duplicate" buttons.
+                        this._updateButtonForDuplicate(button);
+                        if (button && dict < 0) {button.disabled = true;}
+                        if (typeof dictionaryEntryIndex === 'number') {this._updateViewNoteButton(dictionaryEntryIndex, [noteId], true);}
+                    }
                 }
             }
         } catch (e) {
             allErrors.push(toError(e));
+            console.error(allErrors);
         } finally {
-            progressIndicatorVisible.clearOverride(overrideToken);
+            if (overrideToken && progressIndicatorVisible && dict < 0) {
+                progressIndicatorVisible.clearOverride(overrideToken);
+            }
         }
 
         if (allErrors.length > 0) {

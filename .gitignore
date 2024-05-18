@@ -3,7 +3,7 @@
 node_modules/
 
 builds/
-
+dict/
 dictionaries/
 
 /test-results/
@@ -13,6 +13,13 @@ dictionaries/
 
 ext/manifest.json
 
-ext/lib/*
+ext/js/admin
 
 ext/legal-npm.html
+.history/
+.cache/
+.vscode/
+.tmp.driveupload/
+ext/lib
+|ext/lib/kuromoji.js
+|ext/lib/bower_components

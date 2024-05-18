@@ -299,7 +299,17 @@ export class QueryParser extends EventDispatcher {
             termNode.dataset.offset = `${offset}`;
             for (const {text, reading} of term) {
                 if (reading.length === 0) {
-                    termNode.appendChild(document.createTextNode(text));
+                    try {
+                        if (this._japaneseUtil.isStringEntirelyKana(text)) {
+                            const r0 = this._japaneseUtil.convertKatakanaToHiragana(text);
+                            const r1 = this._japaneseUtil.convertToRomaji(r0);
+                            termNode.appendChild(this._createSegment(text, r1, offset));
+                        } else {
+                            termNode.appendChild(document.createTextNode(text));
+                        }
+                    } catch (e) {
+                        termNode.appendChild(document.createTextNode(text));
+                    }
                 } else {
                     const reading2 = this._convertReading(text, reading);
                     termNode.appendChild(this._createSegment(text, reading2, offset));

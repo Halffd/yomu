@@ -43,6 +43,7 @@ export class SearchDisplayController {
         this._queryInput = querySelectorNotNull(document, '#search-textbox');
         /** @type {HTMLElement} */
         this._introElement = querySelectorNotNull(document, '#intro');
+        this._introElement.style.display = 'none';
         /** @type {HTMLInputElement} */
         this._clipboardMonitorEnableCheckbox = querySelectorNotNull(document, '#clipboard-monitor-enable');
         /** @type {HTMLInputElement} */

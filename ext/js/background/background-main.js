@@ -17,11 +17,13 @@
  */
 
 import {log} from '../core/log.js';
+import {context} from '../ctx.js';
 import {WebExtension} from '../extension/web-extension.js';
 import {Backend} from './backend.js';
 
 /** Entry point. */
 async function main() {
+    context();
     const webExtension = new WebExtension();
     log.configure(webExtension.extensionName);
 

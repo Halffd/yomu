@@ -25,6 +25,7 @@ import {TextSourceElement} from '../dom/text-source-element.js';
 import {TextSourceGenerator} from '../dom/text-source-generator.js';
 import {TextSourceRange} from '../dom/text-source-range.js';
 import {TextScanner} from '../language/text-scanner.js';
+import {canRun} from '../mod/aUtil.js';
 
 /**
  * This is the main class responsible for scanning and handling webpage content.
@@ -431,7 +432,9 @@ export class Frontend {
     _clearSelection(passive) {
         this._stopClearSelectionDelayed();
         if (this._popup !== null) {
+            if(!canRun()){
             void this._popup.clearAutoPlayTimer();
+            }
             void this._popup.hide(!passive);
             this._isPointerOverPopup = false;
         }
