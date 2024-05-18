@@ -17,6 +17,7 @@
  */
 
 import {Application} from '../application.js';
+import {Mecab} from '../comm/mecab.js';
 import {DocumentFocusController} from '../dom/document-focus-controller.js';
 import {HotkeyHandler} from '../input/hotkey-handler.js';
 import {aDict} from '../mod/aDict.js';
@@ -29,6 +30,8 @@ import {Display} from './display.js';
 import {SearchActionPopupController} from './search-action-popup-controller.js';
 import {SearchDisplayController} from './search-display-controller.js';
 import {SearchPersistentStateController} from './search-persistent-state-controller.js';
+import {convertToRomaji} from '../language/ja/japanese-wanakana.js';
+import {convertHiraganaToKatakana, convertKatakanaToHiragana, isStringEntirelyKana} from '../language/ja/japanese.js';
 
 
 await Application.main(true, async (application) => {
@@ -59,15 +62,16 @@ await Application.main(true, async (application) => {
     const displayAnki = new DisplayAnki(display, displayAudio);
     displayAnki.prepare();
 
+    const mecab = new Mecab();
     const aN = new Note();
     if (display) {
-        const aD = new aDict(display, displayAudio, japaneseUtil, displayAnki, control, mecab, true, aN);
+        const aD = new aDict(display, displayAudio, displayAnki, control, mecab, true, aN);
         aN.dic = aD.util;
         aN.anki = displayAnki;
         aN.aDict = aD;
         const sv = aN.svClk.bind(aN);
         display.setDict(aD);
-        window.vars(aD, displayAnki, aN, sv, japaneseUtil);
+        window.vars(aD, displayAnki, aN, sv, {roma: convertToRomaji, hira: convertKatakanaToHiragana,kata: convertHiraganaToKatakana});
     }
     //const searchDisplayController = new SearchDisplayController(tabId, frameId, display, displayAudio, japaneseUtil, searchPersistentStateController);
     const searchDisplayController = new SearchDisplayController(display, displayAudio, searchPersistentStateController);

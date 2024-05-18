@@ -691,10 +691,12 @@ export class Popup extends EventDispatcher {
         const contentWindow = this._frame.contentWindow;
         try {
             if (this._frameClient === null || !this._frameClient.isConnected() || contentWindow === null) {
-                //throw new Error(`Failed to invoke action ${action}: frame state invalid`);
-                return;
+                throw new Error(`Failed to invoke action ${action}: frame state invalid`);
+                //return;
             }
-        } catch {}
+        } catch(error) {
+            console.error(error);
+        }
 
         /** @type {import('display').DirectApiMessage<TName>} */
         const message = {action, params};

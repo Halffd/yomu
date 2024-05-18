@@ -1,4 +1,8 @@
 /* eslint-disable */
+
+var convertToRomaji
+var convertHiraganaToKatakana
+
 /**
  * Description placeholder
  * @date 1/18/2024 - 1:57:42 AM
@@ -89,22 +93,21 @@ function add(key, value) {
  * @param {import("../display/display-anki").DisplayAnki} displayAnki
  * @param {import("./aNote").Note} aN
  * @param {(elem: { innerHTML: any; querySelector: (arg0: string) => string; getAttribute: (arg0: string) => string; classList: { add: (arg0: string) => void; }; parentElement: { getAttribute: (arg0: string) => any; }; querySelectorAll: (arg0: string) => any; }, cx?: number, tw?: string, tx?: string, _yc?: null, clip?: string, img?: any[], snd?: any[]) => Promise<void>} someValue
- * @param {import("../language/sandbox/japanese-util").JapaneseUtil} japaneseUtil
  */
-function vars(aD, displayAnki, aN, someValue, japaneseUtil) {
+function vars(aD, displayAnki, aN, someValue, funcs) {
     aDict = aD;
     anki = displayAnki;
     aNote = aN;
     sv = someValue;
-    jpu = japaneseUtil;
+    convertToRomaji = funcs.roma
+    convertHiraganaToKatakana = funcs.hira //kata
 
     // Create a namespace object and assign variables as its properties
     mod = {
         aDict: aDict,
         anki: anki,
         aNote: aNote,
-        sv: sv,
-        jpu: jpu
+        sv: sv
     };
     console.log(mod);
 }
@@ -362,8 +365,8 @@ function token_to_dict(token, tok = false, furi = false, dicts = false, short = 
             return token.surface_form;
         }
 
-        const hiragana_reading = jpu.convertHiraganaToKatakana(token.reading);
-        const roma = jpu.convertToRomaji(token.reading);
+        const hiragana_reading = convertHiraganaToKatakana(token.reading);
+        const roma = convertToRomaji(token.reading);
         const token_dict = {
             "surface": token.surface_form,
             "part_of_speech": token.pos,

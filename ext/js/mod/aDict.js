@@ -2,6 +2,7 @@
 
 import {mobile} from "../ctx.js";
 import {Display} from "../display/display.js";
+import {isStringPartiallyJapanese} from "../language/ja/japanese.js";
 import {Analyze} from './aAnalyze.js';
 import {Note} from "./aNote.js";
 import {aAll, getWords, sortArrays, sort_by_property, aId, aModel, aDeck, aIn, aQuery, aTag, api, iDeck, iTag, isIndexInsideElement} from './aUtil.js';
@@ -14,10 +15,6 @@ export function av(/** @type {string} */ v) {
 }
 export var wn = console.warn
 // @ts-ignore
-/**
- * @type {import("../language/sandbox/japanese-util.js").JapaneseUtil}
- */
-var japaneseUtil
 /**
  * @type {any[]}
  */
@@ -174,17 +171,15 @@ export class aDict {
   /**
    * @param {import("../display/display.js").Display} display
    * @param {import("../display/display-audio.js").DisplayAudio} audio
-   * @param {import("../language/sandbox/japanese-util.js").JapaneseUtil} jpu
    * @param {import("../display/display-anki.js").DisplayAnki} anki
    * @param {import("../pages/settings/anki-controller.js").AnkiController | null} control
    * @param {import("../comm/mecab.js").Mecab | null} mecab
    * @param {import("./aNote.js").Note | null} note
    */
-  constructor(display, audio, jpu, anki, control, mecab = null, param = true, note) {
+  constructor(display, audio, anki, control, mecab = null, param = true, note) {
     this.search = param == true && display !== null
     this.param = param
     this.anki = anki
-    this.japaneseUtil = jpu
     this.note = note
     // Set up the AnkiConnect server and enable the connection
     // api.server = 'http://localhost:8765';
@@ -199,8 +194,7 @@ export class aDict {
       anki,
       control,
       mecab,
-      param,
-      jpu
+      param
     }
     mecab?.setEnabled(true)
     // Usage examples
@@ -210,7 +204,6 @@ export class aDict {
     // getNotesByTag('jp2');
 
     // Accessing the JSON data
-    japaneseUtil = jpu;
     this.upd = true
     this.util = util
     this.fl = true
@@ -312,7 +305,7 @@ this.txtImg(false)
   .catch((error) => {
     console.error('Error retrieving text:', error);
   }); */
-    if (av('log')) console.log('aDict: ', [display, audio, japaneseUtil, anki])
+    //if (av('log')) console.log('aDict: ', [display, audio, japaneseUtil, anki])
 
     // var sv = this.saveAdd
     // navigator.clipboard.writeText(this.search);
@@ -628,7 +621,6 @@ this.txtImg(false)
       // let mode = 'lyrics'
       let spl = txt.split('\n')// .filter(item=>item);
       this.frst = ft
-      this.jpu = japaneseUtil
       this.start = true
       /*      const keys = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', // 0-9
               'arrowup', 'arrowdown', 'arrowleft', 'arrowright', // 10-13
@@ -1996,7 +1988,7 @@ this.txtImg(false)
   async tokens(spl, splL = 0) {
     let txt = spl
     if (typeof spl === 'string') txt = txt.replace(/[&/\\#,+()$~%.'":*?<>{}]/g, '')
-    const isKana = this.japaneseUtil.isStringPartiallyJapanese(txt)
+    const isKana = isStringPartiallyJapanese(txt)
     if (isKana) {
       if (typeof spl === 'string') spl = await token(txt)
       this.spls = spl
@@ -2068,7 +2060,7 @@ this.txtImg(false)
         let ptxt
         // this.modP.appendChild(ptxt)
         let tti = 0
-        const isKana = japaneseUtil.isStringPartiallyJapanese(tt)
+        const isKana = isStringPartiallyJapanese(tt)
         if (isKana) {
           ptxt = this.setup()
           if (av('warn')) console.warn(this.modK, this.modP)
@@ -2431,7 +2423,7 @@ this.txtImg(false)
             ind = parseInt(c[ii].getAttribute('data-offset'))
             if (av('log')) console.log(`${parseInt(ii) + 1}/${cc.length}.  : `, ii, tt, tts, ix, ind)
           }
-          const isKana = japaneseUtil.isStringPartiallyJapanese(tt)
+          const isKana = isStringPartiallyJapanese(tt)
           if (Y != lY || !document.querySelector('#modK')) {
             this.spll = l[Y]
             this.sentence(qs, Y)
@@ -2481,7 +2473,7 @@ this.txtImg(false)
           if (this.var('tl')) await this.translate([tt], 0, tl);
           const ptxt = document.createElement('span')
           ptxt.style.border = '1px solid rgb(120,120,120)'
-          const isKana = japaneseUtil.isStringPartiallyJapanese(tt)
+          const isKana = isStringPartiallyJapanese(tt)
           if (isKana) {
             ts = line
           }
@@ -3149,7 +3141,7 @@ this.txtImg(false)
       this.saudios = result
       this._saudio = getWords(result.notes);
       this._saudioP = true
-      localStorage.setItem("saudio", pops.join(' '))
+      localStorage.setItem("saudio", this._saudio.join(' '))
       return this._saudio;
     })();
   }
@@ -4346,8 +4338,6 @@ this.txtImg(false)
     try {
       if (av('warn')) console.warn('Y:', word, elem, k, i)
       const sc = this.most.slice(0, this.known).includes(word)
-      // if(av('log')) console.log(k, optionsContext, i, t, r, ln, this.nl) //(optionsContext,ln,nl)//k, optionsContext, i, t, r, japaneseUtil, sc)
-      // if(av('log')) console.dir(results)
       const h = document.createElement('p')
       // `h.inn`erHTML = optionsContext + "(" + r + "):"
       // let ct2 = document.createElement("tr")

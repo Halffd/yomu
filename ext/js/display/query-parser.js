@@ -19,6 +19,7 @@
 import {EventDispatcher} from '../core/event-dispatcher.js';
 import {log} from '../core/log.js';
 import {querySelectorNotNull} from '../dom/query-selector.js';
+import {convertToRomaji} from '../language/ja/japanese-wanakana.js';
 import {convertHiraganaToKatakana, convertKatakanaToHiragana, isStringEntirelyKana} from '../language/ja/japanese.js';
 import {TextScanner} from '../language/text-scanner.js';
 
@@ -300,9 +301,9 @@ export class QueryParser extends EventDispatcher {
             for (const {text, reading} of term) {
                 if (reading.length === 0) {
                     try {
-                        if (this._japaneseUtil.isStringEntirelyKana(text)) {
-                            const r0 = this._japaneseUtil.convertKatakanaToHiragana(text);
-                            const r1 = this._japaneseUtil.convertToRomaji(r0);
+                        if (isStringEntirelyKana(text)) {
+                            const r0 = convertKatakanaToHiragana(text);
+                            const r1 = convertToRomaji(r0);
                             termNode.appendChild(this._createSegment(text, r1, offset));
                         } else {
                             termNode.appendChild(document.createTextNode(text));

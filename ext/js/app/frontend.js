@@ -432,9 +432,9 @@ export class Frontend {
     _clearSelection(passive) {
         this._stopClearSelectionDelayed();
         if (this._popup !== null) {
-            if(!canRun()){
+            //if(!canRun()){
             void this._popup.clearAutoPlayTimer();
-            }
+            //}
             void this._popup.hide(!passive);
             this._isPointerOverPopup = false;
         }
