@@ -187,7 +187,7 @@ export class Display extends EventDispatcher {
         this._onMenuButtonMenuCloseBind = this._onMenuButtonMenuClose.bind(this);
         /** @type {ThemeController} */
         this._themeController = new ThemeController(document.documentElement);
-
+        this.canRun = canRun;
         /* eslint-disable @stylistic/no-multi-spaces */
         this._hotkeyHandler.registerActions([
             ['close', () => {this._onHotkeyClose();}],

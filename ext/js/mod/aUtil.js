@@ -13,16 +13,18 @@ import {av, wn} from './aDict.js';
  * @returns {boolean} - `true` if the application can run, `false` otherwise.
  */
 export function canRun(option = 0) {
-    const isSearchPage = document.URL.includes('search.html') && document.URL.includes('chrome-extension');
-    const isRunFlagTrue = localStorage.getItem('run') === 'true';
-    const isQpFlagTrue = localStorage.getItem('qp') === 'true';
+const isSearchPage = document.URL.includes('search.html') && document.URL.includes('chrome-extension');
+const isRunFlagTrue = localStorage.getItem('run') === 'true';
+const isQpFlagTrue = localStorage.getItem('qp') === 'true';
 
-    if (option === 1) {
-      return isQpFlagTrue || isSearchPage || isRunFlagTrue;
-    } else {
-      return isSearchPage && isRunFlagTrue;
-    }
-  }
+if (option === 1) {
+    return isQpFlagTrue || isSearchPage || isRunFlagTrue;
+} else {
+    return isSearchPage && isRunFlagTrue;
+}
+}
+
+export const canRunObject = canRun;
 /**
  * @param {Node} node
  * @param {number} index
