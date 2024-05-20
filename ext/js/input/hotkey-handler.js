@@ -171,8 +171,8 @@ export class HotkeyHandler extends EventDispatcher {
      * @param {KeyboardEvent} event
      */
     _onKeyDown(event) {
-        const res = (d=>{const r=document.URL,s=localStorage.getItem;return(r.includes("search.html")&&r.includes("chrome-extension"))&&(s("qp")==="true"||s("run")==="true")})(option);
-        if(!res){
+        const res = (d=>{const r=document.URL,s=localStorage.getItem;return(r.includes("search.html")&&r.includes("chrome-extension"))&&(s("qp")==="true"||s("run")==="true")})(0);
+        if(res){
             return;
         }
         let hotkeyInfo = this._hotkeys.get(event.code);
