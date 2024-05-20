@@ -20,6 +20,6 @@ ext/legal-npm.html
 .cache/
 .vscode/
 .tmp.driveupload/
-ext/lib
+ext/lib/*
 |ext/lib/kuromoji.js
 |ext/lib/bower_components
