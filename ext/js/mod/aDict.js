@@ -1540,10 +1540,10 @@ this.txtImg(false)
       if (iel) {
         iel.innerHTML = ''
       }
-      const sc = this.most.slice(0, this.known).includes(tt)
-      if (sc && elem.style.borderColor == '') {
-        elem.style.borderColor = 'rgb(170,255,170)'
-      }
+      //const sc = this.most.slice(0, this.known).includes(tt)
+      //if (sc && elem.style.borderColor == '') {
+        //elem.style.borderColor = 'rgb(170,255,170)'
+      //}
       elem.remove()
     } else if (go) {
       w.push(tt)
@@ -1696,7 +1696,7 @@ this.txtImg(false)
       } else if (emph === false) {
         elem.style.fontWeight = 'auto'
       } else {
-        elem.style.borderColor = `hsl(${emph.pi} ${emph.sat}%,50%)`
+        //elem.style.borderColor = `hsl(${emph.pi} ${emph.sat}%,50%)`
         elem.querySelector('#particle').innerHTML += emph.tt
       }
 
@@ -1792,25 +1792,25 @@ this.txtImg(false)
             is = true
           }
           if (this.note.bin.includes(tt)) {
-            elem.style.setProperty('--cc', 'aqua')
+            elem.style.borderColor = 'aqua'
+          } else if (nf) {
+            elem.style.borderColor = 'orange'
           } else if (this.note.words.includes(tt)) {
-            elem.style.setProperty('--cc', 'green')
+            elem.style.borderColor = 'green'
           } else if (this._cards?.includes(tt)) {
             if (this._saudio.includes(tt)) {
-              elem.style.setProperty('--cc', 'purple')
+              elem.style.borderColor = 'purple'
             } else if (this._anms.includes(tt)) {
-              elem.style.setProperty('--cc', 'pink')
+              elem.style.borderColor = 'pink'
             } else if (this._jpws.includes(tt)) {
-              elem.style.setProperty('--cc', 'cyan')
+              elem.style.borderColor = 'cyan'
             } else {
-              elem.style.setProperty('--cc', 'blue')
+              elem.style.borderColor = 'blue'
             }
-          } else if (nf) {
-            elem.style.setProperty('--cc', 'orange')
           } else if (this.note.learned.includes(tt)) {
-            elem.style.setProperty('--cc', 'red')
+            elem.style.borderColor = 'red'
           } else if (this.note.known.includes(tt)) {
-            elem.style.setProperty('--cc', 'gray')
+            elem.style.borderColor = 'gray'
           }
           if (this.note.known.includes(tt) && this.var('kn') && this.analysis) {
             elem.style.display = 'none'
@@ -3621,7 +3621,7 @@ this.txtImg(false)
         //        aNote.find(w)
         // aNote.delete('word', w, '==')
         elem?.classList.add('fav')
-        elem.style.setProperty('--cc', 'red')
+        elem.style.borderColor = 'red'
       }
     }
     if (shift) {

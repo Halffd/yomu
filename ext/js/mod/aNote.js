@@ -10,6 +10,41 @@ import {isStringEntirelyKana} from '../language/ja/japanese.js';
 var nv = (/** @type {string} */ v) => {
     return localStorage.getItem(v) == 'true'
 }
+
+function chunkData(data, chunkSize) {
+    const chunks = [];
+    for (let i = 0; i < data.length; i += chunkSize) {
+      chunks.push(data.slice(i, i + chunkSize));
+    }
+    return chunks;
+  }
+  
+  async function sendBatchedData(url, chunks) {
+    try {
+      const responses = await Promise.all(
+        chunks.map(async (chunk, index) => {
+          const chunkOptions = {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(chunk),
+          };
+          const response = await fetch(`${url}/chunk-${index}`, chunkOptions);
+          return response;
+        })
+      );
+  
+      const success = responses.every((response) => response.ok);
+      if (success) {
+        return { success: true, message: 'Data uploaded successfully' };
+      } else {
+        throw new Error('Failed to upload data');
+      }
+    } catch (error) {
+      throw new Error('Failed to upload data: ' + error.message);
+    }
+  }
 // Function to apply the comparison operator to the value and targetValue
 /**
  * @param {string | number} value
@@ -458,35 +493,8 @@ export class Note {
             await this.setter('day', currentDate)
             let iCur = parseInt(await this.getter('cur'))
             iCur += 1
-            const existingContents = await this.getter('save')// await note.getFileContents();
             if (nv('warn')) console.warn([t, txt, def, fq, tags, html, moe, audio, image, clip])
             this.show()
-            let save
-            try {
-                if (nv('warn')) console.warn(existingContents)
-                if (typeof existingContents !== 'object') {
-                    save = JSON.parse(existingContents)
-                }
-            } catch {
-                save = null
-                await this.setter('savebk', existingContents)
-            }
-            // Nullish Coalescing Operator (??)
-            // This operator returns the first operand if it is not null or undefined.
-            // Otherwise, it returns the second operand.
-            const s = save ?? {data: []}
-            // Optional Chaining Operator (?.)
-            // This operator allows you to read the value of a property located deep within a chain of connected objects
-            // without having to check that each reference in the chain is valid.
-            //   let result = note?.get();
-            // Optional Chaining Operator (?.)
-            // Here it is used to access the 'data' property of 's'. If 's' is null or undefined, 'data1' will be undefined.
-            const data = s?.data
-            // Ternary Operator (?:)
-            // This operator takes three operands: a condition followed by a question mark (?),
-            // then an expression to execute if the condition is truthy followed by a colon (:),
-            // and finally the expression to execute if the condition is falsy.
-            // let data2 = s.text ?? ''; //let data2 = s.text ? s.text : '';
             let options = {
                 year: 'numeric',
                 month: 'numeric',
@@ -654,7 +662,7 @@ export class Note {
                             time: dateString,
                             params: `Yc:${yc} Cx:${cx} Flag:${flag}`
                         }
-                        let sv = await this.getter('save') ?? ''
+                        let sv = await this.getter('save') ?? {}
                         let sj = sv
                         if (typeof sv !== 'object') {
                             sj = JSON.parse(sv)
@@ -1153,8 +1161,18 @@ export class Note {
             };
 
             if (method !== 'GET' && method !== 'HEAD') {
-                options.body = JSON.stringify(data);
-            }
+                // Check if the data is too large to send in a single request
+                if (JSON.stringify(data).length > 1000000) {
+                  // Chunk the data into smaller pieces
+                  const chunks = chunkData(data, 1000);
+          
+                  // Use batched writes to upload the data
+                  const response = await sendBatchedData(url, chunks);
+                  return response;
+                } else {
+                  options.body = JSON.stringify(data);
+                }
+              }
 
             const response = await fetch(url, options);
 
@@ -1335,7 +1353,12 @@ export class Note {
     }
     async getter(key) {
         let val = null
-        return localStorage.getItem(key)
+        let i = localStorage.getItem(key)
+        if(i == '[object Object]'){
+            return {};
+        } else {
+            return i;
+        }
         if (Object.hasOwn(this.vars, key)) {
             val = this.vars[key]
         } else {
@@ -1360,7 +1383,7 @@ export class Note {
         let val = null
         try {
             localStorage.setItem(key, value)
-            val = this.put(`/${key}`, value)
+            val = this.put(value, `/${key}`)
             this.vars[key] = val
         } catch (error) {
             console.error(error);
