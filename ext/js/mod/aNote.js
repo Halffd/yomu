@@ -552,12 +552,12 @@ export class Note {
                     ks.push(t)
                     k = ks.join(' ')
                     // elem.style.borderColor = 'green'
-                    elem.style.setProperty('--cc', 'aqua')
+                    elem.style.borderColor = 'aqua'
                     await this.setter('keep', k)
                 } else {
                     const kf = ks.filter(item => item !== t);
                     k = kf.join(' ')
-                    elem.style.setProperty('--cc', 'red')
+                    elem.style.borderColor = 'red'
                     let d = await this.getter('recycle') ?? []
                     let dl = []
                     if (typeof d === 'string') {
@@ -569,7 +569,7 @@ export class Note {
                     await this.setter('keep', k)
                 }
             } else {
-                elem.style.setProperty('--cc', 'lime')
+                elem.style.borderColor = 'lime'
             }
             const objin = async () => {
                 let on = this.obj;
