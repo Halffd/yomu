@@ -132,10 +132,10 @@ export class Analyze {
         this.txt.placeholder = 'Text to Analyze'
         this.txt.addEventListener('change', this.run.bind(this), false)
         this.btn.textContent = 'All Learned'
-        this.btn.onclick = function(e){
+        this.btn.onclick = async function(e){
             e.stopPropagation()
             let es = document.querySelectorAll('.vis')
-            let kn = localStorage.getItem('alllearned') ?? ''
+            let kn = await this.dic.note.getter('alllearned') ?? ''
             kn = kn.split(' ') ?? []
             for(let elem of es){
                 let ww = elem.getAttribute('w')
@@ -156,7 +156,7 @@ export class Analyze {
             }
             console.warn(kn);
             kn = kn.join(' ')
-            localStorage.setItem('alllearned', kn)
+            this.dic.note.setter('alllearned', kn)
         }.bind(this)
         t.appendChild(this.txt)
         t.appendChild(this.btn)

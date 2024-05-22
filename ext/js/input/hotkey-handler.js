@@ -171,8 +171,17 @@ export class HotkeyHandler extends EventDispatcher {
      * @param {KeyboardEvent} event
      */
     _onKeyDown(event) {
-        const res = (d=>{const r=document.URL,s=localStorage.getItem;return(r.includes("search.html")&&r.includes("chrome-extension"))&&(s("qp")==="true"||s("run")==="true")})(0);
-        if(res){
+        const res = (option) => {
+            const isSearchPage = document.URL.includes('search.html') && document.URL.includes('chrome-extension');
+            const isRunFlagTrue = localStorage.getItem('run') === 'true';
+            const isQpFlagTrue = localStorage.getItem('qp') === 'true';
+            if (option === 1) {
+                return isQpFlagTrue || isSearchPage || isRunFlagTrue;
+            } else {
+                return isSearchPage && isRunFlagTrue;
+            }
+            }
+        if(res(0)){
             return;
         }
         let hotkeyInfo = this._hotkeys.get(event.code);

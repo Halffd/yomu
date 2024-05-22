@@ -479,7 +479,7 @@ export class Note {
             }
             if (lt !== t) {
                 this.saveAdd(cx, lt, txt, def, fq, tags, html, moe, audio, image, clip, yc, read, elem, [true, true])
-            }
+            }   
             const note = window.aNote
             const noteMod = Object.create(Note.prototype, {dict: this})
             const storedDay = parseInt(await this.getter('day'))
@@ -528,7 +528,7 @@ export class Note {
                 let ks = k.split(' ')
                 let filt = false
                 let is = ks.includes(t)
-                if (!is) {
+                /*if (!is) {
                     ks = ks.map(word => {
                         const lastIndex = word.indexOf(t);
                         if (lastIndex !== -1) {
@@ -547,7 +547,7 @@ export class Note {
                           return word;
                       }
                   });*/
-                }
+                //}
                 if (!is && !filt) {
                     ks.push(t)
                     k = ks.join(' ')

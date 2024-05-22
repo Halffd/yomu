@@ -143,12 +143,11 @@
 
 #particle:not(:empty) {
     position: absolute;
-    bottom: 50%;
     word-wrap: break-word;
     /* Enable word wrapping */
     width: 0.8em;
     right: 0;
-    font-size: 1.64em;
+    font-size: 1.68em;
     border-radius: 12px;
     border-color: rgba(90, 42, 195, 1);
     border-style: solid;

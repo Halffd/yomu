@@ -44,6 +44,17 @@ var jpu;
  *
  * @type {{}}
  */
+var canRun = function(option = 0) {
+    const isSearchPage = document.URL.includes('search.html') && document.URL.includes('chrome-extension');
+    const isRunFlagTrue = localStorage.getItem('run') === 'true';
+    const isQpFlagTrue = localStorage.getItem('qp') === 'true';
+    
+    if (option === 1) {
+        return isQpFlagTrue || isSearchPage || isRunFlagTrue;
+    } else {
+        return isSearchPage && isRunFlagTrue;
+    }
+    }
 var mod = {}; // Initialize an empty namespace object
 function calcFlex(result) {
     return Math.round(100 / (result + 1));

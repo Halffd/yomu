@@ -5,6 +5,7 @@ import {Display} from "../display/display.js";
 import {isStringPartiallyJapanese} from "../language/ja/japanese.js";
 import {Analyze} from './aAnalyze.js';
 import {Note} from "./aNote.js";
+import {Db} from "./aSql.js";
 import {aAll, getWords, sortArrays, sort_by_property, aId, aModel, aDeck, aIn, aQuery, aTag, api, iDeck, iTag, isIndexInsideElement} from './aUtil.js';
 import {yomiKanjis} from "./aYomi.js";
 /* global aDict, Note, isIndexInsideElement, aDeck, aTag, aAll, aModel, api, aNote, sv, aQuery
@@ -1096,6 +1097,7 @@ this.txtImg(false)
       qp.style.display = 'block'
       this.t.appendChild(qpc)
       this.analyze = new Analyze(this, this.t)
+      // this.db = new Db();
       var aA = this.analyze
       this.iS = inSearch;
       if (av('log')) console.log(qpc);
@@ -1525,7 +1527,7 @@ this.txtImg(false)
       pi *= 360 / this.part.length
       if (av('warn')) console.warn(pi, this.part.length, elem, isKana, ii, tt, tts)
       if (ii > 0) {
-        vis[vis.length - 1].style.borderColor = `hsl(${pi} ${sat}%,50%)`
+        vis[vis.length - 1].querySelector('#particle').style.borderColor = `hsl(${pi} ${sat}%,50%)`
         vis[vis.length - 1].querySelector('#particle').innerHTML += tt
       }
       if (ii == 0) {
