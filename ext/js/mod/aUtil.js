@@ -277,7 +277,7 @@ export async function aAll(sort = '') {
         } catch (error) {
             console.error(error);
         }
-        await setTimeout(() => {}, 900);
+        await setTimeout(() => {}, 3000);
     }
 }
 /**
