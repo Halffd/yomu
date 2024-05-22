@@ -5,7 +5,7 @@ export class Db {
       }
       // The `initSqlJs` function is globally provided by all of the main dist files if loaded in the browser.
       // We must specify this locateFile function if we are loading a wasm file from anywhere other than the current html page's folder.
-      initSqlJs(config).then(function(SQL){
+     /* initSqlJs(config).then(function(SQL){
         //Create the database
         const db = new SQL.Database();
         // Run a query without reading the results
@@ -21,6 +21,6 @@ export class Db {
           const row = stmt.getAsObject();
           console.log('Here is a row: ' + JSON.stringify(row));
         }
-      });
+      });*/
     }
 }
