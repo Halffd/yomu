@@ -3207,14 +3207,14 @@ this.txtImg(false)
   }
   async vals() {
     try {
-      const r = await Promise.all([
+      /*const r = await Promise.all([
         this.cards,
         this.jpws,
         this.anms,
         this.saudio,
         this.pops,
         this.mined
-      ]);
+      ]);*/
 
       // 'r' will be an array containing the resolved values of all promises
       // You can access the individual results using array indexing, e.g., r[0], r[1], etc.
