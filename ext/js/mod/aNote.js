@@ -6,6 +6,7 @@ import {wn, av} from './aDict.js';
 import {store, retrieve, dbinit} from './aDb.js'
 import {convertToKana} from '../language/ja/japanese-wanakana.js';
 import {isStringEntirelyKana} from '../language/ja/japanese.js';
+import {Db} from './aSql.js';
 
 var nv = (/** @type {string} */ v) => {
     return localStorage.getItem(v) == 'true'
@@ -14,37 +15,37 @@ var nv = (/** @type {string} */ v) => {
 function chunkData(data, chunkSize) {
     const chunks = [];
     for (let i = 0; i < data.length; i += chunkSize) {
-      chunks.push(data.slice(i, i + chunkSize));
+        chunks.push(data.slice(i, i + chunkSize));
     }
     return chunks;
-  }
-  
-  async function sendBatchedData(url, chunks) {
+}
+
+async function sendBatchedData(url, chunks) {
     try {
-      const responses = await Promise.all(
-        chunks.map(async (chunk, index) => {
-          const chunkOptions = {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(chunk),
-          };
-          const response = await fetch(`${url}/chunk-${index}`, chunkOptions);
-          return response;
-        })
-      );
-  
-      const success = responses.every((response) => response.ok);
-      if (success) {
-        return { success: true, message: 'Data uploaded successfully' };
-      } else {
-        throw new Error('Failed to upload data');
-      }
+        const responses = await Promise.all(
+            chunks.map(async (chunk, index) => {
+                const chunkOptions = {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(chunk),
+                };
+                const response = await fetch(`${url}/chunk-${index}`, chunkOptions);
+                return response;
+            })
+        );
+
+        const success = responses.every((response) => response.ok);
+        if (success) {
+            return {success: true, message: 'Data uploaded successfully'};
+        } else {
+            throw new Error('Failed to upload data');
+        }
     } catch (error) {
-      throw new Error('Failed to upload data: ' + error.message);
+        throw new Error('Failed to upload data: ' + error.message);
     }
-  }
+}
 // Function to apply the comparison operator to the value and targetValue
 /**
  * @param {string | number} value
@@ -129,6 +130,7 @@ export class Note {
         this.svClk = this.svClk.bind(this);
         this.saveAdd = this.saveAdd.bind(this);
         this.url = "https://yomu-d9ca6-default-rtdb.firebaseio.com/save"
+        this.db = new Db()
     }
 
     /**
@@ -479,7 +481,7 @@ export class Note {
             }
             if (lt !== t) {
                 this.saveAdd(cx, lt, txt, def, fq, tags, html, moe, audio, image, clip, yc, read, elem, [true, true])
-            }   
+            }
             const note = window.aNote
             const noteMod = Object.create(Note.prototype, {dict: this})
             const storedDay = parseInt(await this.getter('day'))
@@ -522,7 +524,8 @@ export class Note {
             const saveDiv = document.querySelector('.save')
             if (nv('warn')) console.warn(cx, isStringInSet, ww, w2, t)
             //if (cx == -1) return
-            if (cx >= 1 || this.aDict?.saving) {
+            var keep = cx >= 1 || this.aDict?.saving
+            if (keep) {
                 let k = await this.getter('keep') ?? ''
                 await this.setter('keepbackup', k)
                 let ks = k.split(' ')
@@ -657,6 +660,8 @@ export class Note {
                             sentence: txt,
                             definition: def,
                             frequency: fq,
+                            type: keep ? "keep" : "words",
+                            learning: 0,
                             clipboard: clip?.substring(0, 5) === txt.substring(0, 5) ? '' : clip?.substring(0, 80),
                             status: cx < 1 ? 1 : cx,
                             time: dateString,
@@ -674,6 +679,8 @@ export class Note {
                         if (nv('warn')) console.warn(word, o)
                         localStorage.setItem('save', JSON.stringify(o));
                         this.put(o, '/save')
+                        oc.id = unixSeconds
+                        this.db?.add(oc)
                     } else if (tf?.[0].sentence != txt) {
                         this.obj()
                     }
@@ -1134,10 +1141,28 @@ export class Note {
     }
     async save() {
         const jsonStr = localStorage
-        await this.put(jsonStr)
-        await this.put(this.obj, '/save')
+        await this.saveObject(jsonStr, '/');
     }
-    async db(url = '') {
+    async saveObject(obj, path) {
+        await Promise.all(
+            Object.entries(obj).map(async ([key, value]) => {
+                const currentPath = `${path}${key}`;
+                if (typeof value === 'string') {
+                    try {
+                        const parsedObj = JSON.parse(value);
+                        await this.saveObject(parsedObj, `${currentPath}/`);
+                    } catch (err) {
+                        await this.put(value, currentPath);
+                    }
+                } else if (typeof value === 'object' && value !== null) {
+                    await this.saveObject(value, `${currentPath}/`);
+                } else {
+                    await this.put(value, currentPath);
+                }
+            })
+        );
+    }
+    async getDb(url = '') {
         return await this.request(null, 'GET', url)
     }
 
@@ -1162,17 +1187,17 @@ export class Note {
 
             if (method !== 'GET' && method !== 'HEAD') {
                 // Check if the data is too large to send in a single request
-                if (JSON.stringify(data).length > 1000000) {
-                  // Chunk the data into smaller pieces
-                  const chunks = chunkData(data, 1000);
-          
-                  // Use batched writes to upload the data
-                  const response = await sendBatchedData(url, chunks);
-                  return response;
-                } else {
-                  options.body = JSON.stringify(data);
-                }
-              }
+                /*if (JSON.stringify(data).length > 1000000) {
+                    // Chunk the data into smaller pieces
+                    const chunks = chunkData(data, 1000);
+
+                    // Use batched writes to upload the data
+                    const response = await sendBatchedData(url, chunks);
+                    return response;
+                } else {*/
+                    options.body = JSON.stringify(data);
+                //}
+            }
 
             const response = await fetch(url, options);
 
@@ -1354,7 +1379,7 @@ export class Note {
     async getter(key) {
         let val = null
         let i = localStorage.getItem(key)
-        if(i == '[object Object]'){
+        if (i == '[object Object]') {
             return {};
         } else {
             return i;
@@ -1363,7 +1388,7 @@ export class Note {
             val = this.vars[key]
         } else {
             try {
-                val = await this.db(`/${key}`)
+                val = await this.getDb(`/${key}`)
             } catch (err) {
                 console.log(err);
                 try {

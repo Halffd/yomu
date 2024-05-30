@@ -880,7 +880,7 @@ this.txtImg(false)
         document.getElementById('sync').onclick = (event) => {
           event.preventDefault(); // Prevent the default context menu from appearing
           try {
-            aNote.db().then(data => {
+            aNote.getDb().then(data => {
               Object.keys(data).forEach((key) => {
                 localStorage.setItem(key, data[key]);
               });
@@ -1794,7 +1794,7 @@ this.txtImg(false)
             is = true
           }
           if (this.note.bin.includes(tt)) {
-            elem.style.borderColor = 'aqua'
+            elem.style.borderColor = 'rgb(0,90,135)'
           } else if (nf) {
             elem.style.borderColor = 'orange'
           } else if (this.note.words.includes(tt)) {
