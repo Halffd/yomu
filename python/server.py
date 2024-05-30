@@ -2,11 +2,12 @@ from flask import Flask, request, jsonify
 import sqlite3
 import os
 import json
+from collections import defaultdict
 
 app = Flask(__name__)
 
 # Connect to the Anki SQLite database
-conn = sqlite3.connect("save.sqlite", check_same_thread=False)
+conn = sqlite3.connect("db/save.sqlite", check_same_thread=False)
 c = conn.cursor()
 
 # Create the 'words' table if it doesn't exist
@@ -36,8 +37,12 @@ CREATE TABLE IF NOT EXISTS bin (
 """)
 
 c.execute("SELECT name FROM sqlite_master WHERE type='table';")
-for table in c.fetchall():
-    table_name = table[0]
+tables = [table[0] for table in c.fetchall()]
+
+# Create a defaultdict to store the data
+data = defaultdict(list)
+
+for table_name in tables:
     print(f"Table: {table_name}")
 
     # Get the column information for the current table
@@ -50,15 +55,24 @@ for table in c.fetchall():
         c.execute(f"SELECT * FROM {table_name} LIMIT 50;")
         rows = c.fetchall()
         for row in rows:
-            row_values = []
-            for i, value in enumerate(row):
-                column_name = columns[i]
-                row_values.append(f"{column_name}: {value}")
+            row_values = [f"{col_name}: {value}" for col_name, value in zip(columns, row)]
             print(", ".join(row_values))
     except sqlite3.OperationalError as e:
-        print(e)
+        print(f"Error accessing table '{table_name}': {e}")
     print()
 
+    # Fetch all rows from the table and create a list of dictionaries
+    c.execute(f"SELECT * FROM {table_name};")
+    rows = c.fetchall()
+    table_data = [
+        {col_name: value for col_name, value in zip(columns, row)}
+        for row in rows
+    ]
+    data[table_name] = table_data
+
+# Save the data to a JSON file
+with open('db/data.json', 'w') as f:
+    json.dump(data, f, indent=4)
 # Create
 @app.route('/yomu', methods=['POST'])
 def create_yomu():
