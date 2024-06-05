@@ -4,3 +4,12 @@ remake the top qord div
 make words readddable to anki clipboardimmage
 clipboardimage deck
 double click not working
+delete words on analyze
+analyze perfomance boost/cleanup
+analyze tests - better analyze tokenizer
+wiktionary & kanjidamage
+wiktionary parser  any language
+
+
+---
+electron?

@@ -246,6 +246,9 @@ export class Analyze {
                 this.tc.innerHTML += ` ${t}: ${f} `
             }
             this.dic.delete();
+            localStorage.setItem("slw", true)
+            localStorage.setItem("yc", false)
+            localStorage.setItem("kanjis", false)
             if (this.dic.var('moe') || this.dic.var('slw')) {
                 await this.dic.update(ft)
             } else {

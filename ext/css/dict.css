@@ -127,7 +127,9 @@
 .sentence:hover .tls {
     display: block;
 }
-
+.modW {
+    border: 5px solid purple;
+}
 .tit {
     position: relative;
 }
@@ -140,13 +142,33 @@
     font-size: 1.1em;
     border: 2px solid rgb(77, 184, 149);
 }
-
+.eng:not(:empty) {
+    position: absolute;
+    /* Enable word wrapping */
+    right: 0;
+    width: max-content;
+    bottom: 0;
+    z-index: 2;
+    text-align: right;
+    font-size: 1.05em;
+    border-radius: 12px;
+    border-color: rgba(40, 92, 215, 1);
+    border-style: solid;
+    font-weight: 700;
+    opacity: 0.75;
+    margin: 20px;
+    color: rgba(255, 245, 242, 1);
+    border-width: 2px;
+    padding: 0;
+    margin: 0;
+}
 #particle:not(:empty) {
     position: absolute;
     word-wrap: break-word;
     /* Enable word wrapping */
     width: 0.8em;
     right: 0;
+    bottom: 0;
     font-size: 1.68em;
     border-radius: 12px;
     border-color: rgba(90, 42, 195, 1);

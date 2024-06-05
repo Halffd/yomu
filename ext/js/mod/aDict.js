@@ -783,8 +783,8 @@ this.txtImg(false)
       pb.prepend(bd)
       bnct.prepend(pb)
       let hd = true
-      const hider = function(e){
-        if(e.target.closest('.config').style.height == '30px' || e.target.closest('.config').style.height == ''){
+      const hider = function (e) {
+        if (e.target.closest('.config').style.height == '30px' || e.target.closest('.config').style.height == '') {
           e.target.closest('.config').style.height = 'auto'
         } else {
           e.target.closest('.config').style.height = '30px'
@@ -796,13 +796,13 @@ this.txtImg(false)
         e.target.closest('.config').style.height = 'auto'
         hd = false
       }
-      bnct.onmouseleave = (e)=>{
-        if(!hd){
-        e.target.closest('.config').style.height = '30px'
-        hd = true
+      bnct.onmouseleave = (e) => {
+        if (!hd) {
+          e.target.closest('.config').style.height = '30px'
+          hd = true
         }
       }
-      
+
       bnv.prepend(bnct)
       // if(av('warn')) console.warn(ids)//vs, vbs, stt);
       const g = this.g.bind(this)
@@ -1428,6 +1428,32 @@ this.txtImg(false)
    */
   async makeElem(tt, spl, ii, splL, I, w, line, emph, ltp, tts, mns = null, y = null, elem = null, o = this.var) {
     if (av('log')) console.log('MakingElem--- ', tt, spl, ii, splL, I, w, line, mns == null, elem == null, o)
+    let started = this.prog?.length == 0
+    this.prog += tt
+    let enw = ''
+    const japaneseSymbolsRegex = /[\u3000-\u303F\uFF00-\uFFEF\u1F300-\u1F5FF\u1F600-\u1F64F\u1F680-\u1F6FF]/u;
+    if (started) {
+      for (let i = 0; i < spl[0].indexOf(tt); i++) {
+        let c = spl[0][i]
+        if (!japaneseSymbolsRegex.test(c) || isStringPartiallyJapanese(c)) {
+          break
+        } else {
+          enw += c
+        }
+      }
+    }
+    this.prog = enw + this.prog
+    if (this.prog) {
+      for (let i = this.prog.length; i < spl[0].length; i++) {
+        let c = spl[0][i]
+        if (isStringPartiallyJapanese(c)) {
+          break
+        } else {
+          enw += c
+        }
+      }
+    }
+    this.prog += enw
     let il = tt.length
     const height = localStorage.getItem('ht')
     const width = localStorage.getItem('wt')
@@ -1544,7 +1570,7 @@ this.txtImg(false)
       }
       //const sc = this.most.slice(0, this.known).includes(tt)
       //if (sc && elem.style.borderColor == '') {
-        //elem.style.borderColor = 'rgb(170,255,170)'
+      //elem.style.borderColor = 'rgb(170,255,170)'
       //}
       elem.remove()
     } else if (go) {
@@ -1701,7 +1727,18 @@ this.txtImg(false)
         //elem.style.borderColor = `hsl(${emph.pi} ${emph.sat}%,50%)`
         elem.querySelector('#particle').innerHTML += emph.tt
       }
-
+      if (enw.length > 0) {
+        let eel = document.createElement('div')
+        eel.className = 'eng'
+        if (started) {
+          eel.style.left = '0'
+          eel.style.right = ''
+          eel.style.direction = 'ltr'
+          eel.style.unicodeBidi = 'normal'
+        }
+        elem.appendChild(eel)
+        eel.innerHTML += `<span class="enw">${enw}</span>`
+      }
       // Check conditions using meaningful variable names
       this.modK.appendChild(elem)
       tt = this.unconj(elem)
@@ -1774,57 +1811,58 @@ this.txtImg(false)
       /*this._display._findDictionaryEntries(false, tt, false, this.options).then(async (results) => {
         let ttt = results[0].headwords[0].term
         ts.push(ttt)*/
-        let is = false
-        for (tt of ts) {
-          if (this._mined) {
-            if (this._mined.includes(tt)) {
-              elem.classList.add('mined')
-            }
+      let is = false
+      for (tt of ts) {
+        if (this._mined) {
+          if (this._mined.includes(tt)) {
+            elem.classList.add('mined')
           }
+        }
 
-          let nf = await this.note.find(tt)
-          console.warn(tt, this.at(tt, nf), this.ws);
-          if ((this.at(tt, nf) || this.ws) && !is) {
-            elem.classList.add('fav')
-            elem.setAttribute("fav", "1")
-            if (this.analysis && !this.ws) {
-              elem.style.display = 'none'
-              elem.className = 'mns'
-            }
-            is = true
-          }
-          if (this.note.bin.includes(tt)) {
-            elem.style.borderColor = 'rgb(0,90,135)'
-          } else if (nf) {
-            elem.style.borderColor = 'orange'
-          } else if (this.note.words.includes(tt)) {
-            elem.style.borderColor = 'green'
-          } else if (this._cards?.includes(tt)) {
-            if (this._saudio.includes(tt)) {
-              elem.style.borderColor = 'purple'
-            } else if (this._anms.includes(tt)) {
-              elem.style.borderColor = 'pink'
-            } else if (this._jpws.includes(tt)) {
-              elem.style.borderColor = 'cyan'
-            } else {
-              elem.style.borderColor = 'blue'
-            }
-          } else if (this.note.learned.includes(tt)) {
-            elem.style.borderColor = 'red'
-          } else if (this.note.known.includes(tt)) {
-            elem.style.borderColor = 'gray'
-          }
-          if (this.note.known.includes(tt) && this.var('kn') && this.analysis) {
-            elem.style.display = 'none'
+        let nf = await this.note.find(tt)
+        console.warn(tt, this.at(tt, nf), this.ws);
+        if ((this.at(tt, nf) || this.ws) && !is) {
+          elem.classList.add('fav')
+          elem.setAttribute("fav", "1")
+          if (this.analysis && !this.ws) {
+            this.modW.appendChild(elem)
+            //elem.style.display = 'none'
             elem.className = 'mns'
           }
-          if (nf) {
-            let st = nf?.[0].sentence
-            elem.setAttribute('wset', st)
-            elem.insertAdjacentHTML('beforeend', `<span class="wset" style="font-size: 1.05em;padding:0;margin:0;">${st}</span>`)
-          }
-          //if (is) break
+          is = true
         }
+        if (this.note.bin.includes(tt)) {
+          elem.style.borderColor = 'rgb(0,90,135)'
+        } else if (nf) {
+          elem.style.borderColor = 'orange'
+        } else if (this.note.words.includes(tt)) {
+          elem.style.borderColor = 'green'
+        } else if (this._cards?.includes(tt)) {
+          if (this._saudio.includes(tt)) {
+            elem.style.borderColor = 'purple'
+          } else if (this._anms.includes(tt)) {
+            elem.style.borderColor = 'pink'
+          } else if (this._jpws.includes(tt)) {
+            elem.style.borderColor = 'cyan'
+          } else {
+            elem.style.borderColor = 'blue'
+          }
+        } else if (this.note.learned.includes(tt)) {
+          elem.style.borderColor = 'red'
+        } else if (this.note.known.includes(tt)) {
+          elem.style.borderColor = 'gray'
+        }
+        if (this.note.known.includes(tt) && this.var('kn') && this.analysis) {
+          elem.style.display = 'none'
+          elem.className = 'mns'
+        }
+        if (nf) {
+          let st = nf?.[0].sentence
+          elem.setAttribute('wset', st)
+          elem.insertAdjacentHTML('beforeend', `<span class="wset" style="font-size: 1.05em;padding:0;margin:0;">${st}</span>`)
+        }
+        //if (is) break
+      }
       //})
     }
     return [emph, line, w]
@@ -2003,6 +2041,7 @@ this.txtImg(false)
       let line = []
       this.splc = spl
       this.spll = spl.length
+      this.prog = ''
       for (const ii in spl) {
         try {
           if (this.stop) {
@@ -2078,6 +2117,7 @@ this.txtImg(false)
           const mns = Array.from(mnsa).filter(element => element.innerHTML.trim() !== "");
           this.splc = mns
           this.spll = mns.length
+          this.prog = ''
           for (const ii in mns) {
             try {
               if (this.stop) {
@@ -2239,6 +2279,9 @@ this.txtImg(false)
     } catch {
       ltp = null
     }
+    this.modW = document.createElement('div')
+    this.modW.className = 'modW'
+    this.modP.prepend(this.modW)
     this.modP.appendChild(this.modK)
     return ltp
   }
@@ -2390,6 +2433,7 @@ this.txtImg(false)
     // this.sentence(qs, Y)
     this.splc = c
     this.spll = l[Y]
+    this.prog = ''
     for (const ii in c) {
       if (av('warn')) console.warn(c[ii])
       try {
@@ -2902,27 +2946,27 @@ this.txtImg(false)
           this.expand(b[this.pos], e.shiftKey)
         }
       }
-      if(!e.ctrlKey){
-      if (kn == 'g') {
-        e.preventDefault()
-        e.stopPropagation()
-        this.txts.value = ''
-        this.txts.textContent = '';
-        this.txts.focus();
-        this.txts.scrollIntoView()
+      if (!e.ctrlKey) {
+        if (kn == 'g') {
+          e.preventDefault()
+          e.stopPropagation()
+          this.txts.value = ''
+          this.txts.textContent = '';
+          this.txts.focus();
+          this.txts.scrollIntoView()
+        }
+        if (kn == 'f') {
+          e.preventDefault()
+          e.stopPropagation()
+          this.txts.focus();
+          this.txts.scrollIntoView()
+        }
       }
-      if (kn == 'f') {
-        e.preventDefault()
-        e.stopPropagation()
-        this.txts.focus();
-        this.txts.scrollIntoView()
-      }
-    }
       if (kn == 'r') {
         const elem = b[this.pos]
         try {
           sv(elem, undefined, undefined, undefined, undefined, undefined, undefined, undefined, [true, false])
-          if(this.var('wsw')){
+          if (this.var('wsw')) {
             this.wst(elem)
           }
         } catch (err) {
@@ -2933,7 +2977,7 @@ this.txtImg(false)
         const elem = b[this.pos]
         try {
           sv(elem, undefined, undefined, undefined, undefined, undefined, undefined, undefined, [true, true])
-          if(this.var('wsw')){
+          if (this.var('wsw')) {
             this.wst(elem)
           }
         } catch (err) {
@@ -2944,23 +2988,23 @@ this.txtImg(false)
         const elem = b[this.pos]
         try {
           sv(elem) //,undefined,undefined,undefined,undefined,undefined,undefined,undefined,[e.ctrlKey,e.shiftKey])
-          if(this.var('wsw')){
+          if (this.var('wsw')) {
             this.wst(elem)
           }
         } catch (err) {
           console.error(err)
         }
       }
-      if(!e.ctrlKey && !e.shiftKey){
-      if (kn === '=') {
-        let elem = document.getElementById('cur')
-        this.del(true, true, elem)
+      if (!e.ctrlKey && !e.shiftKey) {
+        if (kn === '=') {
+          let elem = document.getElementById('cur')
+          this.del(true, true, elem)
+        }
+        if (kn === '-') {
+          let elem = document.getElementById('cur')
+          this.del(true, false, elem)
+        }
       }
-      if (kn === '-') {
-        let elem = document.getElementById('cur')
-        this.del(true, false, elem)
-      }
-    }
       if (kn === 'delete') {
         let elem = document.getElementById('cur')
         if (e.ctrlKey == false && e.shiftKey == false) {
@@ -3207,14 +3251,14 @@ this.txtImg(false)
   }
   async vals() {
     try {
-      /*const r = await Promise.all([
+      const r = await Promise.all([
         this.cards,
         this.jpws,
         this.anms,
         this.saudio,
         this.pops,
         this.mined
-      ]);*/
+      ]);
 
       // 'r' will be an array containing the resolved values of all promises
       // You can access the individual results using array indexing, e.g., r[0], r[1], etc.
@@ -3653,7 +3697,8 @@ this.txtImg(false)
     console.log(w, this.note.bin, this.note.words, this.note.learned);
   }
   async wst(elem) {
-    let ws = elem.getAttribute('wset') ?? null
+    let w = elem.getAttrubute("t") ?? ''
+    let ws = w + ": " + elem.getAttribute('wset') ?? ''
     let wss = elem.getAttribute('ws') !== '1' ?? false
     if (ws && wss) {
       //this.do = false
@@ -4225,6 +4270,12 @@ this.txtImg(false)
 
     return hoursElapsed >= hours;
   }
+  /**
+* Asynchronously saves the given text or an array of texts to the note object.
+*
+* @param {string|string[]} txt - The text or array of texts to be saved.
+* @return {Promise<void>} A promise that resolves when the saving is complete.
+*/
   async saves(txt) {
     let ts = this.sis ?? txt.split(' ')
     let p = false
@@ -4275,26 +4326,22 @@ this.txtImg(false)
     }
   }
   /**
-   * @param {any} arr
+   * Fills the array with the given values and performs additional operations.
+   *
+   * @param {string} arrayValue - The array to be filled.
+   * @param {string} newValue - The value to be added to the array.
+   * @return {void} This function does not return a value.
    */
-  fill(arr, kp) {
-    const spl = [[arr, kp]]
-    const istart = 0
-    if (av('warn')) console.warn(arr)
-    if (this.fl) {
-      this.fi = 0
-    } else {
-      this.fi += 1
-    }
-    this.fl = false
-    this.delete()
-    this.startMod()
-    //this.modP?.insertAdjacentHTML('beforeend', `<p>${}</p>`)
-    this.sentence([arr + '</br>    ' + kp], 0)
-    this.saving = true
-    this.spl = spl
-    this.yomi.bind(this, spl[istart], istart, undefined, true)()
-    //this.update(arr)
+  fill(arrayValue, newValue) {
+    const inputValues = [[arrayValue, newValue]];
+    this.startIndex = 0;
+    this.fillIndex += 1;
+    this.delete();
+    this.startMod();
+    this.sentence([arrayValue + '</br>    ' + newValue], 0);
+    this.saving = true;
+    this.inputValues = inputValues;
+    this.yomi.bind(this, inputValues[this.startIndex], this.startIndex, undefined, true)();
   }
 
   /**
@@ -5085,22 +5132,22 @@ this.txtImg(false)
         </li>`
     }
   }
-  subStart(f = true){
+  subStart(f = true) {
     function convertToSrt(text, f = true) {
       const lines = text.trim().split('\n');
       let srt = '';
-  
+
       let reg = new RegExp(`.{40,99999999999}`, 'g');
       let reg2 = new RegExp(`^[A-Za-z]+$`, 'gm');
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i].trim();
         const match = line.match(/\[(\d{2}:\d{2}\.\d{3}) -> (\d{2}:\d{2}\.\d{3})\](.*)/);
-  
+
         if (match) {
           const startTime = match[1];
           const endTime = match[2];
           const content = match[3];
-  
+
           srt += `${i + 1}\n00:${startTime.replace('.', ',')} --> 00:${endTime.replace('.', ',')}\n${content.trim()}\n\n`;
         }
       }
@@ -5120,7 +5167,7 @@ this.txtImg(false)
         return null;
       }
     }
-  
+
     /**
      * @param {string} filename
      * @param {BlobPart} text
@@ -5128,28 +5175,28 @@ this.txtImg(false)
     function downloadFile(filename, text) {
       const blob = new Blob([text], {type: 'text/plain'});
       const url = URL.createObjectURL(blob);
-  
+
       const link = document.createElement('a');
       link.href = url;
       link.download = filename;
-  
+
       document.body.appendChild(link);
       link.click();
-  
+
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
     }
     // Usage
-  let text = this.getText() // tx //prompt("Sub")
-  //navigator.clipboard.readText().then(text => {
-  if (text) {
-    if (av('log')) console.log('Text from clipboard:', text);
-    let srt = convertToSrt(text, f);
-    if (av('log')) console.log(srt);
-    let filename = 'sub.srt';
-    downloadFile(filename, srt);
+    let text = this.getText() // tx //prompt("Sub")
+    //navigator.clipboard.readText().then(text => {
+    if (text) {
+      if (av('log')) console.log('Text from clipboard:', text);
+      let srt = convertToSrt(text, f);
+      if (av('log')) console.log(srt);
+      let filename = 'sub.srt';
+      downloadFile(filename, srt);
+    }
   }
-}
   /**
    * @param {any} word
    */

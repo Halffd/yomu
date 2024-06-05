@@ -20,10 +20,11 @@
 export class Db {
   constructor() {
     this.baseUrl = 'http://localhost:5300/yomu';
+    this.bin = 'http://localhost:5300/bin';
   }
 
-  async add(data) {
-    const response = await fetch(this.baseUrl, {
+  async add(data, url = this.baseUrl) {
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -42,8 +43,12 @@ export class Db {
     return result.message;
   }
 
-  async set(id, data) {
-    const response = await fetch(`${this.baseUrl}/${id}`, {
+  async set(id, data, url = this.baseUrl) {
+      if(url == 1){
+      url = this.bin
+    }
+    await setTimeout(() => {}, parseInt(Math.random() * 10000));
+    const response = await fetch(`${url}/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',

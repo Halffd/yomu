@@ -557,6 +557,13 @@ export class Note {
                     // elem.style.borderColor = 'green'
                     elem.style.borderColor = 'aqua'
                     await this.setter('keep', k)
+                    try {
+                        this.db.set(1, {
+                            keep: k
+                        }, 1)
+                    } catch (error) {
+                        console.error(error);
+                    }
                 } else {
                     const kf = ks.filter(item => item !== t);
                     k = kf.join(' ')
@@ -570,6 +577,13 @@ export class Note {
                     await this.setter('recycle', dl.join(' '))
                     // if (!filt) this.delete('word', t, '==')
                     await this.setter('keep', k)
+                    try {
+                        this.db.set(1, {
+                            keep: k
+                        }, 1)
+                    } catch (error) {
+                        console.error(error);
+                    }
                 }
             } else {
                 elem.style.borderColor = 'lime'
@@ -623,6 +637,13 @@ export class Note {
                 //}
                 word = word.join(' ')
                 await this.setter('words', word)
+                try {
+                    this.db.set(1, {
+                        words: word
+                    }, 1)
+                } catch (errpr) {
+                    console.error(error);
+                }
                 let so = {
                     st: txt,
                     sound: false,
@@ -1195,7 +1216,7 @@ export class Note {
                     const response = await sendBatchedData(url, chunks);
                     return response;
                 } else {*/
-                    options.body = JSON.stringify(data);
+                options.body = JSON.stringify(data);
                 //}
             }
 
