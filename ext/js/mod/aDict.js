@@ -967,7 +967,7 @@ this.txtImg(false)
         saveDiv.classList.add('save') // Apply Material Design card style
         saveDiv.classList.add('mdc-card') // Apply Material Design card style
         saveDiv.style.fontFamily = 'Arial'
-        saveDiv.onclick = this.words.bind(this)
+        saveDiv.ondblclick = this.words.bind(this)
         let sb = this.btc('Words-JPMN', async function (/** @type {{ stopPropagation: () => void; }} */ e) {
           e.stopPropagation()
           let si = localStorage.getItem('words') // + ` ${localStorage.getItem('wordbk')}`*/ document.querySelector('.save .w').innerText
@@ -985,9 +985,9 @@ this.txtImg(false)
         }.bind(this), saveDiv)
         this.btc('Words-Popups', async function (/** @type {{ stopPropagation: () => void; }} */ e) {
           e.stopPropagation()
-          let si = localStorage.getItem('words') // + ` ${localStorage.getItem('wordbk')}`*/ document.querySelector('.save .w').innerText
-          si = si.split(' ')
-          this.svs(si, await this.pops)
+          //let si = localStorage.getItem('words') // + ` ${localStorage.getItem('wordbk')}`*/ document.querySelector('.save .w').innerText
+          //si = si.split(' ')
+          this.svs([], await this.pops)
           this.hke = true
         }.bind(this), saveDiv)
         this.btc('JPMN', async function (/** @type {{ stopPropagation: () => void; }} */ e) {
@@ -1426,34 +1426,40 @@ this.txtImg(false)
    * @param {Element | null | undefined} ltp
    * @param {string | null | undefined} tts
    */
-  async makeElem(tt, spl, ii, splL, I, w, line, emph, ltp, tts, mns = null, y = null, elem = null, o = this.var) {
+  async makeElem(tt, spl, ii, splL, I, w, line, emph, ltp, tts, mns = null, y = null, elem = null, o = this.var, tt2) {
     if (av('log')) console.log('MakingElem--- ', tt, spl, ii, splL, I, w, line, mns == null, elem == null, o)
     let started = this.prog?.length == 0
-    this.prog += tt
     let enw = ''
+    let isen = false
+    this.prog += tt
     const japaneseSymbolsRegex = /[\u3000-\u303F\uFF00-\uFFEF\u1F300-\u1F5FF\u1F600-\u1F64F\u1F680-\u1F6FF]/u;
     if (started) {
       for (let i = 0; i < spl[0].indexOf(tt); i++) {
         let c = spl[0][i]
-        if (!japaneseSymbolsRegex.test(c) || isStringPartiallyJapanese(c)) {
+        let jrx = !japaneseSymbolsRegex.test(c)
+        if (jrx && isStringPartiallyJapanese(c)) {
           break
         } else {
           enw += c
+          isen = true
         }
       }
     }
     this.prog = enw + this.prog
+    let enw2 = ''
     if (this.prog) {
       for (let i = this.prog.length; i < spl[0].length; i++) {
         let c = spl[0][i]
-        if (isStringPartiallyJapanese(c)) {
+        let jrx = !japaneseSymbolsRegex.test(c)
+        if (jrx && isStringPartiallyJapanese(c)) {
           break
         } else {
-          enw += c
+          enw2 += c
+          isen = true
         }
       }
     }
-    this.prog += enw
+    this.prog += enw2
     let il = tt.length
     const height = localStorage.getItem('ht')
     const width = localStorage.getItem('wt')
@@ -1536,6 +1542,50 @@ this.txtImg(false)
         isPart = true
       }
     } */
+
+    if (isen) {
+      let eel = document.createElement('div')
+      eel.className = 'eng'
+      if (started) {
+        eel.style.left = '0'
+        eel.style.right = ''
+        eel.style.direction = 'ltr'
+        eel.style.unicodeBidi = 'normal'
+      }
+      if (!isPart) {
+        elem.appendChild(eel)
+      } else {
+        const vis = document.querySelectorAll('.vis')
+        vis[vis.length - 1].appendChild(eel)
+      }
+      eel.innerHTML += `<span class="enw">${enw}${enw2}</span>`
+      /*function adjustFontSize() {
+        var containerWidth = elem.offsetWidth;
+        var textWidth = eel.offsetWidth;
+
+        if (textWidth > containerWidth) {
+          var newFontSize = (containerWidth / textWidth) * parseFloat(window.getComputedStyle(eel).fontSize);
+          eel.style.fontSize = newFontSize + 'px';
+        } else {
+          eel.style.fontSize = '';
+        }
+      }
+
+      // Create a MutationObserver to detect changes in the DOM
+      var observer = new MutationObserver(function (mutations) {
+        mutations.forEach(function (mutation) {
+          if (mutation.type === 'childList') {
+            adjustFontSize();
+          }
+        });
+      });
+
+      // Observe the text content element for changes
+      observer.observe(eel, {childList: true});
+
+      // Call the adjustFontSize function on window resize
+      window.addEventListener('resize', adjustFontSize);*/
+    }
     if ((isPart)) { // (f < this.fval && false) (tt.length < this.min)
       const vis = document.querySelectorAll('.vis')
       const ttt = [tt, 8]
@@ -1603,7 +1653,8 @@ this.txtImg(false)
         }
       });
       elem.appendChild(navflex)
-      elem.insertAdjacentHTML('beforeend', '<span id="particle" class="part" style="font-size: 1.25em;padding:0;margin:0;"></span>')
+      let inl = elem.querySelector("dd") ?? elem
+      inl.insertAdjacentHTML('beforeend', '<span id="particle" class="part"></span>')
       if (this.analyze?.ref) {
         try {
           let st = this.analyze.ref[tt]
@@ -1726,18 +1777,6 @@ this.txtImg(false)
       } else {
         //elem.style.borderColor = `hsl(${emph.pi} ${emph.sat}%,50%)`
         elem.querySelector('#particle').innerHTML += emph.tt
-      }
-      if (enw.length > 0) {
-        let eel = document.createElement('div')
-        eel.className = 'eng'
-        if (started) {
-          eel.style.left = '0'
-          eel.style.right = ''
-          eel.style.direction = 'ltr'
-          eel.style.unicodeBidi = 'normal'
-        }
-        elem.appendChild(eel)
-        eel.innerHTML += `<span class="enw">${enw}</span>`
       }
       // Check conditions using meaningful variable names
       this.modK.appendChild(elem)
@@ -2170,10 +2209,17 @@ this.txtImg(false)
                   }
                 } catch { }
                 let emph = false
+                let tt2 = ''
                 ttt = mns[ii].querySelector('dt').innerHTML.split(' ')
                 tt = parseInt(ttt[0].substring(0, 1)) >= 0 && ttt.length > 1 ? ttt[1] : ttt[0]
+                try {
+                  let ttt2 = mns[ii + 1].querySelector('dt').innerHTML.split(' ')
+                  tt2 = parseInt(ttt2[0].substring(0, 1)) >= 0 && ttt2.length > 1 ? ttt2[1] : ttt2[0]
+                } catch {
+                  tt2 = ''
+                }
                 tts = mns[ii].parentElement.parentElement.children[0].children[0].innerText
-                const retv = await this.makeElem(tt, spl, ii, splL, this.I, w, line, emph, ptxt, tts, mns)
+                const retv = await this.makeElem(tt, spl, ii, splL, this.I, w, line, emph, ptxt, tts, mns, undefined, undefined, undefined, tt2)
                 emph = retv[0]
                 line = retv[1]
                 w = retv[2]
@@ -2803,7 +2849,7 @@ this.txtImg(false)
         this.toast(`Delete: ${d}`)
       }
       if (kn == 'm') {
-        this.wst(b[this.pos])
+        this.wordSentence(b[this.pos])
       }
       if (ki == 93) {
         let o = b[this.pos]
@@ -2882,7 +2928,7 @@ this.txtImg(false)
         if (e.shiftKey) {
           this.del(false, false, b[this.pos])
         }
-        this.wst(b[this.pos])
+        this.wordSentence(b[this.pos])
       }
       if (kn == 'y') {
         let y = !this.var('yc')
@@ -2967,7 +3013,7 @@ this.txtImg(false)
         try {
           sv(elem, undefined, undefined, undefined, undefined, undefined, undefined, undefined, [true, false])
           if (this.var('wsw')) {
-            this.wst(elem)
+            this.wordSentence(elem)
           }
         } catch (err) {
           console.error(err)
@@ -2978,7 +3024,7 @@ this.txtImg(false)
         try {
           sv(elem, undefined, undefined, undefined, undefined, undefined, undefined, undefined, [true, true])
           if (this.var('wsw')) {
-            this.wst(elem)
+            this.wordSentence(elem)
           }
         } catch (err) {
           console.error(err)
@@ -2989,7 +3035,7 @@ this.txtImg(false)
         try {
           sv(elem) //,undefined,undefined,undefined,undefined,undefined,undefined,undefined,[e.ctrlKey,e.shiftKey])
           if (this.var('wsw')) {
-            this.wst(elem)
+            this.wordSentence(elem)
           }
         } catch (err) {
           console.error(err)
@@ -3047,7 +3093,7 @@ this.txtImg(false)
     } catch { }
     if (ws.length > 0) {
       si = [...ws, ...si]// merge(si, ws)
-      si = si.split(' ')
+      //si = si.split(' ')
     }
     if (kp) {
       si = si.filter(item => !kp.includes(item));
@@ -3696,17 +3742,21 @@ this.txtImg(false)
     }
     console.log(w, this.note.bin, this.note.words, this.note.learned);
   }
-  async wst(elem) {
-    let w = elem.getAttrubute("t") ?? ''
-    let ws = w + ": " + elem.getAttribute('wset') ?? ''
-    let wss = elem.getAttribute('ws') !== '1' ?? false
-    if (ws && wss) {
-      //this.do = false
-      this.ws = true
-      await this.sentence([ws], 0)
-      await this.moe([ws], 0, 1)
-      this.ws = null
-      elem.setAttribute('ws', '1')
+  /**
+   * Expands the word set of an element and calls the sentence and moe methods.
+   * @param {Element} elem - The element containing the word set.
+   */
+  async wordSentence(elem) {
+    const word = elem.getAttribute("t") || "";
+    const wordSet = `${word}: ${elem.getAttribute('wset') || ''}`;
+    const isExpanded = elem.getAttribute('ws') !== '1';
+
+    if (wordSet && isExpanded) {
+      this.ws = true;
+      await this.sentence([wordSet], 0);
+      await this.moe([wordSet], 0, 1);
+      this.ws = null;
+      elem.setAttribute('ws', '1');
     }
   }
   /**
