@@ -1226,12 +1226,13 @@ this.txtImg(false)
        */
       this.terms = []
       if (fast) {
-        let ol = this.var("oneln")
+        let ol = this.var("oneln") || this.spl?.join(' ').includes('OriginalSenderNameLang')
         this.ssp = spl
         if (ol && spl) {
           spl = [spl.join(' ')]
         }
         for (ii in spl) {
+          this.splIndex = parseInt(ii)
           rI = 0
           /**
            * @type {any[]}
@@ -1430,36 +1431,41 @@ this.txtImg(false)
     if (av('log')) console.log('MakingElem--- ', tt, spl, ii, splL, I, w, line, mns == null, elem == null, o)
     let started = this.prog?.length == 0
     let enw = ''
+    let enw2 = ''
     let isen = false
     this.prog += tt
     const japaneseSymbolsRegex = /[\u3000-\u303F\uFF00-\uFFEF\u1F300-\u1F5FF\u1F600-\u1F64F\u1F680-\u1F6FF]/u;
-    if (started) {
-      for (let i = 0; i < spl[0].indexOf(tt); i++) {
-        let c = spl[0][i]
-        let jrx = !japaneseSymbolsRegex.test(c)
-        if (jrx && isStringPartiallyJapanese(c)) {
-          break
-        } else {
-          enw += c
-          isen = true
+    const stxt = spl[this.splIndex]
+    try {
+      if (started) {
+        for (let i = 0; i < stxt.indexOf(tt); i++) {
+          let c = stxt[i]
+          let jrx = !japaneseSymbolsRegex.test(c)
+          if (jrx && isStringPartiallyJapanese(c)) {
+            break
+          } else {
+            enw += c
+            isen = true
+          }
         }
       }
-    }
-    this.prog = enw + this.prog
-    let enw2 = ''
-    if (this.prog) {
-      for (let i = this.prog.length; i < spl[0].length; i++) {
-        let c = spl[0][i]
-        let jrx = !japaneseSymbolsRegex.test(c)
-        if (jrx && isStringPartiallyJapanese(c)) {
-          break
-        } else {
-          enw2 += c
-          isen = true
+      this.prog = enw + this.prog
+      if (this.prog) {
+        for (let i = this.prog.length; i < stxt.length; i++) {
+          let c = stxt[i]
+          let jrx = !japaneseSymbolsRegex.test(c)
+          if (jrx && isStringPartiallyJapanese(c)) {
+            break
+          } else {
+            enw2 += c
+            isen = true
+          }
         }
       }
+      this.prog += enw2
+    } catch (err) {
+      console.error(err);
     }
-    this.prog += enw2
     let il = tt.length
     const height = localStorage.getItem('ht')
     const width = localStorage.getItem('wt')
@@ -1479,7 +1485,7 @@ this.txtImg(false)
     elem.setAttribute('pos', `${pl}`)
     elem.setAttribute('w', tt)
     let tit
-    let txt = spl[0]
+    let txt = stxt
     wn({tt, spl, txt, ii, splL, I, w, line, emph, ltp, tts, mns, y, rI, elem})
     if (mns) {
       elem.innerHTML = `${mns[ii].innerHTML}`
@@ -1559,6 +1565,9 @@ this.txtImg(false)
         vis[vis.length - 1].appendChild(eel)
       }
       eel.innerHTML += `<span class="enw">${enw}${enw2}</span>`
+      if (eel.textContent?.length < 7) {
+        eel.style.width = '1.1em';
+      }
       /*function adjustFontSize() {
         var containerWidth = elem.offsetWidth;
         var textWidth = eel.offsetWidth;
@@ -1603,8 +1612,19 @@ this.txtImg(false)
       pi *= 360 / this.part.length
       if (av('warn')) console.warn(pi, this.part.length, elem, isKana, ii, tt, tts)
       if (ii > 0) {
-        vis[vis.length - 1].querySelector('#particle').style.borderColor = `hsl(${pi} ${sat}%,50%)`
-        vis[vis.length - 1].querySelector('#particle').innerHTML += tt
+        const lastVis = vis[vis.length - 1];
+        let particle = lastVis.querySelector('#particle');
+        const definition = lastVis.querySelector("dd") || elem;
+
+        if (!particle) {
+          particle = document.createElement('span');
+          particle.id = 'particle';
+          particle.classList.add('part');
+          definition.appendChild(particle);
+        }
+
+        particle.style.borderColor = `hsl(${pi} ${sat}%, 50%)`;
+        particle.textContent += tt;
       }
       if (ii == 0) {
         emph = {pl, sat, tt}
@@ -1653,8 +1673,6 @@ this.txtImg(false)
         }
       });
       elem.appendChild(navflex)
-      let inl = elem.querySelector("dd") ?? elem
-      inl.insertAdjacentHTML('beforeend', '<span id="particle" class="part"></span>')
       if (this.analyze?.ref) {
         try {
           let st = this.analyze.ref[tt]
@@ -1776,7 +1794,17 @@ this.txtImg(false)
         elem.style.fontWeight = 'auto'
       } else {
         //elem.style.borderColor = `hsl(${emph.pi} ${emph.sat}%,50%)`
-        elem.querySelector('#particle').innerHTML += emph.tt
+        let particleElement = elem.querySelector("#particle")
+        if (!particleElement) {
+          const definitionElement = elem.querySelector("dd") || elem;
+          particleElement = document.createElement("span");
+          particleElement.id = "particle";
+          particleElement.classList.add("part");
+          particleElement.textContent = emph.tt;
+          definitionElement.appendChild(particleElement);
+        } else {
+          particleElement.textContent = emph.tt;
+        }
       }
       // Check conditions using meaningful variable names
       this.modK.appendChild(elem)
@@ -1811,7 +1839,7 @@ this.txtImg(false)
         il = spl.length
       } catch {
         try {
-          il = spl[0].length
+          il = stxt.length
         } catch {
           il = spl.length * 2
         }
@@ -1870,8 +1898,15 @@ this.txtImg(false)
           }
           is = true
         }
+        if(this.atAnki(tt)){
+          elem.classList.add('mined')
+        }
         if (this.note.bin.includes(tt)) {
-          elem.style.borderColor = 'rgb(0,90,135)'
+          if (this.saving) {
+            elem.style.borderColor = 'rgb(0,90,135)'
+          } else {
+            elem.style.borderColor = 'aqua'
+          }
         } else if (nf) {
           elem.style.borderColor = 'orange'
         } else if (this.note.words.includes(tt)) {
@@ -1926,6 +1961,7 @@ this.txtImg(false)
     }
     let b = document.querySelectorAll('.vis');
     let t = document.querySelectorAll('.mns');
+    let lm = typeof this.spl[0] == 'object'
     if (i == 0) {
       this.pos = this.mv(-1, this.pos, t, b)
     } else {
@@ -2325,9 +2361,11 @@ this.txtImg(false)
     } catch {
       ltp = null
     }
-    this.modW = document.createElement('div')
-    this.modW.className = 'modW'
-    this.modP.prepend(this.modW)
+    if (this.analysis) {
+      this.modW = document.createElement('div')
+      this.modW.className = 'modW'
+      this.modP.prepend(this.modW)
+    }
     this.modP.appendChild(this.modK)
     return ltp
   }
@@ -2340,6 +2378,7 @@ this.txtImg(false)
     }
     this.I = 0
     this.stop = true
+    this.noNav = true
     document.querySelector('#istart').value = istart
     localStorage.setItem('istart', istart)
     let txt
@@ -2362,7 +2401,8 @@ this.txtImg(false)
     try {
       let ch = localStorage.getItem('navcache') ?? ''
       ch += `${localStorage.getItem('navsave')}: ${localStorage.getItem('navsentence')}`
-      this.cache(null, istart, undefined, ch)
+      let line = this.map?.get(istart * this.prt)
+      this.cache(null, istart, line, ch)
       if (this.var('del')) {
         document.getElementById('modP').remove()
         // document.getElementById('tl').remove()
@@ -2390,6 +2430,7 @@ this.txtImg(false)
       }
       b[p].id = 'cur'
     }
+    this.noNav = false
   }
   /**
    * @param {HTMLCollection} cc
@@ -2685,11 +2726,15 @@ this.txtImg(false)
       } catch { }
       return
     } else if (ki <= 13 || wasd) {
+      if (this.noNav) {
+        return
+      }
       const dir = ki - 10
       this.ppos = this.pos
       //if (av('warn')) console.warn(dir)
       let vis
       let mu = false
+      let ppos = this.pos
       if (dir < 0) {
         const dirValue = dir;
         const logEnabled = av('log');
@@ -2730,21 +2775,26 @@ this.txtImg(false)
         this.pos += this.wasd(kn)
       }
       if (av('warn')) console.warn(vis)
+      let lm = typeof this.spl[0] == 'object'
       if (vis) {
         vis = document.querySelectorAll('.vis')
       }
-      if (this.pos < 0) {
+      if (this.pos < 0 && this.done) {
         this.pos = 0
-        if (this.istart > 0 && mu && this.done) {
-          this.istart -= 1
-          //this.loadMore(this.istart, false)
+        if (this.istart > 0 && mu) {
+          if (lm) {
+            this.istart -= 1
+            this.loadMore(this.istart, false)
+          }
         }
       }
-      if (this.pos >= b.length) {
+      if (this.pos >= b.length && this.done) {
         this.pos = b.length - 1
-        if (this.istart < this.spl.length - 1 && mu && this.done) {
-          this.istart += 1
-          //this.loadMore(this.istart, true)
+        if (this.istart < this.spl.length - 1 && mu) {
+          if (lm) {
+            this.istart += 1
+            this.loadMore(this.istart, true)
+          }
         }
       }
       if (av('warn')) console.warn(b[this.pos])
@@ -2924,11 +2974,13 @@ this.txtImg(false)
         window.open(baseUrl, '_self')
       }
       if (kn == "\\" || kn == "|") {
-        this.note.keep(e.ctrlKey, e.shiftKey, b[this.pos])
+        let is = this.note.keep(e.ctrlKey, e.shiftKey, b[this.pos])
         if (e.shiftKey) {
-          this.del(false, false, b[this.pos])
+          this.del(false, true, b[this.pos])
         }
-        this.wordSentence(b[this.pos])
+        if (!is) {
+          this.wordSentence(b[this.pos])
+        }
       }
       if (kn == 'y') {
         let y = !this.var('yc')
@@ -2955,6 +3007,13 @@ this.txtImg(false)
         localStorage.setItem('kanjis', !y)
         let vt = `slw ${y} qp ${!y} yc ${!y} kanjis ${!y}`
         !y ? this.toast("Slow: " + vt) : this.toast(`Fast: ${vt}`);
+      }
+      
+      if (kn == 'l') {
+        let y = !this.var('del')
+        document.querySelector('.config').style.borderColor = y ? 'green' : 'red'
+        localStorage.setItem('del', y)
+        this.toast('Del: ' + y)
       }
       if (ki == 30) {
         /**
@@ -3256,7 +3315,7 @@ this.txtImg(false)
   }
   get jpws() {
     return (async () => {
-      const result = await this.ankis(4); // Call ankis to populate jpws
+      const result = await this.query('"note:JP Mining Note" -(tag:inSearch -tag:inGame)'); // Call ankis to populate jpws
       this.jpmn = result
       this._jpws = getWords(result.notes);
       localStorage.setItem("jpws", this._jpws.join(' '))
@@ -3283,6 +3342,16 @@ this.txtImg(false)
       localStorage.setItem("pops", pops.join(' '))
       this.popP = true
       return pops;
+    })();
+  }
+  get insearch() {
+    return (async () => {
+      const result = await aQuery('tag:inSearch -tag:inGame'); // Call ankis to populate pops
+      this._insearch = result
+      this.insearch = getWords(result.notes);
+      localStorage.setItem("insearch", this.insearch.join(' '))
+      this.insearchP = true
+      return this.insearch;
     })();
   }
   get cards() {
@@ -3355,6 +3424,7 @@ this.txtImg(false)
     }
     if (this.var('run')) {
       this.fl = false
+      this.istart = 0
       this.lang = localStorage.getItem('lng')
       let fq
       if (this.search) {
@@ -3408,10 +3478,9 @@ this.txtImg(false)
       }
       this.start = true
     }
-    this.new = true
-    if (this.var('hk') || this.lis) {
-      this.istart = parseInt(localStorage.getItem('istart'))
-    }
+    //if (this.var('hk') || this.lis) {
+      //this.istart = parseInt(localStorage.getItem('istart'))
+    //}
     this.upd = true
   }
   /**
@@ -3747,12 +3816,14 @@ this.txtImg(false)
    * @param {Element} elem - The element containing the word set.
    */
   async wordSentence(elem) {
-    const word = elem.getAttribute("t") || "";
+    const word = elem.getAttribute("w") || "";
     const wordSet = `${word}: ${elem.getAttribute('wset') || ''}`;
     const isExpanded = elem.getAttribute('ws') !== '1';
 
     if (wordSet && isExpanded) {
       this.ws = true;
+      this.spl = [wordSet]
+      this.splIndex = 0
       await this.sentence([wordSet], 0);
       await this.moe([wordSet], 0, 1);
       this.ws = null;
@@ -3770,6 +3841,7 @@ this.txtImg(false)
   mv = (d, pos, _t, b) => {
     let l = pos;
     l += 1 * d;
+    let bp = b[pos].parentNode
     try {
       // Check if b[pos] exists and has a parentNode
       if (b[pos] && b[pos].parentNode) {
@@ -3866,7 +3938,18 @@ this.txtImg(false)
       this.pos = b.length - 1
     }
     elem.scrollIntoView({behavior: 'auto', block: 'start'});
-    this.cache(elem, this.istart, this.pos)
+    let pos = this.geLine(elem, this.pos)
+    this.cache(elem, this.istart, pos)
+  }
+  getLine(elem, pos = null) {
+    let line = elem.parentElement?.getAttribute('txt')
+    let lineN = this.spl[this.istart].indexOf(line)
+    if (this.map) {
+      pos = this.map.get(lineN)
+    } else {
+      pos = lineN
+    }
+    return pos
   }
   /**
    * @param {any} k
@@ -3974,7 +4057,8 @@ this.txtImg(false)
       createSettingsInputTemplate('svl', 'Save Slice', '', '2px solid purple'),
       createSettingsInputTemplate('shr', 'Save Timespan', '', '2px solid purple'),
       createSettingsInputTemplate('istart', 'Lines Pos', '', '2px solid purple'),
-      createSettingsInputTemplate('deck', 'Deck Name', '', '2px solid purple')
+      createSettingsInputTemplate('deck', 'Deck Name', '', '2px solid purple'),
+      createSettingsInputTemplate('gamedeck', 'Game Deck Name', '', '2px solid purple')
     ]
     const inputs = document.createElement('div')
     inputs.className = 'inputs'
@@ -4635,13 +4719,16 @@ this.txtImg(false)
       return true;
     } else if (note.known.includes(tt)) {
       return true
-    } else if (this._cards) {
-      if (this._cards.includes(tt)) {
-        return true
-      }
+    } else if (this.atAnki(tt)) {
+      return true
     }
 
     return false;
+  }
+  atAnki(tt){
+    return this._jpws?.includes(tt)
+    //this._anms?.includes(tt) ||
+    //this.pop.includes(tt)
   }
   /**
    * @param {string | any[]} w
@@ -6076,13 +6163,24 @@ this.txtImg(false)
   groupByN(n, arr, ist = 0) {
     const result = []
     // arr = arr.length < 2 ? arr[0] : arr
-    arr = arr.filter((/** @type {string} */ item) => item.trim() !== '')
+    const filteredArr = arr.filter((/** @type {string} */ item) => item.trim() !== '');
+    const indexMap = new Map();
 
-    for (let i = 0; i < arr.length; i += n) {
-      result.push(arr.slice(i, i + n))
+    for (let i = 0, j = 0; i < arr.length; i++) {
+      if (arr[i].trim() !== '') {
+        indexMap.set(i + 1, j);
+        j++;
+      }
     }
 
+    for (let i = 0; i < filteredArr.length; i += n) {
+      result.push(filteredArr.slice(i, i + n));
+    }
     if (av('warn')) console.warn('GroupN:: ', result, n, arr, ist)
+    this.rMap = indexMap
+    this.map = new Map(
+      Array.from(indexMap.entries()).map(([key, value]) => [value, key])
+    );
     this.stop = false
     return result
   }

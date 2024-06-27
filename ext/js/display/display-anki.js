@@ -590,7 +590,7 @@ export class DisplayAnki {
                         const typ = dict >= 0 ? 'Search' : 'Popup';
                         const [t1, t2, t3, t4] = ['aDict', `v0.1-${new Date().toISOString().slice(0, 7)}`, `in${typ}`, mode == 'term-kana' ? 'kanaMode' : 'termMode'];
                         note.tags.push(t1, t2, t3, t4);
-                        //console.dir(note);
+                        console.dir(note);
                         const vrs = [note, [this, dict, dictionaryEntry, dictionaryEntries, dictionaryEntryDetails, dictionaryEntryIndex, details, requirements, mode, button, progressIndicatorVisible, overrideToken]];
                         // vrs.push(JSON.stringify(vrs))
                         //console.dir(vrs);
@@ -598,6 +598,7 @@ export class DisplayAnki {
                         // x.style.dmmmisplay = "none";
                         // console.log(note.fields['Key']);
                         let run = true;
+                        console.warn(note.fields)
                         if (document.URL.includes('search.html') && document.URL.includes('chrome-extension')) {
                             run = localStorage.getItem('run') === 'true' ? true : false ?? true;
                         }
@@ -613,6 +614,15 @@ export class DisplayAnki {
                         }
                         if(aDict.prototype.mobile){
                             aDict.prototype._copyText(note.fields.Key)
+                        }
+                        if(note.fields.PrimaryDefinitionPicture != ''){
+                            if(o){
+                                o.deck =  o.gameDeck
+                                note.tags.push('inGame')
+                                let picture = note.fields.PrimaryDefinitionPicture
+                                note.fields.PrimaryDefinitionPicture = note.fields.Picture
+                                note.fields.Picture = picture
+                            }
                         }
                         try {
                             let df = await yomiKanjis.bind(this._display, note.fields.Key)()

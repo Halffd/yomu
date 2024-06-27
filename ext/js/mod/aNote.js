@@ -591,6 +591,7 @@ export class Note {
             const objin = async () => {
                 let on = this.obj;
                 let ow = await this.find(t, "word");
+
                 if (ow?.length > 2) {
                     let ox = ow[0]
                     for (let i in ox) {
@@ -600,6 +601,29 @@ export class Note {
                     this.nobj(on, ow[1], dateString, unixSeconds, txt)
                 }
                 await this.setter('save', JSON.stringify(on))
+            }
+            if (!this.aDict?.atAnki(t)) {
+                let ain
+                try {
+                    let js = this.aDict._jpws
+                    ain = av("anki") ? true : false //aIn(t, js)
+                } catch (zx) {
+                    console.error(zx);
+                }
+                if (ain) {
+                    //ain.then(() => {
+                    let so = {
+                        st: txt,
+                        sound: false,
+                        deck: await this.getter('deck') ?? 'aDict',
+                        gameDeck: await this.getter('gamedeck') ?? 'VG'
+                    }
+                    note.addAnki(results, t, read, so, results.length)
+                    this.aDict._jpws += ' ' + t
+                    localStorage.setItem('jpws', this.aDict._jpws)
+                    elem.classList.add('mined')
+                    //})
+                }
             }
             if ((isStringInSet && cx >= 0)) {
                 const bsWithoutString = ww.filter(function (element) {
@@ -644,24 +668,7 @@ export class Note {
                 } catch (errpr) {
                     console.error(error);
                 }
-                let so = {
-                    st: txt,
-                    sound: false,
-                    deck: await this.getter('deck') ?? 'aDict'
-                }
                 // if (nv('warn')) console.warn(options, yc, read, results, fq, fq.length)
-                let ain
-                try {
-                    let js = this.aDict._jpws
-                    ain = av("anki") ? true : false //aIn(t, js)
-                } catch (zx) {
-                    console.error(zx);
-                }
-                if (ain) {
-                    //ain.then(() => {
-                    note.addAnki(results, t, read, so, results.length)
-                    //})
-                }
                 if (fq.length == 0) {
                     let sum = 0;
                     const frequencies = results[0].frequencies;
@@ -755,6 +762,9 @@ export class Note {
      * @param {{ innerHTML: any; querySelector: (arg0: string) => string; getAttribute: (arg0: string) => string; classList: { add: (arg0: string) => void; }; parentElement: { getAttribute: (arg0: string) => any; }; querySelectorAll: (arg0: string) => any; }} elem
      */
     async svClk(elem, cx = 0, tw = '', mode = 0, _yc = null, clip = '', img = [], snd = [], keys = [false, false]) {
+        if (this.aDict) {
+            this.aDict.new = false
+        }
         const fq = []
         let df = ''
         const ht = elem?.innerHTML
@@ -770,7 +780,8 @@ export class Note {
             this.mined[3].push(tx)
         }
         try {
-            aDict.prototype.cache(elem, cx)
+            let pos = this.aDict.getLine(elem)
+            this.aDict.cache(elem, this.aDict.istart, pos + ' ' + cx)
             //if (img == []) {            }
             if (clip == '') {
                 clip = this.dic.main.getText()
@@ -1264,13 +1275,15 @@ export class Note {
      */
     keep(k1, k2, elem) {
         let t = elem.getAttribute('w') ?? ''
-        if (!this.bin.includes(t) && !this.mined[2].includes(t)) {
+        let is = this.bin.includes(t)
+        if (!is && !this.mined[2].includes(t)) {
             this.mined[0] += 1
             this.mined[2].push(t)
         }
         let v = 1
         let opt = k1 && k2 ? v + 2 : ((k1 || k2) ? v + 1 : v)
         this.svClk(elem, opt, undefined, 1, undefined, undefined, undefined, undefined, [k2, k1])
+        return is
     }
     /**
      * @param {{ [x: string]: any; }} obj
