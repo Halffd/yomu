@@ -7,6 +7,7 @@ import {store, retrieve, dbinit} from './aDb.js'
 import {convertToKana} from '../language/ja/japanese-wanakana.js';
 import {isStringEntirelyKana} from '../language/ja/japanese.js';
 import {Db} from './aSql.js';
+import {mobile} from '../ctx.js';
 
 var nv = (/** @type {string} */ v) => {
     return localStorage.getItem(v) == 'true'
@@ -1262,6 +1263,9 @@ export class Note {
     * @returns {Promise<object>} A promise that resolves to the parsed response data.
     */
     async put(data, url = '') {
+        if(mobile()){
+            return
+        }
         return await this.request(data, 'PUT', url)
     }
     async dbset() {
@@ -1442,7 +1446,9 @@ export class Note {
         let val = null
         try {
             localStorage.setItem(key, value)
-            val = this.put(value, `/${key}`)
+            if(!mobile()){
+                val = this.put(value, `/${key}`)
+            }
             this.vars[key] = val
         } catch (error) {
             console.error(error);

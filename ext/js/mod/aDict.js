@@ -1709,7 +1709,7 @@ this.txtImg(false)
           if (!ele) ele = window.event
           ele.stopPropagation()
           if (av('log')) console.dir(ele, ele.target)
-          this.expand(ele.target)
+          this.expand(ele?.target.closest('.mns'))
         }.bind(this), false)
         elem.addEventListener('click', function (/** @type {Event | undefined} */ ele) {
           if (!ele) ele = window.event
@@ -1888,7 +1888,7 @@ this.txtImg(false)
 
         let nf = await this.note.find(tt)
         console.warn(tt, this.at(tt, nf), this.ws);
-        if ((this.at(tt, nf) || this.ws) && !is) {
+        if ((this.at(tt, nf) || this._cards?.includes(tt) || this.ws) && !is) {
           elem.classList.add('fav')
           elem.setAttribute("fav", "1")
           if (this.analysis && !this.ws) {
@@ -3015,7 +3015,7 @@ this.txtImg(false)
         localStorage.setItem('del', y)
         this.toast('Del: ' + y)
       }
-      if (ki == 30) {
+      if (ki == 30 && !this.analysis) {
         /**
          * @type {string | Promise<void> | null}
          */
@@ -3033,6 +3033,7 @@ this.txtImg(false)
         localStorage.setItem('kan', false)
         localStorage.setItem('rd', false)
         localStorage.setItem('yc', false)
+        localStorage.setItem('oneln', false)
         localStorage.setItem('freq', -100)
         if (e.shiftKey && !e.ctrlKey) {
           si = this.jpws.then(() => {
@@ -3161,15 +3162,15 @@ this.txtImg(false)
       kp = kp.join(' ')
     }
     try {
-      this.sln = ln
+      this.sln = ln > 3 ? ln - 3 : ln
       this.slns = si.reduce((accumulator, currentElement) => {
         if (typeof currentElement === "string") {
           return accumulator + currentElement.length;
         }
         return accumulator;
       }, 0);
-      this.slc = si.length - ln
-      si = si.slice(si.length - ln)
+      this.slc = si.length - this.sln
+      si = si.slice(this.slc)
       this.sis = si
       si = si.join(' ')
     } catch { }
@@ -3938,7 +3939,7 @@ this.txtImg(false)
       this.pos = b.length - 1
     }
     elem.scrollIntoView({behavior: 'auto', block: 'start'});
-    let pos = this.geLine(elem, this.pos)
+    let pos = this.getLine(elem, this.pos)
     this.cache(elem, this.istart, pos)
   }
   getLine(elem, pos = null) {
