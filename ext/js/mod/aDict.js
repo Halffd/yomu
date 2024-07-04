@@ -1665,6 +1665,10 @@ this.txtImg(false)
       buttonItems.forEach(function (item) {
         var button = aDict.prototype.createButton(item.text, item.classNames);
         button.id = item.key;
+        if(this.mobile){
+          button.style.width = '28px'
+          button.style.height = '22px'
+        } 
         item.button = button;
         if (item.elem) {
           item.elem.appendChild(button);
