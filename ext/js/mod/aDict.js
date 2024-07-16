@@ -1650,6 +1650,10 @@ this.txtImg(false)
       var navflex = document.createElement('div');
       navflex.classList.add('navigation-flex');
 
+      var navflex2 = document.createElement('div');
+      navflex2.classList.add('navigation-flex');
+      navflex2.classList.add('navigation-flex-2');
+
       // Button items with a key property
       var buttonItems = [
         {key: 'button1', text: '<<', classNames: ['navigation-button', 'direction', 'left-top'], elem: elem},
@@ -1658,17 +1662,24 @@ this.txtImg(false)
         {key: 'button4', text: '>', classNames: ['navigation-button', 'direction', 'right-bottom'], elem: elem},
         {key: 'del', text: '⌫', classNames: ['navigation-button', 'flex-button'], elem: navflex},
         {key: 'rm', text: '—', classNames: ['navigation-button', 'flex-button'], elem: navflex},
-        {key: 'copy', text: '©', classNames: ['navigation-button', 'flex-button'], elem: navflex},
-        {key: 'keep', text: '\u{1D54A}', classNames: ['navigation-button', 'flex-button'], elem: navflex},
+        {key: 'copy', text: '©', classNames: ['navigation-button', 'flex-button'], elem: navflex2},
+        {key: 'keep', text: '\u{1D54A}', classNames: ['navigation-button', 'flex-button'], elem: navflex2},
       ];
-
+      
       buttonItems.forEach(function (item) {
         var button = aDict.prototype.createButton(item.text, item.classNames);
         button.id = item.key;
         if(mobile()){
           button.style.width = '28px'
           button.style.height = '22px'
-        } 
+          if(item.classNames.includes('left-top') || item.classNames.includes('right-top')){
+            button.style.top = '40px'
+          }
+        } else if(item.elem == navflex2){
+          //button.style.width = '20px'
+          button.style.left = '0'
+          button.style.padding = '0'
+        }
         item.button = button;
         if (item.elem) {
           item.elem.appendChild(button);
@@ -1677,6 +1688,7 @@ this.txtImg(false)
         }
       });
       elem.appendChild(navflex)
+      elem.appendChild(navflex2)
       if (this.analyze?.ref) {
         try {
           let st = this.analyze.ref[tt]
@@ -1693,8 +1705,8 @@ this.txtImg(false)
       try {
         if (av('warn')) console.warn(tit)
         let timeout;
-        let mobi = this.mobile
-        function handleMouseMove() {
+        let mobi = this.mobile;
+        function handleMovement(e) {
           clearTimeout(timeout);
           elem.classList.add('moving');
 
@@ -1702,13 +1714,20 @@ this.txtImg(false)
             elem.classList.remove('moving');
           }, mobi ? 15000 : 1500); // Adjust the timeout duration as needed
         }
+
         elem.addEventListener('mouseover', () => {
-          elem.addEventListener('mousemove', handleMouseMove);
+          elem.addEventListener('mousemove', handleMovement);
+          elem.addEventListener('touchmove', handleMovement);
         });
+
         elem.addEventListener('mouseout', () => {
-          elem.removeEventListener('mousemove', handleMouseMove);
+          elem.removeEventListener('mousemove', handleMovement);
+          elem.removeEventListener('touchmove', handleMovement);
           elem.classList.remove('moving');
         });
+
+        elem.addEventListener('touchstart', handleMovement);
+        
         elem.addEventListener('dblclick', function (/** @type {Event | undefined} */ ele) {
           if (!ele) ele = window.event
           ele.stopPropagation()
