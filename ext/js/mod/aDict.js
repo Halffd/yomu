@@ -1231,6 +1231,7 @@ this.txtImg(false)
         if (ol && spl) {
           spl = [spl.join(' ')]
         }
+        this.spls = spl
         for (ii in spl) {
           this.splIndex = parseInt(ii)
           rI = 0
@@ -1435,8 +1436,11 @@ this.txtImg(false)
     let isen = false
     this.prog += tt
     const japaneseSymbolsRegex = /[\u3000-\u303F\uFF00-\uFFEF\u1F300-\u1F5FF\u1F600-\u1F64F\u1F680-\u1F6FF]/u;
-    const stxt = spl[this.splIndex]
+    const stxt = this.spls[this.splIndex]
     try {
+      if(!stxt){
+        stxt = spl
+      }
       if (started) {
         for (let i = 0; i < stxt.indexOf(tt); i++) {
           let c = stxt[i]
@@ -1614,7 +1618,7 @@ this.txtImg(false)
       if (ii > 0) {
         const lastVis = vis[vis.length - 1];
         let particle = lastVis.querySelector('#particle');
-        const definition = lastVis.querySelector("dd") || elem;
+        const definition = lastVis.querySelector("dd") || lastVis.querySelector(".definition-item-inner");
 
         if (!particle) {
           particle = document.createElement('span');
@@ -2110,7 +2114,7 @@ this.txtImg(false)
       if (results?.length > 0) {
         let yc = await this.yomichan(results)
         const elem = document.createElement('div')
-        let bot = this.yomishow(yc, elem, undefined, undefined, elem, tt, -1, yc)
+        let bot = this.yomishow(yc, elem, undefined, undefined, elem, tt, -1, results)
         console.warn(bot, yc)
         const y = bot[3].innerHTML + bot[0].innerHTML
         return `<div class="yomi">${y}</div>`
@@ -2129,7 +2133,6 @@ this.txtImg(false)
     const isKana = isStringPartiallyJapanese(txt)
     if (isKana) {
       if (typeof spl === 'string') spl = await token(txt)
-      this.spls = spl
       let ptxt = this.setup()
       if (av('warn')) console.warn(this.modK, this.modP)
       this.modK.setAttribute('txt', txt)
@@ -6063,7 +6066,11 @@ this.txtImg(false)
    */
   yomiread(elem, kj = true) {
     this.ee = elem
-    let en = elem.querySelector('.headword-text-container').cloneNode(true)
+    let he = elem.querySelector('.headword-text-container')
+    if(!he){
+      return ''
+    }
+    let en = he.cloneNode(true)
     let rd = ''
     for (const r of en.querySelectorAll('rt')) {
       rd += r.innerText
