@@ -1716,7 +1716,7 @@ this.txtImg(false)
 
           timeout = setTimeout(() => {
             elem.classList.remove('moving');
-          }, mobi ? 15000 : 1500); // Adjust the timeout duration as needed
+          }, mobi ? 2000 : 1500); // Adjust the timeout duration as needed
         }
 
         elem.addEventListener('mouseover', () => {
@@ -1731,6 +1731,11 @@ this.txtImg(false)
         });
 
         elem.addEventListener('touchstart', handleMovement);
+        elem.addEventListener('touchend', () => {{
+          setTimeout(()=>{
+            elem.classList.remove('moving');
+          }, 2000)
+        }});
         
         elem.addEventListener('dblclick', function (/** @type {Event | undefined} */ ele) {
           if (!ele) ele = window.event
