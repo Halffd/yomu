@@ -690,7 +690,14 @@ export class Popup extends EventDispatcher {
     async _invoke(action, params) {
         const contentWindow = this._frame.contentWindow;
         if (this._frameClient === null || !this._frameClient.isConnected() || contentWindow === null) {
-            throw new Error(`Failed to invoke action ${action}: frame state invalid`);
+            this._frame.addEventListener('load', () => {
+                // Initialize or update iframe state here
+                setTimeout(() => {
+                    this._invoke(action, params)
+                }, 5000)
+            });
+            return
+            // throw new Error(`Failed to invoke action ${action}: frame state invalid`);
         }
 
         /** @type {import('display').DirectApiMessage<TName>} */

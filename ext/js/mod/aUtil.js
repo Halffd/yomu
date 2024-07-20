@@ -219,25 +219,28 @@ export async function aDeck(deckName, sort = '') {
  * @param {string} q
  * @param sort
  */
-export async function aQuery(q, sort = '') {
+export async function aQuery(q, sort = '', fast = true) {
     let r = true;
     while (r) {
         try {
             const deckNotes = await api('findNotes', 6, {query: q});
             const notes = await api('notesInfo', 6, {notes: deckNotes});
-            const date = await api('cardsModTime', 6, {cards: deckNotes});
+            const date = fast ? null : await api('cardsModTime', 6, {cards: deckNotes});
 
             const res = {
                 ids: deckNotes,
                 mod: date,
-                dates: deckNotes.map((/** @type {string | number | Date} */ timestamp) => new Date(timestamp)),
+                dates: date ? deckNotes.map((/** @type {string | number | Date} */ timestamp) => new Date(timestamp))
+                : null,
                 notes
             };
 
-            if (sort === 'asc') {
-                sortArrays(res, 'asc');
-            } else if (sort === 'desc') {
-                sortArrays(res, 'desc');
+            if(!fast) {
+                if (sort === 'asc') {
+                    sortArrays(res, 'asc');
+                } else if (sort === 'desc') {
+                    sortArrays(res, 'desc');
+                }
             }
             r = false;
             return res;

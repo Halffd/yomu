@@ -181,7 +181,7 @@ export class Note {
             console.warn(req);
             if (nv('log')) console.log(mode, req, dic, q) // Output: "term-kanji"
             // Call the addAnkiNote function
-            await this.aDict.anki._addAnkiNote(dic[i], mode, q, req, o)
+            return await this.aDict.anki._addAnkiNote(dic[i], mode, q, req, o)
         } catch (error) {
             console.error(error)
         }
@@ -619,10 +619,14 @@ export class Note {
                         deck: await this.getter('deck') ?? 'aDict',
                         gameDeck: await this.getter('gamedeck') ?? 'VG'
                     }
-                    note.addAnki(results, t, read, so, results.length)
-                    this.aDict._jpws += ' ' + t
-                    localStorage.setItem('jpws', this.aDict._jpws)
-                    elem.classList.add('mined')
+                    note.addAnki(results, t, read, so, results.length).then((res) => {
+                        if(res){
+                            elem.style.setProperty('--mc', 'green')
+                            elem.classList.add('mined')
+                            this.aDict._jpws += ' ' + t
+                            localStorage.setItem('jpws', this.aDict._jpws)
+                        }
+                    })
                     //})
                 }
             }

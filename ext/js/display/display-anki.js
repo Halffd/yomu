@@ -622,6 +622,8 @@ export class DisplayAnki {
                                 let picture = note.fields.PrimaryDefinitionPicture
                                 note.fields.PrimaryDefinitionPicture = note.fields.Picture
                                 note.fields.Picture = picture
+                                //alert(note.fields.Picture)
+                                o.isGame = true
                             }
                         }
                         try {
@@ -731,6 +733,11 @@ export class DisplayAnki {
             this._showErrorNotification(allErrors);
         } else {
             this._hideErrorNotification(true);
+        }
+        if(o && o.isGame){
+            return true
+        } else {
+            return false
         }
     }
 

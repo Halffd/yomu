@@ -1080,7 +1080,7 @@ this.txtImg(false)
       }
       let ret = (i) => {
         let str = localStorage.getItem(i) ?? '';
-        return str.split(' ') ?? [];
+        return str.split(/[, ]+/) ?? [];
       }
       this._saudio = ret('saudio')
       this._mined = ret('mined')
@@ -1906,6 +1906,7 @@ this.txtImg(false)
         let ttt = results[0].headwords[0].term
         ts.push(ttt)*/
       let is = false
+      ts.push(await unconjugate(ts[0]))
       for (tt of ts) {
         if (this._mined) {
           if (this._mined.includes(tt)) {
@@ -3393,14 +3394,14 @@ this.txtImg(false)
   }
   async vals() {
     try {
-      const r = await Promise.all([
+      const r = await this.jpws /*await Promise.all([
         this.cards,
         this.jpws,
         this.anms,
         this.saudio,
         this.pops,
         this.mined
-      ]);
+      ]);*/
 
       // 'r' will be an array containing the resolved values of all promises
       // You can access the individual results using array indexing, e.g., r[0], r[1], etc.

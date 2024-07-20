@@ -746,7 +746,7 @@ export class Display extends EventDispatcher {
      */
     _authenticateMessageData(message) {
         if (this._frameEndpoint !== null && !this._frameEndpoint.authenticate(message)) {
-            throw new Error('Invalid authentication');
+            return //throw new Error('Invalid authentication');
         }
         return /** @type {import('frame-client').Message<T>} */ (message).data;
     }

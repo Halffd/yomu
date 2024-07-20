@@ -61,6 +61,9 @@
 .sentence #cur {
     border: 1px solid rgb(255, 35, 0);
 }
+.mined {
+    --mc: rgb(125, 222, 255);
+}
 .mined#cur::before {
     border-color: transparent transparent rgb(70, 222, 255) transparent;
     border-style: solid;
@@ -90,7 +93,7 @@
     text-rendering: auto;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    color: rgb(125, 222, 255); /*var(--cc);*/
+    color: var(--mc);
     content: '🂢';
     /* FontAwesome star content */
     position: absolute;
