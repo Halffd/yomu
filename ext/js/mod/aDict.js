@@ -463,7 +463,7 @@ this.txtImg(false)
             // lu = lu[lu.length - 1]
             let lc
             try {
-              // lc = lu.querySelector('.mw-parser-output').childNodes//lu.children
+              lc = lu.querySelector('.mw-parser-output').childNodes ?? lu.children
               if (av('warn')) console.warn(lu, lc)
               let lt = false
               let ad = false
@@ -1546,7 +1546,7 @@ this.txtImg(false)
       }
     }
     /* if (this.saving) {
-      if (!this._i && !(this.kp?.includes(tt) || 
+      if (!this._i && !(this.kp?.includes(tt) ||
       typeof this.si === 'object' ? this.si.includes(tt) :
       this.si.split(',').includes(tt))) {
         isPart = true
@@ -1669,7 +1669,7 @@ this.txtImg(false)
         {key: 'copy', text: '©', classNames: ['navigation-button', 'flex-button'], elem: navflex2},
         {key: 'keep', text: '\u{1D54A}', classNames: ['navigation-button', 'flex-button'], elem: navflex2},
       ];
-      
+
       buttonItems.forEach(function (item) {
         var button = aDict.prototype.createButton(item.text, item.classNames);
         button.id = item.key;
@@ -1736,7 +1736,7 @@ this.txtImg(false)
             elem.classList.remove('moving');
           }, 2000)
         }});
-        
+
         elem.addEventListener('dblclick', function (/** @type {Event | undefined} */ ele) {
           if (!ele) ele = window.event
           ele.stopPropagation()
@@ -1751,7 +1751,13 @@ this.txtImg(false)
           const elemc = elem.closest('.mns')
           const ist = elem.closest('.title')
           const b = document.querySelectorAll('.vis')
-          this.pos = parseInt(elemc.getAttribute('pos'))
+          const all = document.querySelectorAll(".vis")
+          for(let e in all){
+            if(all[e] === elemc) {
+                this.pos = parseInt(e)
+            break
+            }
+          }
           const ps = []
           this.posr = [this.pos, elemc, ps]
           if (av('warn')) console.warn(elemc, ist, this.pos, b)
@@ -3040,7 +3046,7 @@ this.txtImg(false)
         let vt = `slw ${y} qp ${!y} yc ${!y} kanjis ${!y}`
         !y ? this.toast("Slow: " + vt) : this.toast(`Fast: ${vt}`);
       }
-      
+
       if (kn == 'l') {
         let y = !this.var('del')
         document.querySelector('.config').style.borderColor = y ? 'green' : 'red'
@@ -4918,9 +4924,16 @@ this.txtImg(false)
     let r = 0
     let pp = this.pos
     let e = document.querySelectorAll('.vis')[this.pos]
+    let ein = 0
     let p = e.parentElement
     let c = p.children.length
-    let x = c - this.pos
+    for(let i in p.children){
+      if(p?.children[i] === e){
+        ein = parseInt(i)
+      }
+    }
+    let x = c - ein
+    console.log({c,x, r, l, ein, pos: this.pos})
     if (k == 'w') {
       let int = parseInt(p.firstChild.getAttribute('pos'))
       r = int - this.pos
@@ -4929,7 +4942,7 @@ this.txtImg(false)
       if (c > l) {
         r = -l
       } else {
-        r = -x
+        r = -ein
       }
       if (r == 0) r = -1
     } else if (k == 's') {
@@ -4944,6 +4957,7 @@ this.txtImg(false)
       }
       if (r == 0) r = 1
     }
+    console.log(r);
     return r
   }
   /**
@@ -5151,7 +5165,7 @@ this.txtImg(false)
             try {
               if (lc[m].innerHTML.length > 0) {
                 if (av('log')) console.log(lc[m].tagName)
-                if (lc[m].tagName == 'H2') {
+                if (lc[m].classList.includes('mw-heading2')) {
                   if (lc[m].innerText.includes('Chin')) {
                     // let sel =
                     // ad = false
