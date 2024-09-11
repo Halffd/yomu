@@ -1650,7 +1650,13 @@ this.txtImg(false)
     } else if (go) {
       w.push(tt)
       line.push(tt)
-
+      let gd = elem.querySelector('.gloss-definitions') ?? elem.querySelector('dd')
+      if(gd.innerText === '' || gd.innerHTML.length < 6){
+        if(this.analysis){
+        elem.remove()
+        return
+        }
+      }
       var navflex = document.createElement('div');
       navflex.classList.add('navigation-flex');
 
@@ -3064,7 +3070,6 @@ this.txtImg(false)
         localStorage.setItem('pt', true)
         localStorage.setItem('roma', true)
         localStorage.setItem('slw', true)
-        localStorage.setItem('wk', false)
         localStorage.setItem('run', true)
         localStorage.setItem('fq', false)
         localStorage.setItem('both', false)
@@ -3356,7 +3361,7 @@ this.txtImg(false)
     return (async () => {
       const result = await this.query('"note:JP Mining Note" -(tag:inSearch -tag:inGame)'); // Call ankis to populate jpws
       this.jpmn = result
-      this._jpws = getWords(result.notes);
+      this._jpws = this.jpmn //getWords(result.notes);
       localStorage.setItem("jpws", this._jpws.join(' '))
       return this._jpws;
     })();

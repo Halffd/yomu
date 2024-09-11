@@ -14,7 +14,15 @@ delete toggle hotkey
 quick moe researcj no deletion
 selected tet to moe
 english dictionary
-umages
+images
+disable kanjipedia/wiki disable on save
+use ai gpt to parse words/reading/meaning/ranslation(/origin) especially for chinese, korean, etc
+bug  analye duplicae wods(with no frequency)
+bug  analze muliple times doing sentence same sentence
+analyze fix words without sentences(undefined) and 
+analyze improve tokenizer
 
 ---
-electron?|
+
+react <--
+xxxxxxx electron?|

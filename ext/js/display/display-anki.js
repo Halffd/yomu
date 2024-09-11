@@ -588,7 +588,7 @@ export class DisplayAnki {
                 try {
                     try {
                         const typ = dict >= 0 ? 'Search' : 'Popup';
-                        const [t1, t2, t3, t4] = ['aDict', `v0.1-${new Date().toISOString().slice(0, 7)}`, `in${typ}`, mode == 'term-kana' ? 'kanaMode' : 'termMode'];
+                        const [t1, t2, t3, t4] = ['aDict', `v0.2-${new Date().toISOString().slice(0, 7)}`, `in${typ}`, mode == 'term-kana' ? 'kanaMode' : 'termMode'];
                         note.tags.push(t1, t2, t3, t4);
                         console.dir(note);
                         const vrs = [note, [this, dict, dictionaryEntry, dictionaryEntries, dictionaryEntryDetails, dictionaryEntryIndex, details, requirements, mode, button, progressIndicatorVisible, overrideToken]];

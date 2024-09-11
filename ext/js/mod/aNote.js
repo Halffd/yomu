@@ -617,11 +617,12 @@ export class Note {
                         st: txt,
                         sound: false,
                         deck: await this.getter('deck') ?? 'aDict',
-                        gameDeck: await this.getter('gamedeck') ?? 'VG'
+                        gameDeck: await this.getter('gamedeck') ?? 'VG',
+                        isGame: false
                     }
                     note.addAnki(results, t, read, so, results.length).then((res) => {
                         if(res){
-                            elem.style.setProperty('--mc', 'green')
+                            elem.style.setProperty('--mc', '#00ffad')
                             elem.classList.add('mined')
                             this.aDict._jpws += ' ' + t
                             localStorage.setItem('jpws', this.aDict._jpws)
@@ -1245,7 +1246,7 @@ export class Note {
 
             return response;
         } catch (error) {
-            throw new Error('Failed to perform request: ' + error.message);
+            console.error('Failed to perform request: ' + error.message);
         }
     }
     async post(data, url = '') {
@@ -1451,7 +1452,11 @@ export class Note {
         try {
             localStorage.setItem(key, value)
             if(!mobile()){
-                val = this.put(value, `/${key}`)
+                try {
+                    val = this.put(value, `/${key}`)
+                } catch(err) {
+                    console.log(err);
+                }
             }
             this.vars[key] = val
         } catch (error) {
