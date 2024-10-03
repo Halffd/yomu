@@ -1,12 +1,11 @@
 /* eslint-disable */
 
 import {mobile} from "../ctx.js";
-import {Display} from "../display/display.js";
 import {isStringPartiallyJapanese} from "../language/ja/japanese.js";
+import {AI} from "./aAI.js";
 import {Analyze} from './aAnalyze.js';
 import {Note} from "./aNote.js";
-import {Db} from "./aSql.js";
-import {aAll, getWords, sortArrays, sort_by_property, aId, aModel, aDeck, aIn, aQuery, aTag, api, iDeck, iTag, isIndexInsideElement} from './aUtil.js';
+import {aAll, aDeck, aModel, aQuery, aTag, getWords} from './aUtil.js';
 import {yomiKanjis} from "./aYomi.js";
 /* global aDict, Note, isIndexInsideElement, aDeck, aTag, aAll, aModel, api, aNote, sv, aQuery
 getWords, merge, unconjugate, japaneseUtil
@@ -1097,6 +1096,9 @@ this.txtImg(false)
       qp.style.display = 'block'
       this.t.appendChild(qpc)
       this.analyze = new Analyze(this, this.t)
+      this.aiMain = document.createElement('div')
+      this.t.appendChild(this.aiMain)
+      this.ai = new AI(this, this.aiMain)
       // this.db = new Db();
       var aA = this.analyze
       this.iS = inSearch;
@@ -3477,6 +3479,12 @@ this.txtImg(false)
         fq = this.v
       }
       this.lq = q
+      
+      if(this.var('aiimg') && this.aiMain){
+        this.ai?.generateImage(q)
+        //this.aiMain.querySelector("input").value = q
+        //this.aiMain.querySelector("button").click()
+      }
       if (this.var('del')) {
         this.delete()
       }
@@ -4258,6 +4266,7 @@ this.txtImg(false)
       {id: 'pre', label: 'Prepend'},
       {id: 'wsw', label: 'WordSentence'},
       {id: 'oneln', label: 'OneLine'},
+      {id: 'aiimg', label: "AIImage"},
       {id: 'zoom', label: 'Zoom'},
       {id: 'del', label: 'Delete'},
       {id: 'slw', label: 'Fast'},
@@ -4274,6 +4283,9 @@ this.txtImg(false)
       {id: 'jaxuf', label: 'JAXsubs-EN', def: 0},
       {id: 'exe', label: 'Restart', def: 0}
     ]
+
+    // Sort the buttonData array alphabetically by label using an inline function
+    buttonData.sort((a, b) => a.label.localeCompare(b.label));
 
     // Loop through the button data and create buttons using the generateTemplate function
     buttonData.forEach((data) => {

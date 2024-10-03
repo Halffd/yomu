@@ -22,5 +22,6 @@ ext/legal-npm.html
 .tmp.driveupload/
 python/db
 ext/lib/*
+ext/js/mod/t.js
 |ext/lib/kuromoji.js
 |ext/lib/bower_components

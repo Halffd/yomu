@@ -34,7 +34,7 @@ export function store(oc) {
     try {
       const database = firebase.database();
       const dataRef = database.ref('save'); // Use 'save' as the collection name
-
+``
       // Generate a new key for the object
       const newRef = dataRef.push();
       

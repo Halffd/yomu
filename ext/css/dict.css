@@ -702,3 +702,43 @@ body {
 #query-parser-mode-container {
     flex: 1 1 auto;
 }
+.main-container input {
+    max-width: 90%;
+}
+.main-container {
+    width: 100%;
+    padding: 10px;
+    font-family: Arial, sans-serif;
+    background-color: black;
+    color: white;
+}
+.image-container {
+    display: flex;
+    flex: 1 2 25%;
+    flex-direction: column;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 10px;
+}
+.image-wrapper {
+    position: relative;
+    margin: 10px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.5));
+}
+.generated-img {
+    max-width: 100%;
+    border-radius: 8px;
+}
+.prompt-text {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 5px;
+    border-radius: 0 0 8px 8px;
+}
