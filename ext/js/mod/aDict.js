@@ -735,7 +735,7 @@ this.txtImg(false)
         'quote', // 103 - 222
       ];
       this.nk = false
-      this.txts = document.querySelector('textarea')
+      this.txts = document.querySelector('#search-textbox')
 
       // document.removeEventListener('keydown')
       /** @global
@@ -2698,10 +2698,10 @@ this.txtImg(false)
     let ret = false
 
     if (activeElement) {
-      ret = activeElement === this.txts ||
-        activeElement.tagName === 'INPUT' ||
-        activeElement.tagName === 'TEXTAREA'
+      ret = activeElement === this.txts
     }
+    let fc = (activeElement.tagName === 'INPUT' ||
+    activeElement.tagName === 'TEXTAREA')
     if (!ret) ret = (this.nk && (e.ctrlKey || e.altKey || e.metaKey || e.shiftKey));
     /**
      * @type {string}
@@ -2709,13 +2709,16 @@ this.txtImg(false)
     var kn = e.key.trim().toLowerCase()
     // if (av('log')) console.log(activeElement.tagName, ret, e.key)
     if (e.key == '' || e.key == ' ' || e.key == 'arrowup') {
-      e.preventDefault()
+      if(!fc){
+        e.preventDefault()
+      }
       if (ret) {
         this.txts?.blur()
         document.body.focus()
         return
       }
     }
+    if(fc) return
     if (ret && e.key != 'Alt') {return }
     ret = true
     let ki = -1
