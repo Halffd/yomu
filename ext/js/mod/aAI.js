@@ -268,114 +268,106 @@ export class AI {
         }, 500);
         return mainDiv;
     }
-
     async generateImage(prompt, negative) {
-        if (prompt == '' || prompt == ' ') {
+        if(prompt == '' || prompt == ' '){
             return "Null"
-        } else if (prompt.length > 5000) {
+        } else if(prompt.length > 5000){
             return "Full"
         }
-        this.processingCount++; // Increment processing count
-        let endpoint = this.selectedEndpoint.name
-        console.log(`Generating ${prompt}  ${negative}    ${this.processingCount}`)
-        this.updateLoadingScreen();
-        try {
-            const body = this.selectedEndpoint.params(prompt, negative);
-            let headers = {
-                'Content-Type': 'application/json',
-            };
-            if (this.selectedEndpoint.token) {
-                headers['Authorization'] = `Bearer ${this.selectedEndpoint.token}`;
+        this.processingCount++
+        this.updateLoadingScreen()
+        const endpoint = this.selectedEndpoint;
+        const img = await this.generate(endpoint, prompt, negative, [150, this.curDelay])
+        const txt = `${endpoint.name}: ${prompt}${negative ? ` | ${negative}` : ""}`
+        this.displayImage(img, txt)
+        this.processingCount--
+        this.updateLoadingScreen()
+    }
+    async generate(endpoint, prompt, negative, attempt = [10, 8000]) {
+        console.log(`Generating image for prompt: ${prompt}`);
+        const body = endpoint.params(prompt, negative);
+        const headers = this.buildHeaders(endpoint);
+        return await this.fetchWithRetry(endpoint.url, headers, body, ...attempt);
+    }
+    
+    buildHeaders(endpoint) {
+        let headers = {
+            'Content-Type': 'application/json',
+        };
+        if (endpoint.token) {
+            headers['Authorization'] = `Bearer ${endpoint.token}`;
+        }
+        if (endpoint.header) {
+            headers[endpoint.header[0]] = endpoint.header[1];
+        }
+        return headers;
+    }
+    
+    async fetchWithRetry(url, headers, body, retries = 3, delay = 2000) {
+        for (let attempt = 0; attempt < retries; attempt++) {
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify(body),
+                });
+    
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+    
+                return await response.blob(); // Return the image blob
+            } catch (error) {
+                console.error(`Attempt ${attempt + 1} failed: ${error.message}`);
+                if (attempt < retries - 1) {
+                    await this.delay(delay); // Wait before retrying
+                } else {
+                    throw error; // Rethrow the error after retries
+                }
             }
-            if (this.selectedEndpoint.header) {
-                headers[this.selectedEndpoint.header[0]] = this.selectedEndpoint.header[1];
-            }
-
-            const response = await fetch(this.selectedEndpoint.url, {
-                method: 'POST',
-                headers: headers,
-                body: JSON.stringify(body),
-            });
-            if (response.status === 420) {
-                console.log('Rate limit exceeded. Retrying...');
-                this.processingCount--
-                this.curDelay *= 1.5
-                await this.delay(this.curDelay);
-                await this.generateImage(prompt, negative);
-                return; // Exit after handling the rate limit
-            }
-
-            if (!response.ok) {
-                console.error(new Error('Network response was not ok'));
-                this.curDelay *= 2.4
-                await this.delay(this.curDelay);
-                await this.generateImage(prompt, negative);
-                return
-            }
-
-            const data = await response.blob();
-            this.processingImages.unshift(data); // Prepend the new image
-            this.prompts.unshift(`${endpoint}: ${prompt}${negative ? ` | ${negative}` : ""}`); // Prepend the new prompt
-        } catch (error) {
-            console.error('Error generating image:', error);
-            this.curDelay *= 3
-            this.processingCount--; // Decrement processing count
-            await this.delay(this.curDelay);
-            this.generateImage(prompt, negative);
-            return
-            //alert('An error occurred. Please check the console for details.');
-        } finally {
-            this.processingCount--; // Decrement processing count
-            this.updateLoadingScreen();
         }
     }
     async delay(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
-    async generate(endpoint, prompt, negative) {
-        console.log(`Generating image for prompt: ${prompt}`);
-        const body = endpoint.params(prompt, negative);
-        let headers = {
-            'Content-Type': 'application/json',
-        };
-        if (endpoint.token) {
-            headers['Authorization'] = `Bearer ${this.selectedEndpoint.token}`;
-        }
-        if (endpoint.header) {
-            headers[this.selectedEndpoint.header[0]] = this.selectedEndpoint.header[1];
-        }
-
-        const response = await fetch(endpoint.url, {
-            method: 'POST',
-            headers: headers,
-            body: JSON.stringify(body),
-        });
-
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-
-        return await response.blob(); // Return the image blob
-    }
-
-
-    async combineImages(images, size = 512) {
+    async combineImages(images) {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
-
-        // Assuming images are of the same size, set canvas dimensions
-        const width = size; // Set your desired width
-        const height = size * images.length; // Stack images vertically
-
-        canvas.width = width;
-        canvas.height = height;
-
-        for (let i = 0; i < images.length; i++) {
+    
+        // Set canvas size to 1920x1080
+        const canvasWidth = 1920;
+        const canvasHeight = 1080;
+        canvas.width = canvasWidth;
+        canvas.height = canvasHeight;
+    
+        const numImages = images.length;
+    
+        // Calculate how to arrange images
+        const imagesPerRow = Math.ceil(numImages / 2); // 2 rows
+        const imageWidth = canvasWidth / imagesPerRow; // Width for each image
+        const imageHeight = canvasHeight / 2; // Height for two rows
+    
+        // Draw each image onto the canvas
+        for (let i = 0; i < numImages; i++) {
             const img = await this.loadImage(images[i]);
-            ctx.drawImage(img, 0, i * size); // Draw each image at the correct position
+            const x = (i % imagesPerRow) * imageWidth; // X position
+            const y = Math.floor(i / imagesPerRow) * imageHeight; // Y position
+            
+            // Resize and draw the image to fit the calculated dimensions
+            ctx.drawImage(img, x, y, imageWidth, imageHeight);
         }
-
-        return canvas.toBlob(); // Return combined image as blob
+    
+        // Convert the canvas to a Blob
+        return new Promise((resolve) => {
+            canvas.toBlob(blob => {
+                if (blob) {
+                    resolve(blob); // Resolve the promise with the blob
+                } else {
+                    console.error('Canvas toBlob conversion failed');
+                    resolve(null);
+                }
+            }, 'image/jpeg'); // Specify the image format
+        });
     }
 
     loadImage(imageBlob) {
@@ -392,10 +384,18 @@ export class AI {
         }, prompt, negative, 1);
     }
     async generateAndDisplayImages(endpointCounts, prompt, negative) {
+        if(prompt == '' || prompt == ' '){
+            return "Null"
+        } else if(prompt.length > 5000){
+            return "Full"
+        }
+        
         const allImages = [];
     
         // Create an array of promises for generating images
         const promises = Object.entries(endpointCounts).map(async ([index, count]) => {
+            this.processingCount++
+            this.updateLoadingScreen()
             const endpoint = this.endpoints[index];
             
             try {
@@ -404,6 +404,8 @@ export class AI {
             } catch (error) {
                 console.error(`Error generating images for endpoint ${index}:`, error);
             }
+            this.processingCount--
+            this.updateLoadingScreen()
         });
     
         // Wait for all promises to resolve
@@ -412,7 +414,7 @@ export class AI {
         // Combine all generated images into a single blob
         const combinedImageBlob = await this.combineImages(allImages);
         // Display the combined image
-        this.displayImage(combinedImageBlob);
+        this.displayImage(combinedImageBlob, prompt + ' ' + negative);
     }
     
     async generateMultipleImages(endpoint, prompt, negative, count) {
@@ -420,7 +422,7 @@ export class AI {
     
         // Generate the specified number of images
         const promises = Array.from({ length: count }).map(() =>
-            this.generateImage(endpoint, prompt, negative)
+            this.generate(endpoint, prompt, negative)
                 .then(image => images.push(image)) // Add the generated image to the array
                 .catch(error => console.error('Error generating image:', error))
         );
@@ -440,40 +442,27 @@ export class AI {
             loadingMessage.textContent = `Processing ${this.processingCount} image(s)...`;
             container.appendChild(loadingMessage);
         }
-        if (this.processingImages.length > 0) {
-            this.displayImages(); // Show images if no processing is happening
-        }
     }
 
-    displayImages() {
+    displayImage(image, prompt) {
         const container = document.getElementById('image-container');
+        const wrapper = document.createElement('div');
+        wrapper.className = 'image-wrapper';
 
-        this.processingImages.forEach((image, index) => {
-            const wrapper = document.createElement('div');
-            wrapper.className = 'image-wrapper';
+        const img = document.createElement('img');
+        img.src = URL.createObjectURL(image);
+        img.className = 'generated-img';
 
-            const img = document.createElement('img');
-            img.src = URL.createObjectURL(image);
-            img.className = 'generated-img';
+        const text = document.createElement('p');
+        text.textContent = prompt;
+        text.className = 'prompt-text';
 
-            const text = document.createElement('p');
-            text.textContent = this.prompts[index];
-            text.className = 'prompt-text';
-
-            wrapper.appendChild(img);
-            wrapper.appendChild(text);
-            container.prepend(wrapper);
-        });
-        this.images.unshift(this.processingImages)
-        this.processingImages = []
-        this.prompts = []
+        wrapper.appendChild(img);
+        wrapper.appendChild(text);
+        container.prepend(wrapper);
+        this.images.unshift(image)
         if (this.processingCount < 1) {
             this.curDelay = this.initDelay
         }
-    }
-    displayImage(image, prompt) {
-        this.processingImages.unshift(image)
-        this.prompts.unshift(prompt)
-        this.displayImages()
     }
 }
