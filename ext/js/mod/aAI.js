@@ -1,5 +1,12 @@
 import {hf, pr, rs} from "./t.js";
-
+export function blobToBase64(blob) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+    });
+}
 export class AI {
     constructor(dic, container) {
         this.dic = dic;
@@ -7,7 +14,16 @@ export class AI {
         this.processingImages = [];
         this.images = []
         this.prompts = [];
-        this.endpoints = [
+        this.endpoints = this.getEndpoints()
+        this.initDelay = 10000
+        this.curDelay = this.initDelay
+        this.processingCount = 0
+        this.selectedEndpoint = this.getSelectedEndpoint() || this.endpoints[0];
+        this.main = this.createMainDiv();
+        container.appendChild(this.main);
+    }
+    getEndpoints(){
+        return [
             {
                 name: "Stable Diffusion XL",
                 url: "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0",
@@ -84,7 +100,18 @@ export class AI {
                 })
             },
             {
-                name: "OpenJourney",
+                name: "Stable Diffusion 2.1",
+                url: "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-2-1",
+                token: hf,
+                params: (prompt, negative) => ({
+                    "inputs": `"${prompt}":2.0, "high quality":0.1, masterpiece:0.1, anime:0.1`,
+                    "negative_prompt": negative,
+                    "seed": -1,
+                    "cfg_scale": 20
+                })
+            },
+            {
+                name: "OpenJourney", // working
                 url: "https://api-inference.huggingface.co/models/prompthero/openjourney-v4",
                 token: hf,
                 params: (prompt, negative) => ({
@@ -155,14 +182,7 @@ export class AI {
                 })
             }
         ];
-        this.initDelay = 10000
-        this.curDelay = this.initDelay
-        this.processingCount = 0
-        this.selectedEndpoint = this.getSelectedEndpoint() || this.endpoints[0];
-        this.main = this.createMainDiv();
-        container.appendChild(this.main);
     }
-
     getSelectedEndpoint() {
         const endpointName = localStorage.getItem('selectedEndpoint');
         return this.endpoints.find(ep => ep.name === endpointName);
@@ -185,10 +205,10 @@ export class AI {
         this.endpointSelect.id = 'endpoint-select';
 
         // Populate the select options
-        this.endpoints.forEach(endpoint => {
+        this.endpoints.forEach((endpoint, i) => {
             const option = document.createElement('option');
             option.value = endpoint.name;
-            option.textContent = endpoint.name;
+            option.textContent = i + ':  ' + endpoint.name + ' - ' + endpoint.url;
             this.endpointSelect.appendChild(option);
         });
 
@@ -214,7 +234,7 @@ export class AI {
         multiButton.id = 'multi-btn';
         multiButton.textContent = 'Multiple Image';
         mainDiv.appendChild(multiButton);
-        
+
         mainDiv.innerHTML += `</br><div id="image-loading">.</div>`
         const imageContainer = document.createElement('div');
         imageContainer.className = 'image-container';
@@ -283,13 +303,14 @@ export class AI {
         this.processingCount--
         this.updateLoadingScreen()
     }
-    async generate(endpoint, prompt, negative, attempt = [10, 8000]) {
+    async generate(endpoint, prompt, negative, attempt = [50, 8000]) {
         console.log(`Generating image for prompt: ${prompt}`);
         const body = endpoint.params(prompt, negative);
+        body.seed = Math.floor(Math.random() * 1000000000);
         const headers = this.buildHeaders(endpoint);
         return await this.fetchWithRetry(endpoint.url, headers, body, ...attempt);
     }
-    
+
     buildHeaders(endpoint) {
         let headers = {
             'Content-Type': 'application/json',
@@ -302,7 +323,7 @@ export class AI {
         }
         return headers;
     }
-    
+
     async fetchWithRetry(url, headers, body, retries = 3, delay = 2000) {
         for (let attempt = 0; attempt < retries; attempt++) {
             try {
@@ -311,18 +332,18 @@ export class AI {
                     headers: headers,
                     body: JSON.stringify(body),
                 });
-    
+
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
                 }
-    
+
                 return await response.blob(); // Return the image blob
             } catch (error) {
                 console.error(`Attempt ${attempt + 1} failed: ${error.message}`);
                 if (attempt < retries - 1) {
                     await this.delay(delay); // Wait before retrying
                 } else {
-                    throw error; // Rethrow the error after retries
+                    return null; // Rethrow the error after retries
                 }
             }
         }
@@ -333,30 +354,29 @@ export class AI {
     async combineImages(images) {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
-    
-        // Set canvas size to 1920x1080
-        const canvasWidth = 1920;
-        const canvasHeight = 1080;
-        canvas.width = canvasWidth;
-        canvas.height = canvasHeight;
-    
+
+        // Set canvas size to 1600x1600
+        const canvasSize = 1600;
+        canvas.width = canvasSize;
+        canvas.height = canvasSize;
+
         const numImages = images.length;
-    
+
         // Calculate how to arrange images
-        const imagesPerRow = Math.ceil(numImages / 2); // 2 rows
-        const imageWidth = canvasWidth / imagesPerRow; // Width for each image
-        const imageHeight = canvasHeight / 2; // Height for two rows
-    
+        const imagesPerRow = Math.ceil(Math.sqrt(numImages)); // Calculate rows and columns for a square layout
+        const imageWidth = canvasSize / imagesPerRow; // Width for each image
+        const imageHeight = imageWidth; // Maintain 1:1 aspect ratio
+
         // Draw each image onto the canvas
         for (let i = 0; i < numImages; i++) {
             const img = await this.loadImage(images[i]);
             const x = (i % imagesPerRow) * imageWidth; // X position
             const y = Math.floor(i / imagesPerRow) * imageHeight; // Y position
-            
+
             // Resize and draw the image to fit the calculated dimensions
             ctx.drawImage(img, x, y, imageWidth, imageHeight);
         }
-    
+
         // Convert the canvas to a Blob
         return new Promise((resolve) => {
             canvas.toBlob(blob => {
@@ -369,7 +389,6 @@ export class AI {
             }, 'image/jpeg'); // Specify the image format
         });
     }
-
     loadImage(imageBlob) {
         return new Promise((resolve) => {
             const img = new Image();
@@ -380,8 +399,9 @@ export class AI {
 
     async generateMulti(prompt,negative) {
         this.generateAndDisplayImages({
-            0: 1, 1: 1, 4: 1, 9: 1
-        }, prompt, negative, 1);
+            0: 1, 1: 1, 4: 1, 10: 1,
+            //6: 1, 7: 1, 8: 1, 9: 1
+        }, prompt, negative);
     }
     async generateAndDisplayImages(endpointCounts, prompt, negative) {
         if(prompt == '' || prompt == ' '){
@@ -389,15 +409,15 @@ export class AI {
         } else if(prompt.length > 5000){
             return "Full"
         }
-        
+
         const allImages = [];
-    
+
         // Create an array of promises for generating images
         const promises = Object.entries(endpointCounts).map(async ([index, count]) => {
             this.processingCount++
             this.updateLoadingScreen()
             const endpoint = this.endpoints[index];
-            
+
             try {
                 const images = await this.generateMultipleImages(endpoint, prompt, negative, count);
                 allImages.push(...images); // Combine images from this endpoint
@@ -407,29 +427,29 @@ export class AI {
             this.processingCount--
             this.updateLoadingScreen()
         });
-    
+
         // Wait for all promises to resolve
         await Promise.all(promises);
-    
+
         // Combine all generated images into a single blob
         const combinedImageBlob = await this.combineImages(allImages);
         // Display the combined image
         this.displayImage(combinedImageBlob, prompt + ' ' + negative);
     }
-    
+
     async generateMultipleImages(endpoint, prompt, negative, count) {
         const images = [];
-    
+
         // Generate the specified number of images
         const promises = Array.from({ length: count }).map(() =>
-            this.generate(endpoint, prompt, negative)
+            this.generate(endpoint, prompt, negative, [8, 12000])
                 .then(image => images.push(image)) // Add the generated image to the array
                 .catch(error => console.error('Error generating image:', error))
         );
-    
+
         // Wait for all image generation promises to resolve
         await Promise.all(promises);
-    
+
         return images; // Return an array of image blobs
     }
     updateLoadingScreen() {

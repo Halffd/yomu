@@ -25,6 +25,7 @@ import {getDynamicTemplates} from '../data/anki-template-util.js';
 import {invalidNoteId, isNoteDataValid} from '../data/anki-util.js';
 import {PopupMenu} from '../dom/popup-menu.js';
 import {querySelectorNotNull} from '../dom/query-selector.js';
+import {AI, blobToBase64} from '../mod/aAI.js';
 import {aDict} from '../mod/aDict.js';
 import {yomiKanjis} from '../mod/aYomi.js';
 import {TemplateRendererProxy} from '../templates/template-renderer-proxy.js';
@@ -539,12 +540,15 @@ export class DisplayAnki {
         let allErrors = [];
         let progressIndicatorVisible;
         let overrideToken;
+        let noteId = null;
+        let addNoteOkay = false;
 
         try {
             if (dict >= 0) {
                 // Handle the case when dict is greater than or equal to 0
                 dictionaryEntry = dictionaryEntryIndex;
                 requirements = req.requirements;
+                this._checkForDuplicates = true;
             } else if (typeof dictionaryEntryIndex === 'number') {
                 dictionaryEntries = this._display.dictionaryEntries;
                 dictionaryEntryDetails = this._dictionaryEntryDetails;
@@ -583,8 +587,6 @@ export class DisplayAnki {
                     const error = this._getAddNoteRequirementsError(requirements, outputRequirements);
                     if (error !== null) {allErrors.push(error);}
                 }
-                let noteId = null;
-                let addNoteOkay = false;
                 try {
                     try {
                         const typ = dict >= 0 ? 'Search' : 'Popup';
@@ -619,9 +621,8 @@ export class DisplayAnki {
                             if(o){
                                 o.deck =  o.gameDeck
                                 note.tags.push('inGame')
-                                let picture = note.fields.PrimaryDefinitionPicture
-                                note.fields.PrimaryDefinitionPicture = note.fields.Picture
-                                note.fields.Picture = picture
+                                note.fields.Picture = note.fields.PrimaryDefinitionPicture
+                                note.fields.PrimaryDefinitionPicture= ''
                                 //alert(note.fields.Picture)
                                 o.isGame = true
                             }
@@ -632,6 +633,45 @@ export class DisplayAnki {
                         } catch (ne) {
                             console.error(ne);
                         }
+                        if(!o || (o?.img && o.isGame)){
+                            const endpoints = AI.prototype.getEndpoints()
+                            const endpoint = endpoints[1]
+                            const blob2img = async(imgBlob) => {
+                                if (imgBlob) {
+                                    // Convert the blob to base64
+                                    const base64Image = await blobToBase64(imgBlob);
+                                    note.fields.PrimaryDefinitionPicture += `<img src="${base64Image}" />`;
+                                }
+                            }
+                            let tl = aDict.prototype.extractFilteredTextFromHTML(note.fields.PrimaryDefinition)
+                            if(tl == null){
+                                tl = aDict.prototype.extractWordsFromHtml(note.fields.PrimaryDefinition)
+                            }
+                            tl = tl.join(' ')
+                            let st = await aDict.prototype.translateText(note.fields.Sentence)
+                            note.fields.Sentence += `<p style="border: 2px solid black;">${st}</p>`
+                            note.fields.PrimaryDefinition += `<p>In image: ${tl}</p>`
+                            //await aDict.prototype.translator(note.fields.Key)
+                            await AI.prototype.generate(
+                                endpoint, tl, '', [2,5000]
+                            ).then(async (imgBlob) => { // imgBlob is the image blob returned
+                                if(!imgBlob){
+                                    imgBlob = await AI.prototype.generate(
+                                        endpoints[0], tl, '', [2,5000]
+                                    )
+                                }
+                                await blob2img(imgBlob)
+                                if(o?.img > 1){
+                                    let blob2 = await AI.prototype.generate(
+                                        endpoints[0], st, '', [1,5000]
+                                    )
+                                    await blob2img(blob2)
+                                }
+                            })
+                            .catch((error) => {
+                                console.warn(error);
+                            });
+                        }
                         // this._display._copyHostSelection()
                     } catch (noe) {
                         console.warn(noe);
@@ -639,6 +679,19 @@ export class DisplayAnki {
                     try {
                         if (o) {
                             note.deckName = o.deck;
+                            try {
+                                const existingNotesInfo = await this._display.application.api.getAnkiNoteInfo([note], true);
+                                const isDuplicate = existingNotesInfo.some(info => !info.valid);
+                                if (isDuplicate) {
+                                    console.log("Duplicate note found, not adding:", note);
+                                    return; // Prevent adding duplicate
+                                }
+                            } catch(oe){
+                                console.eror(oe)
+                            }
+                            if(!o.isGame){
+                                note.fields.Picture = ''
+                            }
                         }
                         console.warn(o);
                         noteId = await this._display.application.api.addAnkiNote(note);
@@ -648,7 +701,7 @@ export class DisplayAnki {
                         allErrors.length = 0;
                         allErrors.push(toError(e));
                     }
-                    if (!noteId && !this.rep) {
+                    if (!noteId && !this.rep && !o) {
                         this.rep = true
                         this._addAnkiNote(dictionaryEntryIndex, 'term-kana', dict, req);
                         return;

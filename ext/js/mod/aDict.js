@@ -4,6 +4,7 @@ import {mobile} from "../ctx.js";
 import {isStringPartiallyJapanese} from "../language/ja/japanese.js";
 import {AI} from "./aAI.js";
 import {Analyze} from './aAnalyze.js';
+import {LLM} from "./aLLM.js";
 import {Note} from "./aNote.js";
 import {aAll, aDeck, aModel, aQuery, aTag, getWords} from './aUtil.js';
 import {yomiKanjis} from "./aYomi.js";
@@ -318,7 +319,7 @@ this.txtImg(false)
       V = this.v
       this.hist.push(V)
       localStorage.setItem('hist', this.hist)
-      this.g(this.v, 'auto', 'ru', 1).then((lp) => {
+      this.translator(this.v, 'auto', 'ru', 1).then((lp) => {
         if (av('warn')) console.warn('lllllll', lp)
         this.langg = lp.substring(lp.length - 4)
         if (av('warn')) console.warn(this.langg)
@@ -382,6 +383,8 @@ this.txtImg(false)
     // console.error(uniqueArray);
     this.known = 3200
     this.knownM = 190
+    this.excluded = []
+    this.eAllow = false
     this.auto = false
     this.tb = true
     this.tbs = 0
@@ -600,7 +603,7 @@ this.txtImg(false)
       console.error(sno)
     }
     const run = localStorage.getItem('run') === 'true'
-    this.lang = localStorage.getItem('lng')
+    this.lang = localStorage.getItem('lang')
     this.kan = localStorage.getItem('kan') === 'true'
     const kan = this.kan
     this.pe = localStorage.getItem('pt') === 'true'
@@ -804,7 +807,7 @@ this.txtImg(false)
 
       bnv.prepend(bnct)
       // if(av('warn')) console.warn(ids)//vs, vbs, stt);
-      const g = this.g.bind(this)
+      const g = this.translator.bind(this)
       const f2 = async function (/** @type {string} */ w, /** @type {string | undefined} */ from, /** @type {string} */ to) {
         const a = w.split('\n')
         let r = ''
@@ -1087,6 +1090,7 @@ this.txtImg(false)
       this._anms = ret('anms')
       this.pop = ret('pops')
       this._cards = ret('cards')
+      this._adicts = ret('adicts')
 
       this.new = true
       nSizes()
@@ -1096,6 +1100,9 @@ this.txtImg(false)
       qp.style.display = 'block'
       this.t.appendChild(qpc)
       this.analyze = new Analyze(this, this.t)
+      this.llmMain = document.createElement('div')
+      this.t.appendChild(this.llmMain)
+      this.llm = new LLM(this.llmMain)
       this.aiMain = document.createElement('div')
       this.t.appendChild(this.aiMain)
       this.ai = new AI(this, this.aiMain)
@@ -1440,7 +1447,7 @@ this.txtImg(false)
     const japaneseSymbolsRegex = /[\u3000-\u303F\uFF00-\uFFEF\u1F300-\u1F5FF\u1F600-\u1F64F\u1F680-\u1F6FF]/u;
     const stxt = this.spls[this.splIndex]
     try {
-      if(!stxt){
+      if (!stxt) {
         stxt = spl
       }
       if (started) {
@@ -1568,7 +1575,9 @@ this.txtImg(false)
         elem.appendChild(eel)
       } else {
         const vis = document.querySelectorAll('.vis')
-        vis[vis.length - 1].appendChild(eel)
+        if(vis && vis.length > 0 && eel){
+          vis[vis.length - 1].appendChild(eel)
+        }
       }
       eel.innerHTML += `<span class="enw">${enw}${enw2}</span>`
       if (eel.textContent?.length < 7) {
@@ -1653,10 +1662,10 @@ this.txtImg(false)
       w.push(tt)
       line.push(tt)
       let gd = elem.querySelector('.gloss-definitions') ?? elem.querySelector('dd')
-      if(gd.innerText === '' || gd.innerHTML.length < 6){
-        if(this.analysis){
-        elem.remove()
-        return
+      if (gd.innerText === '' || gd.innerHTML.length < 6) {
+        if (this.analysis) {
+          elem.remove()
+          return
         }
       }
       var navflex = document.createElement('div');
@@ -1681,13 +1690,13 @@ this.txtImg(false)
       buttonItems.forEach(function (item) {
         var button = aDict.prototype.createButton(item.text, item.classNames);
         button.id = item.key;
-        if(mobile()){
+        if (mobile()) {
           button.style.width = '28px'
           button.style.height = '22px'
-          if(item.classNames.includes('left-top') || item.classNames.includes('right-top')){
+          if (item.classNames.includes('left-top') || item.classNames.includes('right-top')) {
             button.style.top = '40px'
           }
-        } else if(item.elem == navflex2){
+        } else if (item.elem == navflex2) {
           //button.style.width = '20px'
           button.style.left = '0'
           button.style.padding = '0'
@@ -1739,11 +1748,13 @@ this.txtImg(false)
         });
 
         elem.addEventListener('touchstart', handleMovement);
-        elem.addEventListener('touchend', () => {{
-          setTimeout(()=>{
-            elem.classList.remove('moving');
-          }, 2000)
-        }});
+        elem.addEventListener('touchend', () => {
+          {
+            setTimeout(() => {
+              elem.classList.remove('moving');
+            }, 2000)
+          }
+        });
 
         elem.addEventListener('dblclick', function (/** @type {Event | undefined} */ ele) {
           if (!ele) ele = window.event
@@ -1758,12 +1769,18 @@ this.txtImg(false)
           if (av('log')) console.dir(ele, elem)
           const elemc = elem.closest('.mns')
           const ist = elem.closest('.title')
+          const mw = elem.closest('.modW')
           const b = document.querySelectorAll('.vis')
           const all = document.querySelectorAll(".vis")
-          for(let e in all){
-            if(all[e] === elemc) {
-                this.pos = parseInt(e)
-            break
+          if(mw){
+            this.eAllow = true
+          } else {
+            this.eAllow = false
+          }
+          for (let e in all) {
+            if (all[e] === elemc) {
+              this.pos = parseInt(e)
+              break
             }
           }
           const ps = []
@@ -1940,12 +1957,13 @@ this.txtImg(false)
           elem.setAttribute("fav", "1")
           if (this.analysis && !this.ws) {
             this.modW.appendChild(elem)
+            this.excluded.push(tt)
             //elem.style.display = 'none'
             elem.className = 'mns'
           }
           is = true
         }
-        if(this.atAnki(tt)){
+        if (this.atAnki(tt)) {
           elem.classList.add('mined')
         }
         if (this.note.bin.includes(tt)) {
@@ -2081,7 +2099,6 @@ this.txtImg(false)
     ctxt.appendChild(ttxt)
     ctxt.appendChild(spanNext);
     ptxt.appendChild(ctxt);
-    ctxt.style.display = 'inline-flex'
 
     // Append ptxt or do further operations with it
     const htxt = document.createElement('div')
@@ -2330,7 +2347,7 @@ this.txtImg(false)
           tl.style.fontSize = '1.32em'
           const frm = this.lang.length > 1 ? this.lang : undefined
           let ts = tt.split(' ')
-          let en = await this.g(tt, frm, 'en', 0)
+          let en = await this.translator(tt, frm, 'en', 0)
           if (av('warn')) console.warn('TlAuto: ', en)
           const ens = en.split(' ')
           const ap = 0
@@ -2357,7 +2374,7 @@ this.txtImg(false)
               t = t[0]
               en = ''
             } else {
-              en = await this.g(t, frm, 'en', ap)
+              en = await this.translator(t, frm, 'en', ap)
               if (av('warn')) console.warn('TlAuto: ', en)
             }
             rub.innerHTML = `<p>${t}</p><rt>${en}</rt>`
@@ -2378,6 +2395,7 @@ this.txtImg(false)
             }
           }
         }
+        if (this.analysis) this.organize(this.modW)
       }
     } catch (error) {
       console.error(error)
@@ -2414,6 +2432,110 @@ this.txtImg(false)
     }
     this.modP.appendChild(this.modK)
     return ltp
+  }
+  /**
+   * Organizes child elements of the given element based on word frequency and status.
+   * Elements are categorized into known, not found, and words with frequency.
+   * 
+   * @param {HTMLElement} elem - The parent element containing child nodes to organize.
+   */
+    async organize(elem) {
+      const nf = []; // Not found (note.bin)
+      const anki = []; // Anki words (this.atAnki)
+      const ws = []; // Unknown words
+      const known = []; // Known words (note.known)
+
+      // Iterate through child nodes to categorize elements
+      for (let e of elem.childNodes) {
+          const w = this.getWord(e);
+          if (w) {
+              const f = await this.analyze.getFrequency(w); // Get frequency
+              const selector = this.getSelector(e); // Get the unique selector for the element
+
+              // Categorize elements based on word status
+              if (this.note.bin.includes(w)) {
+                  nf.unshift({ element: e, frequency: f }); // Not found - add to front with frequency
+              } else if (this.atAnki(w)) {
+                  anki.push({ element: e, frequency: f }); // Anki - add to end with frequency
+              } else if (this.note.known.includes(w)) {
+                  known.push({ element: e, frequency: f }); // Known - add to end with frequency
+              } else {
+                  ws.unshift({ element: e, frequency: f }); // Unknown - add to front with frequency
+              }
+          }
+      }
+
+      // Helper function to sort elements by frequency
+      const sortByFrequency = (elements) => {
+          return elements.sort((a, b) => b.frequency - a.frequency); // Sort in ascending order
+      };
+
+      // Sort all categories
+      const sortedNf = sortByFrequency(nf);
+      const sortedAnki = sortByFrequency(anki);
+      const sortedWs = sortByFrequency(ws);
+      const sortedKnown = sortByFrequency(known);
+
+      // Clear the modW before appending sorted elements
+      this.modW.innerHTML = '';
+
+      // Append elements in the desired order
+      for (let { element } of [...sortedNf, ...sortedAnki, ...sortedWs, ...sortedKnown]) {
+          this.modW.appendChild(element);
+      }
+  }
+  /**
+   * Generates a unique CSS selector for a given element using :nth-child.
+   * 
+   * @param {HTMLElement} elm - The DOM element to generate a selector for.
+   * @returns {string} - A unique selector string for the element.
+   */
+  getSelector(elm) {
+    // Check if the element is valid
+    if (!(elm instanceof HTMLElement)) {
+      throw new Error('Argument must be a valid HTMLElement');
+    }
+
+    // Return "BODY" if the element is the body
+    if (elm.tagName === "BODY") return "BODY";
+
+    const names = [];
+
+    // Traverse up the DOM tree
+    while (elm.parentElement && elm.tagName !== "BODY") {
+      if (elm.id) {
+        // Use the ID if it exists
+        names.unshift("#" + elm.getAttribute("id")); // Use getAttribute for safety
+        break; // Break since ID should be unique
+      } else {
+        // Count previous siblings for nth-child
+        let c = 1, e = elm;
+        for (; e.previousElementSibling; e = e.previousElementSibling, c++);
+        names.unshift(elm.tagName + ":nth-child(" + c + ")");
+      }
+      elm = elm.parentElement; // Move up to the parent element
+    }
+
+    // Join names with ">" to form the complete selector
+    return names.join(" > ");
+  }
+  getWord(e) {
+    let we = e.querySelector("dt .kj")
+    if (we) {
+      let uc = this.unconj(e)
+      if (uc) {
+        return uc
+      } else {
+        return we.textContent
+      }
+    } else {
+      let y = this.yomiread(e)
+      if (y) {
+        return y
+      } else {
+        return null
+      }
+    }
   }
   /**
    * @param {string | number | undefined} istart
@@ -2663,7 +2785,7 @@ this.txtImg(false)
               t = t[0]
               en = ''
             } else {
-              en = await this.g(t, frm, 'en', ap)
+              en = await this.translator(t, frm, 'en', ap)
               if (av('warn')) console.warn('TlAuto: ', en)
             }
             rub.innerHTML = `<p>${t}</p><rt>${en}</rt>`
@@ -2701,7 +2823,7 @@ this.txtImg(false)
       ret = activeElement === this.txts
     }
     let fc = (activeElement.tagName === 'INPUT' ||
-    activeElement.tagName === 'TEXTAREA')
+      activeElement.tagName === 'TEXTAREA')
     if (!ret) ret = (this.nk && (e.ctrlKey || e.altKey || e.metaKey || e.shiftKey));
     /**
      * @type {string}
@@ -2709,7 +2831,7 @@ this.txtImg(false)
     var kn = e.key.trim().toLowerCase()
     // if (av('log')) console.log(activeElement.tagName, ret, e.key)
     if (e.key == '' || e.key == ' ' || e.key == 'arrowup') {
-      if(!fc){
+      if (!fc) {
         e.preventDefault()
       }
       if (ret) {
@@ -2718,7 +2840,7 @@ this.txtImg(false)
         return
       }
     }
-    if(fc) return
+    if (fc) return
     if (ret && e.key != 'Alt') {return }
     ret = true
     let ki = -1
@@ -2737,7 +2859,11 @@ this.txtImg(false)
     let b
     const t = document.querySelectorAll('.mns')
     if (!this.var('rd')) {
-      b = document.querySelectorAll('.mns.nav')
+      if(this.eAllow){
+        b = document.querySelectorAll('.mns')
+      } else {
+        b = document.querySelectorAll('.mns.nav')
+      }
     } else {
       b = document.querySelectorAll('.sentence .words')
     }
@@ -2748,6 +2874,17 @@ this.txtImg(false)
     let wasd = kn == 'w' || kn == 'a' || kn == 's' || kn == 'd'
     // txt.value = `${keys[ki]} ${ki}: ${e.key}`
     if (av('log')) console.log(`${this.keys?.[ki]} ${ki}: ${e.key}`)
+    if (this.alt && kn == 'n') {
+      console.log('Cards:')
+      let c = await this.cards
+      console.log(c);
+      let cc = this._cards
+      console.log(cc);
+      alert(c?.length, cc?.length)
+    }
+    if(kn == 'e'){
+      this.eAllow = !this.eAllow
+    }
     if (ki <= 9) {
       let n = ki
       b = document.querySelectorAll('.vis')
@@ -3362,6 +3499,15 @@ this.txtImg(false)
       return this._mined;
     })();
   }
+  get adict() {
+    return (async () => {
+      const result = await this.query('"deck:aDict"'); // Call ankis to populate jpws
+      this.adicts = result
+      this._adicts = this.adicts //getWords(result.notes);
+      localStorage.setItem("adicts", this._adicts.join(' '))
+      return this._adicts;
+    })();
+  }
   get jpws() {
     return (async () => {
       const result = await this.query('"note:JP Mining Note" -(tag:inSearch -tag:inGame)'); // Call ankis to populate jpws
@@ -3415,7 +3561,9 @@ this.txtImg(false)
   }
   async vals() {
     try {
-      const r = await this.jpws /*await Promise.all([
+      let r = await this.jpws
+      r += await this.adict
+       /*await Promise.all([
         this.cards,
         this.jpws,
         this.anms,
@@ -3474,7 +3622,7 @@ this.txtImg(false)
     if (this.var('run')) {
       this.fl = false
       this.istart = 0
-      this.lang = localStorage.getItem('lng')
+      this.lang = localStorage.getItem('lang')
       let fq
       if (this.search) {
         fq = q // display.fullQuery
@@ -3482,16 +3630,22 @@ this.txtImg(false)
         fq = this.v
       }
       this.lq = q
-      
-      if(this.var('aiimg') && this.aiMain){
-        this.ai?.generateImage(q)
+
+      let aii = this.int('aiimgauto')
+      if (aii > 0 && this.aiMain) {
+        this.translateText(q, this.lang ?? 'ja', 'en', 0).then((qt) => {
+          while(aii > 0){
+            this.ai?.generateImage(qt);
+            aii--;
+          }
+        })
         //this.aiMain.querySelector("input").value = q
         //this.aiMain.querySelector("button").click()
       }
       if (this.var('del')) {
         this.delete()
       }
-      if (fq) {
+      if (fq && (this.lang == 'ja' || this.lang == 'zh')) {
         this.frst = false;
         this.istart = -1;
         this.spl = fq?.split ? fq.split('\n') : fq // .filter(item=>item);
@@ -3530,11 +3684,16 @@ this.txtImg(false)
         } else {
           await this.yomi.bind(this, this.spl, 0, false)()
         }
+      } else {
+        if(fq){
+          let ws = this.llm?.fetchResponse(pr)
+          this.llm?.createFlexbox(ws)
+        }
       }
       this.start = true
     }
     //if (this.var('hk') || this.lis) {
-      //this.istart = parseInt(localStorage.getItem('istart'))
+    //this.istart = parseInt(localStorage.getItem('istart'))
     //}
     this.upd = true
   }
@@ -3964,6 +4123,14 @@ this.txtImg(false)
       }
       this.dictionary(word, elemc, undefined, -10).then(() => {
         elemc.scrollIntoView({block: 'start', behavior: 'smooth'});
+        let df = this.extractWordsFromHtml(elemc.innerHTML)
+        let aii = this.int('aiimgauto')
+        if (aii > 0 && this.aiMain) {
+          while(aii > 0){
+            this.ai?.generateImage(df.join(', '));
+            aii--;
+          }
+        }
       })
     }
     const ist = elem.closest('.title')
@@ -3996,6 +4163,7 @@ this.txtImg(false)
     let pos = this.getLine(elem, this.pos)
     this.cache(elem, this.istart, pos)
   }
+
   getLine(elem, pos = null) {
     let line = elem.parentElement?.getAttribute('txt')
     let lineN = this.spl[this.istart].indexOf(line)
@@ -4113,7 +4281,8 @@ this.txtImg(false)
       createSettingsInputTemplate('shr', 'Save Timespan', '', '2px solid purple'),
       createSettingsInputTemplate('istart', 'Lines Pos', '', '2px solid purple'),
       createSettingsInputTemplate('deck', 'Deck Name', '', '2px solid purple'),
-      createSettingsInputTemplate('gamedeck', 'Game Deck Name', '', '2px solid purple')
+      createSettingsInputTemplate('gamedeck', 'Game Deck Name', '', '2px solid purple'),
+      createSettingsInputTemplate('aiimgauto', 'Auto AI Imgs', '', '2px solid purple')
     ]
     const inputs = document.createElement('div')
     inputs.className = 'inputs'
@@ -4754,7 +4923,7 @@ this.txtImg(false)
     let r = ''
     for (const i of a) {
       // if(av('warn')) console.warn(i);
-      r += await this.g(i, from, to, 0) + '</br>'
+      r += await this.translator(i, from, to, 0) + '</br>'
     }
     return r
   }
@@ -4784,17 +4953,26 @@ this.txtImg(false)
 
     return false;
   }
-  atAnki(tt){
+  atAnki(tt) {
     return this._jpws?.includes(tt)
     //this._anms?.includes(tt) ||
     //this.pop.includes(tt)
+  }
+  async translateText(text, from = 'auto', to, api, maxLength = 5000){
+    const tl = await this.translator(text, from, to, api, maxLength)
+    try {
+      let p = JSON.parse(tl)[0][0][0]
+      return p
+    } catch {
+      return tl
+    }
   }
   /**
    * @param {string | any[]} w
    * @param {string} to
    * @param {number} api
    */
-  async g(w, from = 'auto', to, api, maxLength = 5000) {
+  async translator(w, from = 'auto', to, api, maxLength = 5000) {
     let chunks = []
     // Split the string into arrays of characters
     if (!w) {
@@ -4834,7 +5012,7 @@ this.txtImg(false)
     return r
   }
   async translate(spl, ii, ptxt) {
-    const en = await this.g(spl[ii], localStorage.getItem('lang'), 'en', 0)
+    const en = await this.translator(spl[ii], localStorage.getItem('lang'), 'en', 0)
     if (av('warn')) console.warn('Tld: ', en)
     const tlp = document.createElement('p')
     tlp.innerHTML = en
@@ -4857,7 +5035,7 @@ this.txtImg(false)
    * @param {string} to
    * @param {number} api
    */
-  tl(w, from = 'auto', to, api) {
+  tl(w, from = 'auto', to = 'en', api = 0) {
     let url
     if (api == 0) {
       url = encodeURI(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${from}&tl=${to}&dt=t&q=${w}`)
@@ -4947,13 +5125,13 @@ this.txtImg(false)
     let ein = 0
     let p = e.parentElement
     let c = p.children.length
-    for(let i in p.children){
-      if(p?.children[i] === e){
+    for (let i in p.children) {
+      if (p?.children[i] === e) {
         ein = parseInt(i)
       }
     }
     let x = c - ein
-    console.log({c,x, r, l, ein, pos: this.pos})
+    console.log({c, x, r, l, ein, pos: this.pos})
     if (k == 'w') {
       let int = parseInt(p.firstChild.getAttribute('pos'))
       r = int - this.pos
@@ -6101,13 +6279,69 @@ this.txtImg(false)
     }
     return [bot, fq, tt, elem, ...fqs]
   }
+  extractFilteredTextFromHTML(htmlString) {
+      // Create a new DOMParser instance
+      const parser = new DOMParser();
+      
+      // Parse the HTML string into a Document
+      const doc = parser.parseFromString(htmlString, 'text/html');
+
+      // Function to check if a string contains only English characters
+      function isEnglish(text) {
+          return /^[A-Za-z0-9\s.,!?'"()]+$/.test(text);
+      }
+
+      // Function to filter non-English words from a string
+      function filterNonEnglishWords(text) {
+          return text.split(' ').filter(word => isEnglish(word)).join(' ');
+      }
+
+      // Select all <li> elements from the parsed document
+      const listItems = doc.querySelectorAll('li');
+
+      let filteredTexts = [];
+
+      listItems.forEach(li => {
+        if(!filteredTexts) {
+          return null
+        }
+        const dataDetails = li.getAttribute('data-details');
+          
+          // Check if data-details is in English
+          if (dataDetails !== null  && (isEnglish(dataDetails) || dataDetails?.includes('Jitendex'))) {
+              filteredTexts = null; // Add null if it's English
+              return null
+          } else {
+              const span = li.querySelector('span');
+              if (span) {
+                  const innerText = span.innerText;
+                  const filteredText = filterNonEnglishWords(innerText);
+                  filteredTexts.push(filteredText); // Add filtered text
+              }
+          }
+      });
+
+      return filteredTexts;
+  }
+  extractWordsFromHtml(htmlString) {
+      // Parse the HTML string
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(htmlString, 'text/html');
+
+      // Extract English words
+      const englishWords = Array.from(doc.querySelectorAll('ul[data-sc-content="glossary"] li'))
+          .map(li => li.textContent.trim())
+          .filter(text => text.length > 0);
+
+      return englishWords;
+  }
   /**
    * @param {{ innerHTML?: any; querySelector: any; getAttribute?: (arg0: string) => string; classList?: { add: (arg0: string) => void; }; parentElement?: { getAttribute: (arg0: string) => any; }; querySelectorAll?: (arg0: string) => any; } | null} elem
    */
   yomiread(elem, kj = true) {
     this.ee = elem
     let he = elem.querySelector('.headword-text-container')
-    if(!he){
+    if (!he) {
       return ''
     }
     let en = he.cloneNode(true)

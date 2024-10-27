@@ -1,13 +1,12 @@
 /* eslint-disable */
 /* globals Dict, aDict, aNote, merge, aIn, wn */
-import {aDict} from '../mod/aDict.js';
-import {merge, aIn} from './aUtil.js';
-import {wn, av} from './aDict.js';
-import {store, retrieve, dbinit} from './aDb.js'
+import {mobile} from '../ctx.js';
 import {convertToKana} from '../language/ja/japanese-wanakana.js';
 import {isStringEntirelyKana} from '../language/ja/japanese.js';
+import {aDict} from '../mod/aDict.js';
+import {av} from './aDict.js';
 import {Db} from './aSql.js';
-import {mobile} from '../ctx.js';
+import {merge} from './aUtil.js';
 
 var nv = (/** @type {string} */ v) => {
     return localStorage.getItem(v) == 'true'
@@ -603,11 +602,14 @@ export class Note {
                 }
                 await this.setter('save', JSON.stringify(on))
             }
-            if (!this.aDict?.atAnki(t)) {
+            let notAnki = !this.aDict?.atAnki(t)
+            let aImg = this.getter('aiimg')
+            if (notAnki) {
                 let ain
+                if(!this.aDict._adicts) this.aDict._adicts = []
                 try {
                     let js = this.aDict._jpws
-                    ain = av("anki") ? true : false //aIn(t, js)
+                    ain = av("anki") && !this.aDict._adicts?.includes(t) ? true : false //aIn(t, js)
                 } catch (zx) {
                     console.error(zx);
                 }
@@ -618,8 +620,10 @@ export class Note {
                         sound: false,
                         deck: await this.getter('deck') ?? 'aDict',
                         gameDeck: await this.getter('gamedeck') ?? 'VG',
-                        isGame: false
+                        isGame: false,
+                        img: aImg ? 2 : 0
                     }
+                    this.aDict._adicts?.push(t)
                     note.addAnki(results, t, read, so, results.length).then((res) => {
                         if(res){
                             elem.style.setProperty('--mc', '#00ffad')

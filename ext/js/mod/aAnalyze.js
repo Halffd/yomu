@@ -224,12 +224,7 @@ export class Analyze {
             for (let i in tokens) {
                 let t = tokens[i]
                 // t = await unconjugate(t)
-                let f1 = await this.dic.frequency(t, this.dic.cc) ?? 0
-                let f2 = await this.dic.frequency(t) ?? 0
-                let f
-                //if (f2 > 0 && f2 > 0) { f = Math.round((f1 + f2) / 2)
-                //} else {
-                f = f1 > 0 ? f1 : f2
+                let f = await this.getFrequency(t)
                 //}
                 wn(i, t)
                 fq[t] = f;
@@ -259,6 +254,17 @@ export class Analyze {
             console.error(error);
         }
     }
+async getFrequency(t){
+    let f1 = await this.dic.frequency(t, this.dic.cc) ?? 0
+    let f2 = await this.dic.frequency(t) ?? 0
+    let f
+    f = f1 > 0 ? f1 : f2
+    if(f){
+        return f
+    } else {
+        return null
+    }
+}
     /**
      * @param {{ [s: string]: any; } | ArrayLike<any>} obj
      */
