@@ -633,7 +633,7 @@ export class DisplayAnki {
                         } catch (ne) {
                             console.error(ne);
                         }
-                        if(false)( //!o || (o?.img && o.isGame)){
+                        if(false){ //!o || (o?.img && o.isGame)){
                             const endpoints = AI.prototype.getEndpoints()
                             const endpoint = endpoints[1]
                             const blob2img = async(imgBlob) => {
