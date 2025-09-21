@@ -208,6 +208,7 @@ export class aDict {
     this.upd = true
     this.util = util
     this.fl = true
+    document.addEventListener('wheel', function(e) { e.stopPropagation(); }, true);
     let tx
     let V
     let prev

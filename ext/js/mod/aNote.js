@@ -606,10 +606,10 @@ export class Note {
             let aImg = this.getter('aiimg')
             if (notAnki) {
                 let ain
-                if(!this.aDict._adicts) this.aDict._adicts = []
+                if(!this.aDict._adictsn) this.aDict._adictsn = []
                 try {
-                    let js = this.aDict._jpws
-                    ain = av("anki") && !this.aDict._adicts?.includes(t) ? true : false //aIn(t, js)
+                    //let js = this.aDict._jpws
+                    ain = av("anki") && !this.aDict._adictsn?.includes(t) ? true : false //aIn(t, js)
                 } catch (zx) {
                     console.error(zx);
                 }
@@ -623,7 +623,7 @@ export class Note {
                         isGame: false,
                         img: aImg ? 2 : 0
                     }
-                    this.aDict._adicts?.push(t)
+                    this.aDict._adictsn?.push(t)
                     note.addAnki(results, t, read, so, results.length).then((res) => {
                         if(res){
                             elem.style.setProperty('--mc', '#00ffad')
