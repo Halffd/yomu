@@ -126,6 +126,7 @@ const analyzeFrequency = async (/** @type {any} */ text, mode = 'A') => {
 export class Analyze {
     constructor(dic, t) {
         this.dic = dic
+        this.dic.analyze = this
         this.t = t
         this.txt = document.createElement('textarea')
         this.btn = document.createElement('button')
@@ -168,22 +169,41 @@ export class Analyze {
         let t
         if (e) {
             e.stopPropagation();
-            // txt = e.target
             t = e.target.value
         }
-        console.log(); (txt, t);
+        console.log(txt, t);
         try {
             // document.querySelector('.content-body-inner').remove()
         } catch { }
         // this.del(this.t)
-        // Regular expression pattern to match Japanese katakana, hiragana, or kanji
-        const regex = /[^\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}\n\d\-:,]/gu;
+        // Regular expression pattern to match Japanese katakana, hiragana, or kanji, and Chinese Han characters (excluding digits and punctuation)
+        const regex = /[^\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}\n\s]/gu;
         try {
             t = t.replace(regex, '')
             console.log(t);
             let tokens = []
             if (!ta) {
-                tokens = await token(t);
+                if (this.dic.lang === 'zh' && typeof Intl !== 'undefined' && Intl.Segmenter) {
+                    const segmenter = new Intl.Segmenter('zh', { granularity: 'word' });
+                    const segments = segmenter.segment(t);
+                    let count = 0;
+                    for (const segment of segments) {
+                        tokens.push(segment.segment);
+                        if (++count % 500 === 0) await new Promise(r => setTimeout(r, 0));
+                    }
+                } else {
+                    // Tokenize line by line to prevent long synchronous blocks
+                    const lines = t.split('\n');
+                    for (const line of lines) {
+                        if (line.trim()) {
+                            const lineTokens = await token(line);
+                            tokens.push(...lineTokens);
+                        }
+                        tokens.push('\n');
+                        // Yield to main thread
+                        await new Promise(r => setTimeout(r, 0));
+                    }
+                }
             } else {
                 tokens = ta
             }
@@ -193,53 +213,75 @@ export class Analyze {
             this.ref = {};
             this.an = true;
             let st = [];
+            let stJoin = '';
             const re = /--/g
             for (let i = 0; i < tokens.length; i++) {
                 let word = tokens[i];
-                if (i === tokens.length - 1) {
-                    st.push(word)
-                }
-                let count = ((st.join('') || '').match(re) || []).length
-                let sub = st.join('').includes('--');
+                const isLast = i === tokens.length - 1;
+
+                st.push(word);
+                stJoin += word;
+
+                let count = (stJoin.match(re) || []).length
+                let sub = stJoin.includes('--');
                 if ((!sub && word.includes('\n'))
                     || (sub && count > 1)
                     || (sub && word.includes('\n\n'))
-                    || i === tokens.length - 1) {
+                    || isLast) {
+                    const sentence = stJoin;
                     st.forEach((w) => {
-                        if (this.ref[w]) {
-                            this.ref[w] += '\n' + st.join('');
-                        } else {
-                            this.ref[w] = st.join('');
+                        if (!this.ref[w]) { // Only store the first sentence to save memory
+                            this.ref[w] = sentence;
                         }
                     });
-                    this.sts.push(st.join());
+                    this.sts.push(sentence);
                     st = [];
-                } else {
-                    st.push(word);
+                    stJoin = '';
                 }
+                if (i % 500 === 0) await new Promise(r => setTimeout(r, 0));
             }
             console.warn({st, ref: this.ref, sts: this.sts});
-            tokens = [...new Set(tokens)]
+            const uniqueTokens = [...new Set(tokens)].filter(t => {
+                // Filter out tokens that are purely whitespace, punctuation, numbers, or symbols
+                const trimmed = t.trim();
+                return trimmed.length > 0 && 
+                       !/^[\d\s\-:.,]+$/.test(trimmed) &&
+                       !/^[\p{P}\p{S}]+$/u.test(trimmed);
+            });
 
-            for (let i in tokens) {
-                let t = tokens[i]
-                // t = await unconjugate(t)
-                let f = await this.getFrequency(t)
-                //}
-                wn(i, t)
-                fq[t] = f;
+            // Concurrency-limited frequency lookup
+            const concurrencyLimit = 10;
+            const frequencies = [];
+            for (let i = 0; i < uniqueTokens.length; i += concurrencyLimit) {
+                const chunk = uniqueTokens.slice(i, i + concurrencyLimit);
+                const chunkResults = await Promise.all(chunk.map(t => this.getFrequency(t)));
+                frequencies.push(...chunkResults);
+                // Yield to keep UI responsive
+                await new Promise(r => setTimeout(r, 0));
             }
+
+            for (let i = 0; i < uniqueTokens.length; i++) {
+                const f = frequencies[i];
+                if (f !== null && f > 0) {
+                    fq[uniqueTokens[i]] = f;
+                }
+            }
+
             let res = this.sort(fq)
             wn(fq, res)
             let ft = ''
             let ts = []
+            let tcHtml = '';
+            let resCount = 0;
             for (let fs of res) {
                 let t = fs[0]
                 let f = fs[1]
                 ft += t + ' '
                 ts.push(t)
-                this.tc.innerHTML += ` ${t}: ${f} `
+                tcHtml += ` ${t}: ${f} `
+                if (++resCount % 200 === 0) await new Promise(r => setTimeout(r, 0));
             }
+            this.tc.innerHTML = tcHtml;
             this.dic.delete();
             localStorage.setItem("slw", true)
             localStorage.setItem("yc", false)
@@ -255,15 +297,13 @@ export class Analyze {
         }
     }
 async getFrequency(t){
-    let f1 = await this.dic.frequency(t, this.dic.cc) ?? 0
-    let f2 = await this.dic.frequency(t) ?? 0
-    let f
-    f = f1 > 0 ? f1 : f2
-    if(f){
-        return f
-    } else {
-        return null
-    }
+    if (this.dic.lang === 'zh') return null;
+    const [f1, f2] = await Promise.all([
+        this.dic.frequency(t, this.dic.cc),
+        this.dic.frequency(t)
+    ]);
+    const f = (f1 ?? 0) > 0 ? f1 : (f2 ?? 0);
+    return f > 0 ? f : null;
 }
     /**
      * @param {{ [s: string]: any; } | ArrayLike<any>} obj

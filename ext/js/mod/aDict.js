@@ -2169,8 +2169,20 @@ this.txtImg(false)
     let txt = spl
     if (typeof spl === 'string') txt = txt.replace(/[&/\\#,+()$~%.'":*?<>{}]/g, '')
     const isKana = isStringPartiallyJapanese(txt)
-    if (isKana) {
-      if (typeof spl === 'string') spl = await token(txt)
+    const isChinese = this.lang === 'zh'
+    if (isKana || isChinese) {
+      if (typeof spl === 'string') {
+          if (isChinese && typeof Intl !== 'undefined' && Intl.Segmenter) {
+              const segmenter = new Intl.Segmenter('zh', { granularity: 'word' });
+              const segments = segmenter.segment(txt);
+              spl = [];
+              for (const segment of segments) {
+                  spl.push(segment.segment);
+              }
+          } else {
+              spl = await token(txt)
+          }
+      }
       let ptxt = this.setup()
       if (av('warn')) console.warn(this.modK, this.modP)
       this.modK.setAttribute('txt', txt)

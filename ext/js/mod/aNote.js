@@ -716,7 +716,8 @@ export class Note {
                         }
                         if (nv('warn')) console.warn(word, o)
                         localStorage.setItem('save', JSON.stringify(o));
-                        this.put(o, '/save')
+                        this._objCache = o;
+                        this.put(oc, `/save/${unixSeconds}`)
                         oc.id = unixSeconds
                         this.db?.add(oc)
                     } else if (tf?.[0].sentence != txt) {
@@ -1337,24 +1338,24 @@ export class Note {
         return result;
     }
     get obj() {
+        if (this._objCache) return this._objCache;
         var a = localStorage.getItem("save") ?? '';
-        var oc
         try {
-            oc = JSON.parse(a)
+            this._objCache = JSON.parse(a);
+            return this._objCache;
         } catch {
-            return null
+            return null;
         }
-        return oc
     }
     get words() {
+        if (this._wordsCache) return this._wordsCache;
         var a = localStorage.getItem("words") ?? '';
-        var oc
         try {
-            oc = a.split(' ')
+            this._wordsCache = a.split(' ');
+            return this._wordsCache;
         } catch {
-            return null
+            return null;
         }
-        return oc
     }
     get learned() {
         var a = localStorage.getItem("learned") ?? '';
@@ -1424,48 +1425,40 @@ export class Note {
         return oc
     }
     async getter(key) {
-        let val = null
-        let i = localStorage.getItem(key)
-        if (i == '[object Object]') {
-            return {};
-        } else {
-            return i;
+        if (this.vars[key] !== undefined) {
+            return this.vars[key];
         }
-        if (Object.hasOwn(this.vars, key)) {
-            val = this.vars[key]
-        } else {
-            try {
-                val = await this.getDb(`/${key}`)
-            } catch (err) {
-                console.log(err);
-                try {
-                    val = localStorage.getItem(key)
-                } catch (error) {
-                    console.error(error);
-                }
-            }
-            this.vars[key] = val
+        let val = localStorage.getItem(key);
+        if (val === '[object Object]') {
+            val = {};
         }
-        if (val instanceof Promise) {
-            return await val
-        }
-        return val
+        this.vars[key] = val;
+        return val;
     }
     async setter(key, value) {
-        let val = null
         try {
-            localStorage.setItem(key, value)
+            localStorage.setItem(key, value);
+            // Invalidate specific caches
+            if (key === 'save') this._objCache = null;
+            if (key === 'words') this._wordsCache = null;
+            if (key === 'learned') this._learnedCache = null;
+            if (key === 'keep') this._bin = null;
+            if (key === 'known') this._known = null;
+
             if(!mobile()){
                 try {
-                    val = this.put(value, `/${key}`)
+                    // Avoid full 'save' object updates to Firebase as it's too large
+                    if (key !== 'save') {
+                        this.put(value, `/${key}`);
+                    }
                 } catch(err) {
                     console.log(err);
                 }
             }
-            this.vars[key] = val
+            this.vars[key] = value;
         } catch (error) {
             console.error(error);
         }
-        return val
+        return value;
     }
 }
