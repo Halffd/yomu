@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -49,7 +49,7 @@ export class ExtensionError extends Error {
                 const result = {
                     name: typeof name === 'string' ? name : '',
                     message: typeof message === 'string' ? message : '',
-                    stack: typeof stack === 'string' ? stack : ''
+                    stack: typeof stack === 'string' ? stack : '',
                 };
                 if (error instanceof ExtensionError) {
                     result.data = error.data;
@@ -61,7 +61,7 @@ export class ExtensionError extends Error {
         }
         return /** @type {import('core').SerializedError2} */ ({
             value: error,
-            hasValue: true
+            hasValue: true,
         });
     }
 

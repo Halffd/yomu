@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -43,6 +43,7 @@ export type ElementObserver<T = unknown> = {
     type: NormalizedElementType;
     value: unknown;
     hasValue: boolean;
+    eventType: EventType;
     onChange: null | (() => void);
     metadata: T;
 };
@@ -53,7 +54,9 @@ export type SettingChangedEventData = {
 
 export type SettingChangedEvent = CustomEvent<SettingChangedEventData>;
 
-export type NormalizedElementType = 'textarea' | 'select' | 'text' | 'checkbox' | 'number' | null;
+export type NormalizedElementType = 'textarea' | 'select' | 'text' | 'checkbox' | 'number' | 'element';
+
+export type EventType = 'change';
 
 export type UpdateTaskValue = {all: boolean};
 

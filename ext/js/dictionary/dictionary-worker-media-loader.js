@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  * Copyright (C) 2021-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -57,7 +57,7 @@ export class DictionaryWorkerMediaLoader {
             // This is executed in a Worker context, so the self needs to be force cast
             /** @type {Worker} */ (/** @type {unknown} */ (self)).postMessage({
                 action: 'getImageDetails',
-                params: {id, content, mediaType}
+                params: {id, content, mediaType},
             }, [content]);
         });
     }

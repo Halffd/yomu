@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,9 +18,7 @@
 import type * as Anki from './anki';
 import type * as AnkiNoteBuilder from './anki-note-builder';
 import type * as AnkiTemplates from './anki-templates';
-import type * as AnkiTemplatesInternal from './anki-templates-internal';
-
-export type CreateMode = AnkiTemplatesInternal.CreateModeNoTest;
+import type * as Settings from './settings';
 
 export type LogData = {
     ankiNoteData: AnkiTemplates.NoteData | undefined;
@@ -29,23 +27,26 @@ export type LogData = {
 };
 
 export type AnkiNoteLogData = {
-    mode: CreateMode;
+    cardFormatIndex: number;
     note: Anki.Note | undefined;
     errors?: Error[];
     requirements?: AnkiNoteBuilder.Requirement[];
 };
 
 export type DictionaryEntryDetails = {
-    modeMap: Map<CreateMode, DictionaryEntryModeDetails>;
+    noteMap: Map<number, DictionaryEntryNoteDetails>;
 };
 
-export type DictionaryEntryModeDetails = {
-    mode: CreateMode;
+export type DictionaryEntryNoteDetails = {
+    cardFormat: Settings.AnkiCardFormat;
     note: Anki.Note;
     errors: Error[];
     requirements: AnkiNoteBuilder.Requirement[];
     canAdd: boolean;
     valid: boolean;
+    /**
+     * Anki IDs of duplicate notes. May contain INVALID_NOTE_ID for notes whose ID could not be found.
+     */
     noteIds: Anki.NoteId[] | null;
     noteInfos?: (Anki.NoteInfo | null)[];
     ankiError: Error | null;
@@ -55,4 +56,10 @@ export type CreateNoteResult = {
     note: Anki.Note;
     errors: Error[];
     requirements: AnkiNoteBuilder.Requirement[];
+};
+
+export type RGB = {
+    red: number;
+    green: number;
+    blue: number;
 };

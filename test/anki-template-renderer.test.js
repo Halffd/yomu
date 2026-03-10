@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,15 +29,24 @@ describe('AnkiTemplateRenderer', () => {
                 type: 'kanji',
                 character: 'c',
                 dictionary: 'dictionary',
+                dictionaryIndex: 0,
+                dictionaryAlias: 'dictionaryAlias',
                 onyomi: [],
                 kunyomi: [],
                 tags: [],
                 stats: {},
                 definitions: [],
-                frequencies: []
+                frequencies: [],
             },
             resultOutputMode: 'split',
-            mode: 'test',
+            cardFormat: {
+                type: 'term',
+                name: 'test',
+                deck: 'deck',
+                model: 'model',
+                fields: {},
+                icon: 'big-circle',
+            },
             glossaryLayoutMode: 'default',
             compactTags: false,
             context: {
@@ -47,43 +56,44 @@ describe('AnkiTemplateRenderer', () => {
                 fullQuery: 'query.full',
                 sentence: {
                     text: 'sentence.query.full',
-                    offset: 9
-                }
+                    offset: 9,
+                },
             },
-            media: void 0
-        }
+            media: void 0,
+            dictionaryStylesMap: new Map(),
+        },
     };
     const testCases = [
         {
             name: 'regexMatch 1',
             template: '{{#regexMatch "test" "gu"}}this is a test of regexMatch{{/regexMatch}}',
-            result: 'test'
+            result: 'test',
         },
         {
             name: 'regexMatch 2',
             template: '{{regexMatch "test" "gu" "this is a test of regexMatch"}}',
-            result: 'test'
+            result: 'test',
         },
         {
             name: 'regexMatch 3',
             template: '{{#if (regexMatch "test" "gu" "this is a test of regexMatch")}}true{{else}}false{{/if}}',
-            result: 'true'
+            result: 'true',
         },
         {
             name: 'regexReplace 1',
             template: '{{#regexReplace "test" "TEST" "gu"}}this is a test of regexReplace{{/regexReplace}}',
-            result: 'this is a TEST of regexReplace'
+            result: 'this is a TEST of regexReplace',
         },
         {
             name: 'regexReplace 2',
             template: '{{regexReplace "test" "TEST" "gu" "this is a test of regexReplace"}}',
-            result: 'this is a TEST of regexReplace'
+            result: 'this is a TEST of regexReplace',
         },
         {
             name: 'regexReplace 3',
             template: '{{#if (regexReplace "test" "" "gu" "test")}}true{{else}}false{{/if}}',
-            result: 'false'
-        }
+            result: 'false',
+        },
     ];
     describe.each(testCases)('$name', ({template, result: expectedResult}) => {
         test('Test', ({expect, ankiTemplateRenderer}) => {

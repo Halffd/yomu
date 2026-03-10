@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -63,17 +63,12 @@ export type TagTargetItem = {
     targets: Dictionary.Tag[][];
 };
 
-export type DictionaryEntryGroup = {
-    ids: Set<number>;
-    dictionaryEntries: Dictionary.TermDictionaryEntry[];
-};
-
 export type SequenceQuery = {
     query: number;
     dictionary: string;
 };
 
-export type FindTermsMode = 'simple' | 'group' | 'merge' | 'split';
+export type FindTermsMode = 'simple' | 'group' | 'merge' | 'split' | 'term';
 
 export type TermReadingItem = {
     term: string;

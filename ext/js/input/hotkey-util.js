@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  * Copyright (C) 2021-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -38,7 +38,7 @@ export class HotkeyUtil {
             ['meta', -4],
             ['ctrl', -3],
             ['alt', -2],
-            ['shift', -1]
+            ['shift', -1],
         ]);
         /** @type {Intl.Collator} */
         this._stringComparer = new Intl.Collator('en-US'); // Invariant locale
@@ -243,14 +243,14 @@ export class HotkeyUtil {
                     ['alt', 'Alt'],
                     ['ctrl', 'Ctrl'],
                     ['shift', 'Shift'],
-                    ['meta', 'Windows']
+                    ['meta', 'Windows'],
                 ];
             case 'mac':
                 return [
                     ['alt', 'Opt'],
                     ['ctrl', 'Ctrl'],
                     ['shift', 'Shift'],
-                    ['meta', 'Cmd']
+                    ['meta', 'Cmd'],
                 ];
             case 'linux':
             case 'openbsd':
@@ -260,14 +260,14 @@ export class HotkeyUtil {
                     ['alt', 'Alt'],
                     ['ctrl', 'Ctrl'],
                     ['shift', 'Shift'],
-                    ['meta', 'Super']
+                    ['meta', 'Super'],
                 ];
             default: // 'unknown', etc
                 return [
                     ['alt', 'Alt'],
                     ['ctrl', 'Ctrl'],
                     ['shift', 'Shift'],
-                    ['meta', 'Meta']
+                    ['meta', 'Meta'],
                 ];
         }
     }

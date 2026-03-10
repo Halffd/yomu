@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  * Copyright (C) 2020-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -31,7 +31,7 @@ export class SelectorObserver {
         onAdded = null,
         onRemoved = null,
         onChildrenUpdated = null,
-        isStale = null
+        isStale = null,
     }) {
         /** @type {string} */
         this._selector = selector;
@@ -84,7 +84,7 @@ export class SelectorObserver {
         this._mutationObserver.observe(element, {
             attributes: !!attributes,
             childList: true,
-            subtree: true
+            subtree: true,
         });
 
         const {parentNode} = element;
@@ -92,7 +92,7 @@ export class SelectorObserver {
             type: 'childList',
             target: parentNode !== null ? parentNode : element,
             addedNodes: [element],
-            removedNodes: []
+            removedNodes: [],
         }]);
     }
 

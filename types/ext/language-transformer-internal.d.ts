@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024  Yomitan Authors
+ * Copyright (C) 2024-2025  Yomitan Authors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,13 +16,15 @@
  */
 
 export type Transform = {
+    id: string;
     name: string;
     rules: Rule[];
     heuristic: RegExp;
+    description?: string;
 };
 
 export type Rule = {
-    type: 'suffix' | 'prefix' | 'other';
+    type: 'suffix' | 'prefix' | 'wholeWord' | 'other';
     isInflected: RegExp;
     deinflect: (inflectedWord: string) => string;
     conditionsIn: number;

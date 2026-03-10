@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -49,7 +49,7 @@ function createAjv() {
     return new Ajv({
         meta: true,
         strictTuples: false,
-        allowUnionTypes: true
+        allowUnionTypes: true,
     });
 }
 
@@ -69,7 +69,7 @@ function createValidatorFunctionFromTypeScript(path, type, jsconfigType) {
         additionalProperties: false,
         minify: false,
         expose: 'none',
-        strictTuples: true
+        strictTuples: true,
     };
     const schema = createGenerator(config).createSchema(config.type);
     const ajv = createAjv();
@@ -105,7 +105,7 @@ describe.concurrent('JSON validation', () => {
         'playwright',
         'test-results',
         'dev/lib',
-        'test/playwright'
+        'test/playwright',
     ]);
 
     const existingJsonFiles = getAllFiles(rootDir, (path, isDirectory) => {

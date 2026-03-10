@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  * Copyright (C) 2021-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -32,7 +32,7 @@ export function injectStylesheet(type, content, tabId, frameId, allFrames) {
         /** @type {chrome.scripting.InjectionTarget} */
         const target = {
             tabId,
-            allFrames
+            allFrames,
         };
         /** @type {chrome.scripting.CSSInjection} */
         const details = (
@@ -124,7 +124,7 @@ function createContentScriptRegistrationOptions(details, id) {
     /** @type {chrome.scripting.RegisteredContentScript} */
     const options = {
         id: id,
-        persistAcrossSessions: true
+        persistAcrossSessions: true,
     };
     if (Array.isArray(css)) {
         options.css = [...css];

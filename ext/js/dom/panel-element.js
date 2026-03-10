@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  * Copyright (C) 2020-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -96,7 +96,7 @@ export class PanelElement extends EventDispatcher {
             this._mutationObserver.observe(this._node, {
                 attributes: true,
                 attributeFilter: ['hidden'],
-                attributeOldValue: true
+                attributeOldValue: true,
             });
         }
         super.on(eventName, callback);

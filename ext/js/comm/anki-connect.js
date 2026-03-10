@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  * Copyright (C) 2016-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -144,14 +144,40 @@ export class AnkiConnect {
     }
 
     /**
+     * @param {import('anki').Note} noteWithId
+     * @returns {Promise<null>}
+     */
+    async updateNoteFields(noteWithId) {
+        if (!this._enabled) { return null; }
+        await this._checkVersion();
+        const result = await this._invoke('updateNoteFields', {note: noteWithId});
+        if (result !== null) {
+            throw this._createUnexpectedResultError('null', result);
+        }
+        return result;
+    }
+
+
+    /**
      * @param {import('anki').Note[]} notes
      * @returns {Promise<boolean[]>}
      */
     async canAddNotes(notes) {
-        if (!this._enabled) { return []; }
+        if (!this._enabled) { return new Array(notes.length).fill(false); }
         await this._checkVersion();
         const result = await this._invoke('canAddNotes', {notes});
         return this._normalizeArray(result, notes.length, 'boolean');
+    }
+
+    /**
+     * @param {import('anki').Note[]} notes
+     * @returns {Promise<import('anki').CanAddNotesDetail[]>}
+     */
+    async canAddNotesWithErrorDetail(notes) {
+        if (!this._enabled) { return notes.map(() => ({canAdd: false, error: null})); }
+        await this._checkVersion();
+        const result = await this._invoke('canAddNotesWithErrorDetail', {notes});
+        return this._normalizeCanAddNotesWithErrorDetailArray(result, notes.length);
     }
 
     /**
@@ -163,6 +189,17 @@ export class AnkiConnect {
         await this._checkVersion();
         const result = await this._invoke('notesInfo', {notes: noteIds});
         return this._normalizeNoteInfoArray(result);
+    }
+
+    /**
+     * @param {import('anki').CardId[]} cardIds
+     * @returns {Promise<(?import('anki').CardInfo)[]>}
+     */
+    async cardsInfo(cardIds) {
+        if (!this._enabled) { return []; }
+        await this._checkVersion();
+        const result = await this._invoke('cardsInfo', {cards: cardIds});
+        return this._normalizeCardInfoArray(result);
     }
 
     /**
@@ -352,7 +389,7 @@ export class AnkiConnect {
         const resultActions2 = /** @type {string[]} */ (this._normalizeArray(resultActions, -1, 'string', ', field scopes'));
         return {
             scopes: resultScopes2,
-            actions: resultActions2
+            actions: resultActions2,
         };
     }
 
@@ -379,6 +416,17 @@ export class AnkiConnect {
             }
         }
         return false;
+    }
+
+    /**
+     * Makes Anki sync.
+     * @returns {Promise<?unknown>}
+     */
+    async makeAnkiSync() {
+        if (!this._enabled) { return null; }
+        const version = await this._checkVersion();
+        const result = await this._invoke('sync', {version});
+        return result === null;
     }
 
     // Private
@@ -420,11 +468,11 @@ export class AnkiConnect {
                 cache: 'default',
                 credentials: 'omit',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
                 },
                 redirect: 'follow',
                 referrerPolicy: 'no-referrer',
-                body: JSON.stringify(body)
+                body: JSON.stringify(body),
             });
         } catch (e) {
             const error = new ExtensionError('Anki connection failure');
@@ -453,7 +501,9 @@ export class AnkiConnect {
         if (typeof result === 'object' && result !== null && !Array.isArray(result)) {
             const apiError = /** @type {import('core').SerializableObject} */ (result).error;
             if (typeof apiError !== 'undefined') {
+                // eslint-disable-next-line @typescript-eslint/no-base-to-string
                 const error = new ExtensionError(`Anki error: ${apiError}`);
+                // eslint-disable-next-line @typescript-eslint/no-base-to-string
                 error.data = {action, params, status: response.status, apiError: typeof apiError === 'string' ? apiError : `${apiError}`};
                 throw error;
             }
@@ -639,8 +689,85 @@ export class AnkiConnect {
                 tags: tags2,
                 fields: fields2,
                 modelName,
-                cards: cards2
+                cards: cards2,
+                cardsInfo: [],
             };
+            result2.push(item2);
+        }
+        return result2;
+    }
+
+    /**
+     * Transforms raw AnkiConnect data into the CardInfo type.
+     * @param {unknown} result
+     * @returns {(?import('anki').CardInfo)[]}
+     * @throws {Error}
+     */
+    _normalizeCardInfoArray(result) {
+        if (!Array.isArray(result)) {
+            throw this._createUnexpectedResultError('array', result, '');
+        }
+        /** @type {(?import('anki').CardInfo)[]} */
+        const result2 = [];
+        for (let i = 0, ii = result.length; i < ii; ++i) {
+            const item = /** @type {unknown} */ (result[i]);
+            if (item === null || typeof item !== 'object') {
+                throw this._createError(`Unexpected result type at index ${i}: expected Cards.CardInfo, received ${this._getTypeName(item)}`, result);
+            }
+            const {cardId} = /** @type {{[key: string]: unknown}} */ (item);
+            if (typeof cardId !== 'number') {
+                result2.push(null);
+                continue;
+            }
+            const {note, flags, queue} = /** @type {{[key: string]: unknown}} */ (item);
+            if (typeof note !== 'number') {
+                result2.push(null);
+                continue;
+            }
+
+            /** @type {import('anki').CardInfo} */
+            const item2 = {
+                noteId: note,
+                cardId,
+                flags: typeof flags === 'number' ? flags : 0,
+                cardState: typeof queue === 'number' ? queue : 0,
+            };
+            result2.push(item2);
+        }
+        return result2;
+    }
+
+    /**
+     * @param {unknown} result
+     * @param {number} expectedCount
+     * @returns {import('anki').CanAddNotesDetail[]}
+     * @throws {Error}
+     */
+    _normalizeCanAddNotesWithErrorDetailArray(result, expectedCount) {
+        if (!Array.isArray(result)) {
+            throw this._createUnexpectedResultError('array', result, '');
+        }
+        if (expectedCount !== result.length) {
+            throw this._createError(`Unexpected result array size: expected ${expectedCount}, received ${result.length}`, result);
+        }
+        /** @type {import('anki').CanAddNotesDetail[]} */
+        const result2 = [];
+        for (let i = 0; i < expectedCount; ++i) {
+            const item = /** @type {unknown} */ (result[i]);
+            if (item === null || typeof item !== 'object') {
+                throw this._createError(`Unexpected result type at index ${i}: expected object, received ${this._getTypeName(item)}`, result);
+            }
+
+            const {canAdd, error} = /** @type {{[key: string]: unknown}} */ (item);
+            if (typeof canAdd !== 'boolean') {
+                throw this._createError(`Unexpected result type at index ${i}, field canAdd: expected boolean, received ${this._getTypeName(canAdd)}`, result);
+            }
+
+            const item2 = {
+                canAdd: canAdd,
+                error: typeof error === 'string' ? error : null,
+            };
+
             result2.push(item2);
         }
         return result2;

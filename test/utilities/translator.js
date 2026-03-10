@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  * Copyright (C) 2020-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -78,7 +78,7 @@ export function createFindKanjiOptions(dictionaryName, optionsPresets, optionsAr
 
     return {
         enabledDictionaryMap,
-        removeNonJapaneseCharacters: !!preset.removeNonJapaneseCharacters
+        removeNonJapaneseCharacters: !!preset.removeNonJapaneseCharacters,
     };
 }
 
@@ -124,9 +124,10 @@ export function createFindTermsOptions(dictionaryName, optionsPresets, optionsAr
         sortFrequencyDictionary,
         sortFrequencyDictionaryOrder,
         removeNonJapaneseCharacters,
+        primaryReading,
         excludeDictionaryDefinitions,
         searchResolution,
-        language
+        language,
     } = preset;
 
     return {
@@ -136,10 +137,11 @@ export function createFindTermsOptions(dictionaryName, optionsPresets, optionsAr
         sortFrequencyDictionary: typeof sortFrequencyDictionary !== 'undefined' ? sortFrequencyDictionary : null,
         sortFrequencyDictionaryOrder: typeof sortFrequencyDictionaryOrder !== 'undefined' ? sortFrequencyDictionaryOrder : 'ascending',
         removeNonJapaneseCharacters: typeof removeNonJapaneseCharacters !== 'undefined' ? removeNonJapaneseCharacters : false,
+        primaryReading: typeof primaryReading !== 'undefined' ? primaryReading : '',
         textReplacements,
         enabledDictionaryMap,
         excludeDictionaryDefinitions: Array.isArray(excludeDictionaryDefinitions) ? new Set(excludeDictionaryDefinitions) : null,
         searchResolution: typeof searchResolution !== 'undefined' ? searchResolution : 'letter',
-        language: typeof language !== 'undefined' ? language : 'ja'
+        language: typeof language !== 'undefined' ? language : 'ja',
     };
 }

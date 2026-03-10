@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024  Yomitan Authors
+ * Copyright (C) 2024-2025  Yomitan Authors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,8 +22,20 @@ import {languageDescriptorMap} from './language-descriptors.js';
  */
 export function getLanguageSummaries() {
     const results = [];
-    for (const {name, iso, exampleText} of languageDescriptorMap.values()) {
-        results.push({name, iso, exampleText});
+    for (const {name, iso, iso639_3, exampleText} of languageDescriptorMap.values()) {
+        results.push({name, iso, iso639_3, exampleText});
+    }
+    return results;
+}
+
+/**
+ * @returns {import('language').LanguageAndReadingNormalizer[]}
+ */
+export function getAllLanguageReadingNormalizers() {
+    const results = [];
+    for (const {iso, readingNormalizer} of languageDescriptorMap.values()) {
+        if (typeof readingNormalizer === 'undefined') { continue; }
+        results.push({iso, readingNormalizer});
     }
     return results;
 }
@@ -35,20 +47,20 @@ export function getLanguageSummaries() {
 export function getAllLanguageTextProcessors() {
     const results = [];
     for (const {iso, textPreprocessors = {}, textPostprocessors = {}} of languageDescriptorMap.values()) {
-        /** @type {import('language').TextProcessorWithId<unknown>[]} */
+        /** @type {import('language').TextProcessorWithId[]} */
         const textPreprocessorsArray = [];
         for (const [id, textPreprocessor] of Object.entries(textPreprocessors)) {
             textPreprocessorsArray.push({
                 id,
-                textProcessor: /** @type {import('language').TextProcessor<unknown>} */ (textPreprocessor)
+                textProcessor: /** @type {import('language').TextProcessor} */ (textPreprocessor),
             });
         }
-        /** @type {import('language').TextProcessorWithId<unknown>[]} */
+        /** @type {import('language').TextProcessorWithId[]} */
         const textPostprocessorsArray = [];
         for (const [id, textPostprocessor] of Object.entries(textPostprocessors)) {
             textPostprocessorsArray.push({
                 id,
-                textProcessor: /** @type {import('language').TextProcessor<unknown>} */ (textPostprocessor)
+                textProcessor: /** @type {import('language').TextProcessor} */ (textPostprocessor),
             });
         }
         results.push({iso, textPreprocessors: textPreprocessorsArray, textPostprocessors: textPostprocessorsArray});

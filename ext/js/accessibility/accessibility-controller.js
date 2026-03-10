@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  * Copyright (C) 2021-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -115,8 +115,8 @@ export class AccessibilityController {
             js: [
                 xray ?
                 'js/accessibility/google-docs-xray.js' :
-                'js/accessibility/google-docs.js'
-            ]
+                'js/accessibility/google-docs.js',
+            ],
         };
         if (!xray) { details.world = 'MAIN'; }
         return registerContentScript(id, details);

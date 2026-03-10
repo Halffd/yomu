@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  * Copyright (C) 2020-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -34,7 +34,7 @@ vi.stubGlobal('chrome', chrome);
 /**
  * @param {string} dictionaryDirectory
  * @param {string} dictionaryName
- * @returns {Promise<Translator>}
+ * @returns {Promise<{translator: Translator, styles: string}>}
  */
 export async function createTranslatorContext(dictionaryDirectory, dictionaryName) {
     // Dictionary
@@ -46,36 +46,41 @@ export async function createTranslatorContext(dictionaryDirectory, dictionaryNam
     const dictionaryDatabase = new DictionaryDatabase();
     await dictionaryDatabase.prepare();
 
-    const {errors} = await dictionaryImporter.importDictionary(
+    const {errors, result} = await dictionaryImporter.importDictionary(
         dictionaryDatabase,
         testDictionaryData,
-        {prefixWildcardsSupported: true}
+        {prefixWildcardsSupported: true, yomitanVersion: '0.0.0.0'},
     );
 
     expect(errors.length).toEqual(0);
+    expect(result).not.toBeNull();
+
+    const styles = result?.styles ?? '';
 
     // Setup translator
     const translator = new Translator(dictionaryDatabase);
     translator.prepare();
 
-    return translator;
+    return {translator, styles};
 }
 
 /**
  * @param {string|undefined} htmlFilePath
  * @param {string} dictionaryDirectory
  * @param {string} dictionaryName
- * @returns {Promise<import('vitest').TestAPI<{window: import('jsdom').DOMWindow, translator: Translator}>>}
+ * @returns {Promise<import('vitest').TestAPI<{window: import('jsdom').DOMWindow, translator: Translator, styles: string}>>}
  */
 export async function createTranslatorTest(htmlFilePath, dictionaryDirectory, dictionaryName) {
     const test = createDomTest(htmlFilePath);
-    const translator = await createTranslatorContext(dictionaryDirectory, dictionaryName);
-    /** @type {import('vitest').TestAPI<{window: import('jsdom').DOMWindow, translator: Translator}>} */
+    const {translator, styles} = await createTranslatorContext(dictionaryDirectory, dictionaryName);
+    /** @type {import('vitest').TestAPI<{window: import('jsdom').DOMWindow, translator: Translator, styles: string}>} */
     // eslint-disable-next-line sonarjs/prefer-immediate-return
     const result = test.extend({
         window: async ({window}, use) => { await use(window); },
         // eslint-disable-next-line no-empty-pattern
-        translator: async ({}, use) => { await use(translator); }
+        translator: async ({}, use) => { await use(translator); },
+        // eslint-disable-next-line no-empty-pattern
+        styles: async ({}, use) => { await use(styles); },
     });
     return result;
 }

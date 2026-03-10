@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  * Copyright (C) 2020-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -28,8 +28,8 @@ export const chrome = {
     runtime: {
         getURL: (path) => {
             return pathToFileURL(join(extDir, path.replace(/^\//, ''))).href;
-        }
-    }
+        },
+    },
 };
 
 /** @type {import('test/mocks').FetchMock} */
@@ -47,6 +47,6 @@ export async function fetch(url) {
         status: 200,
         statusText: 'OK',
         text: async () => content.toString('utf8'),
-        json: async () => parseJson(content.toString('utf8'))
+        json: async () => parseJson(content.toString('utf8')),
     };
 }

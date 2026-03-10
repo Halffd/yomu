@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,7 +24,11 @@ export type Index = {
     version?: IndexVersion;
     title: string;
     revision: string;
+    minimumYomitanVersion?: string;
     sequenced?: boolean;
+    isUpdatable?: true;
+    indexUrl?: string;
+    downloadUrl?: string;
     author?: string;
     url?: string;
     description?: string;
@@ -158,7 +162,7 @@ export type TermMetaFrequency = [
 export type TermMetaPitchData = {
     reading: string;
     pitches: {
-        position: number;
+        position: number | string;
         nasal?: number | number[];
         devoice?: number | number[];
         tags?: string[];

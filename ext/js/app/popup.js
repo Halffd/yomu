@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  * Copyright (C) 2016-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,9 +21,11 @@ import {DynamicProperty} from '../core/dynamic-property.js';
 import {EventDispatcher} from '../core/event-dispatcher.js';
 import {EventListenerCollection} from '../core/event-listener-collection.js';
 import {ExtensionError} from '../core/extension-error.js';
+import {safePerformance} from '../core/safe-performance.js';
 import {deepEqual} from '../core/utilities.js';
 import {addFullscreenChangeEventListener, computeZoomScale, convertRectZoomCoordinates, getFullscreenElement} from '../dom/document-util.js';
 import {loadStyle} from '../dom/style-util.js';
+import {checkPopupPreviewURL} from '../pages/settings/popup-preview-controller.js';
 import {ThemeController} from './theme-controller.js';
 
 /**
@@ -68,6 +70,8 @@ export class Popup extends EventDispatcher {
         this._contentScale = 1;
         /** @type {string} */
         this._targetOrigin = chrome.runtime.getURL('/').replace(/\/$/, '');
+        /** @type {?import('core').Timeout} */
+        this._hidePopupTimer = null;
 
         /** @type {number} */
         this._initialWidth = 400;
@@ -97,6 +101,10 @@ export class Popup extends EventDispatcher {
         this._useShadowDom = true;
         /** @type {string} */
         this._customOuterCss = '';
+        /** @type {boolean} */
+        this._hidePopupOnCursorExit = false;
+        /** @type {number} */
+        this._hidePopupOnCursorExitDelay = 0;
 
         /** @type {?number} */
         this._frameSizeContentScale = null;
@@ -109,6 +117,8 @@ export class Popup extends EventDispatcher {
         this._frame.style.height = '0';
         /** @type {boolean} */
         this._frameConnected = false;
+        /** @type {boolean} */
+        this._isPointerOverPopup = false;
 
         /** @type {HTMLElement} */
         this._container = this._frame;
@@ -230,12 +240,42 @@ export class Popup extends EventDispatcher {
             return;
         }
 
+        this.stopHideDelayed();
+
         this._setVisible(false);
         if (this._child !== null) {
             this._child.hide(false);
         }
         if (changeFocus) {
             this._focusParent();
+        }
+    }
+
+    /**
+     * @param {number} delay
+     */
+    hideDelayed(delay) {
+        if (this.isPointerOverSelfOrChildren()) { return; }
+
+        if (delay > 0) {
+            this.stopHideDelayed();
+            this._hidePopupTimer = setTimeout(() => {
+                this._hidePopupTimer = null;
+                if (this.isPointerOverSelfOrChildren()) { return; }
+                this.hide(false);
+            }, delay);
+        } else {
+            this.hide(false);
+        }
+    }
+
+    /**
+     * @returns {void}
+     */
+    stopHideDelayed() {
+        if (this._hidePopupTimer !== null) {
+            clearTimeout(this._hidePopupTimer);
+            this._hidePopupTimer = null;
         }
     }
 
@@ -298,9 +338,13 @@ export class Popup extends EventDispatcher {
             await this._setOptionsContextIfDifferent(optionsContext);
         }
 
+        // If there's already a timer running on the same popup from a previous lookup, reset it
+        this.stopHideDelayed();
+
         await this._show(sourceRects, writingMode);
 
         if (displayDetails !== null) {
+            safePerformance.mark('invokeDisplaySetContent:start');
             void this._invokeSafe('displaySetContent', {details: displayDetails});
         }
     }
@@ -329,7 +373,9 @@ export class Popup extends EventDispatcher {
     async setContentScale(scale) {
         this._contentScale = scale;
         this._frame.style.fontSize = `${scale}px`;
-        await this._invokeSafe('displaySetContentScale', {scale});
+        if (this._frameClient !== null && this._frameClient.isConnected() && this._frame.contentWindow !== null) {
+            await this._invokeSafe('displaySetContentScale', {scale});
+        }
     }
 
     /**
@@ -380,8 +426,7 @@ export class Popup extends EventDispatcher {
      * @returns {Promise<import('popup').ValidSize>} The size and whether or not it is valid.
      */
     async getFrameSize() {
-        const {width, height} = this._getFrameBoundingClientRect();
-        return {width, height, valid: true};
+        return {width: this._frame.offsetWidth, height: this._frame.offsetHeight, valid: true};
     }
 
     /**
@@ -395,20 +440,61 @@ export class Popup extends EventDispatcher {
         return true;
     }
 
+    /**
+     * Returns whether the pointer is currently over this popup.
+     * @returns {boolean}
+     */
+    isPointerOver() {
+        return this._isPointerOverPopup;
+    }
+
+    /**
+     * Returns whether the pointer is currently over this popup or any children.
+     * @returns {boolean}
+     */
+    isPointerOverSelfOrChildren() {
+        if (this.isPointerOver()) { return true; }
+
+        let currentChild = this.child;
+        while (currentChild !== null) {
+            if (currentChild.isPointerOver()) { return true; }
+            currentChild = currentChild.child;
+        }
+
+        return false;
+    }
+
     // Private functions
 
     /**
      * @returns {void}
      */
     _onFrameMouseOver() {
-        this.trigger('framePointerOver', {});
+        this._isPointerOverPopup = true;
+
+        this.stopHideDelayed();
+        this.trigger('mouseOver', {});
+
+        // Clear all child popups when parent is moused over
+        if (this._hidePopupOnCursorExit && this.child !== null) {
+            this.child.hideDelayed(this._hidePopupOnCursorExitDelay);
+        }
     }
 
     /**
      * @returns {void}
      */
     _onFrameMouseOut() {
-        this.trigger('framePointerOut', {});
+        this._isPointerOverPopup = false;
+
+        this.trigger('mouseOut', {});
+
+        // Propagate mouseOut event up through the entire hierarchy
+        let currentParent = this.parent;
+        while (currentParent !== null) {
+            currentParent.trigger('mouseOut', {});
+            currentParent = currentParent.parent;
+        }
     }
 
     /**
@@ -424,7 +510,7 @@ export class Popup extends EventDispatcher {
                     if (injectPromise !== this._injectPromise) { return; }
                     this._injectPromiseComplete = true;
                 },
-                () => {}
+                () => {},
             );
         }
         return injectPromise;
@@ -481,6 +567,12 @@ export class Popup extends EventDispatcher {
         await frameClient.connect(this._frame, this._targetOrigin, this._frameId, setupFrame);
         this._frameConnected = true;
 
+        // Reattach mouse event listeners after frame injection
+        const boundMouseOver = this._onFrameMouseOver.bind(this);
+        const boundMouseOut = this._onFrameMouseOut.bind(this);
+        this._frame.addEventListener('mouseover', boundMouseOver);
+        this._frame.addEventListener('mouseout', boundMouseOut);
+
         // Configure
         /** @type {import('display').DirectApiParams<'displayConfigure'>} */
         const configureParams = {
@@ -489,7 +581,7 @@ export class Popup extends EventDispatcher {
             parentFrameId: this._frameId,
             childrenSupported: this._childrenSupported,
             scale: this._contentScale,
-            optionsContext: this._optionsContext
+            optionsContext: this._optionsContext,
         };
         await this._invokeSafe('displayConfigure', configureParams);
     }
@@ -706,7 +798,7 @@ export class Popup extends EventDispatcher {
         return /** @type {import('display').DirectApiReturn<TName>} */ (await this._application.crossFrame.invoke(
             this._frameClient.frameId,
             'displayPopupMessage1',
-            /** @type {import('display').DirectApiFrameClientMessageAny} */ (wrappedMessage)
+            /** @type {import('display').DirectApiFrameClientMessageAny} */ (wrappedMessage),
         ));
     }
 
@@ -844,7 +936,7 @@ export class Popup extends EventDispatcher {
             frameWidth,
             viewport.left,
             viewport.right,
-            true
+            true,
         );
         const [top, height, below] = this._getConstrainedPositionBinary(
             sourceRect.top - verticalOffset,
@@ -852,7 +944,7 @@ export class Popup extends EventDispatcher {
             frameHeight,
             viewport.top,
             viewport.bottom,
-            preferBelow
+            preferBelow,
         );
         return {left, top, width, height, after, below};
     }
@@ -875,7 +967,7 @@ export class Popup extends EventDispatcher {
             frameWidth,
             viewport.left,
             viewport.right,
-            preferRight
+            preferRight,
         );
         const [top, height, below] = this._getConstrainedPosition(
             sourceRect.bottom - verticalOffset,
@@ -883,7 +975,7 @@ export class Popup extends EventDispatcher {
             frameHeight,
             viewport.top,
             viewport.bottom,
-            true
+            true,
         );
         return {left, top, width, height, after, below};
     }
@@ -991,7 +1083,7 @@ export class Popup extends EventDispatcher {
                     left,
                     top,
                     right: left + width,
-                    bottom: top + height
+                    bottom: top + height,
                 };
             } else {
                 const scale = visualViewport.scale;
@@ -999,7 +1091,7 @@ export class Popup extends EventDispatcher {
                     left: 0,
                     top: 0,
                     right: Math.max(left + width, width * scale),
-                    bottom: Math.max(top + height, height * scale)
+                    bottom: Math.max(top + height, height * scale),
                 };
             }
         }
@@ -1008,7 +1100,7 @@ export class Popup extends EventDispatcher {
             left: 0,
             top: 0,
             right: window.innerWidth,
-            bottom: window.innerHeight
+            bottom: window.innerHeight,
         };
     }
 
@@ -1018,9 +1110,13 @@ export class Popup extends EventDispatcher {
     async _setOptionsContext(optionsContext) {
         this._optionsContext = optionsContext;
         const options = await this._application.api.optionsGet(optionsContext);
-        const {general} = options;
+        const {general, scanning} = options;
         this._themeController.theme = general.popupTheme;
         this._themeController.outerTheme = general.popupOuterTheme;
+        this._themeController.siteOverride = checkPopupPreviewURL(optionsContext.url);
+        if (this._themeController.outerTheme === 'site' && this._themeController.siteOverride && ['dark', 'light'].includes(this._themeController.theme)) {
+            this._themeController.outerTheme = this._themeController.theme;
+        }
         this._initialWidth = general.popupWidth;
         this._initialHeight = general.popupHeight;
         this._horizontalOffset = general.popupHorizontalOffset;
@@ -1035,6 +1131,8 @@ export class Popup extends EventDispatcher {
         this._useSecureFrameUrl = general.useSecurePopupFrameUrl;
         this._useShadowDom = general.usePopupShadowDom;
         this._customOuterCss = general.customPopupOuterCss;
+        this._hidePopupOnCursorExit = scanning.hidePopupOnCursorExit;
+        this._hidePopupOnCursorExitDelay = scanning.hidePopupOnCursorExitDelay;
         void this.updateTheme();
     }
 
@@ -1128,7 +1226,7 @@ export class Popup extends EventDispatcher {
             left: rect.left * scale,
             top: rect.top * scale,
             right: rect.right * scale,
-            bottom: rect.bottom * scale
+            bottom: rect.bottom * scale,
         };
     }
 }

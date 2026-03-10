@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024  Yomitan Authors
+ * Copyright (C) 2024-2025  Yomitan Authors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,14 +15,18 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export type LanguageTransformDescriptor = {
+export type LanguageTransformDescriptor<TCondition extends string = string> = {
     language: string;
-    conditions: ConditionMapObject;
-    transforms: Transform[];
+    conditions: ConditionMapObject<TCondition>;
+    transforms: TransformMapObject<TCondition>;
 };
 
-export type ConditionMapObject = {
-    [type: string]: Condition;
+export type ConditionMapObject<TCondition extends string> = {
+    [type in TCondition]: Condition;
+};
+
+export type TransformMapObject<TCondition> = {
+    [name: string]: Transform<TCondition>;
 };
 
 export type ConditionMapEntry = [type: string, condition: Condition];
@@ -41,11 +45,11 @@ export type RuleI18n = {
     name: string;
 };
 
-export type Transform = {
+export type Transform<TCondition> = {
     name: string;
     description?: string;
     i18n?: TransformI18n[];
-    rules: Rule[];
+    rules: Rule<TCondition>[];
 };
 
 export type TransformI18n = {
@@ -54,19 +58,21 @@ export type TransformI18n = {
     description?: string;
 };
 
-export type Rule = {
-    type: 'suffix' | 'prefix' | 'other';
-    isInflected: RegExp;
-    deinflect: (inflectedWord: string) => string;
-    conditionsIn: string[];
-    conditionsOut: string[];
+export type DeinflectFunction = (inflectedWord: string) => string;
+
+export type Rule<TCondition = string> = {
+    type: 'suffix' | 'prefix' | 'wholeWord' | 'other';
+    isInflected: RegExp; // If evaluates true, will try to deinflect
+    deinflect: DeinflectFunction;
+    conditionsIn: TCondition[];
+    conditionsOut: TCondition[];
 };
 
-export type SuffixRule = {
+export type SuffixRule<TCondition = string> = {
     type: 'suffix';
     isInflected: RegExp;
     deinflected: string;
-    deinflect: (inflectedWord: string) => string;
-    conditionsIn: string[];
-    conditionsOut: string[];
+    deinflect: DeinflectFunction;
+    conditionsIn: TCondition[];
+    conditionsOut: TCondition[];
 };

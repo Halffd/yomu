@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  * Copyright (C) 2020-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -75,7 +75,7 @@ export class KeyboardMouseInputField extends EventDispatcher {
         /** @type {import('event-listener-collection').AddEventListenerArgs[]} */
         const events = [
             [this._inputNode, 'keydown', this._onModifierKeyDown.bind(this), false],
-            [this._inputNode, 'keyup', this._onModifierKeyUp.bind(this), false]
+            [this._inputNode, 'keyup', this._onModifierKeyUp.bind(this), false],
         ];
         if (mouseModifiersSupported && this._mouseButton !== null) {
             events.push(
@@ -85,7 +85,7 @@ export class KeyboardMouseInputField extends EventDispatcher {
                 [this._mouseButton, 'pointerout', this._onMouseButtonPointerOut.bind(this), false],
                 [this._mouseButton, 'pointercancel', this._onMouseButtonPointerCancel.bind(this), false],
                 [this._mouseButton, 'mouseup', this._onMouseButtonMouseUp.bind(this), false],
-                [this._mouseButton, 'contextmenu', this._onMouseButtonContextMenu.bind(this), false]
+                [this._mouseButton, 'contextmenu', this._onMouseButtonContextMenu.bind(this), false],
             );
         }
         for (const args of events) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  * Copyright (C) 2021-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -56,14 +56,14 @@ export class TranslationTextReplacementsController {
                 path: 'translation.textReplacements.groups',
                 start: 0,
                 deleteCount: 0,
-                items: [[newEntry]]
+                items: [[newEntry]],
             } :
             {
                 action: 'splice',
                 path: 'translation.textReplacements.groups[0]',
                 start: groups[0].length,
                 deleteCount: 0,
-                items: [newEntry]
+                items: [newEntry],
             }
         );
 
@@ -91,14 +91,14 @@ export class TranslationTextReplacementsController {
                 path: 'translation.textReplacements.groups[0]',
                 start: index,
                 deleteCount: 1,
-                items: []
+                items: [],
             } :
             {
                 action: 'splice',
                 path: 'translation.textReplacements.groups',
                 start: 0,
                 deleteCount: group0.length,
-                items: []
+                items: [],
             }
         );
 

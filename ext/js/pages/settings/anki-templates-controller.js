@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  * Copyright (C) 2019-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -25,11 +25,14 @@ import {TemplateRendererProxy} from '../../templates/template-renderer-proxy.js'
 
 export class AnkiTemplatesController {
     /**
+     * @param {import('../../application.js').Application} application
      * @param {import('./settings-controller.js').SettingsController} settingsController
      * @param {import('./modal-controller.js').ModalController} modalController
      * @param {import('./anki-controller.js').AnkiController} ankiController
      */
-    constructor(settingsController, modalController, ankiController) {
+    constructor(application, settingsController, modalController, ankiController) {
+        /** @type {import('../../application.js').Application} */
+        this._application = application;
         /** @type {import('./settings-controller.js').SettingsController} */
         this._settingsController = settingsController;
         /** @type {import('./modal-controller.js').ModalController} */
@@ -52,6 +55,8 @@ export class AnkiTemplatesController {
         this._renderTextInput = querySelectorNotNull(document, '#anki-card-templates-test-text-input');
         /** @type {HTMLElement} */
         this._renderResult = querySelectorNotNull(document, '#anki-card-templates-render-result');
+        /** @type {HTMLElement} */
+        this._mainSettingsEntry = querySelectorNotNull(document, '[data-modal-action="show,anki-card-templates"]');
         /** @type {?import('./modal.js').Modal} */
         this._fieldTemplateResetModal = null;
         /** @type {AnkiNoteBuilder} */
@@ -80,7 +85,7 @@ export class AnkiTemplatesController {
             menuButton.addEventListener(
                 /** @type {string} */ ('menuClose'),
                 /** @type {EventListener} */ (this._onFieldMenuClose.bind(this)),
-                false
+                false,
             );
         }
 
@@ -89,6 +94,9 @@ export class AnkiTemplatesController {
         const options = await this._settingsController.getOptions();
         const optionsContext = this._settingsController.getOptionsContext();
         this._onOptionsChanged({options, optionsContext});
+
+        void this._updateExampleText();
+        this._mainSettingsEntry.addEventListener('click', this._updateExampleText.bind(this), false);
     }
 
     // Private
@@ -157,7 +165,7 @@ export class AnkiTemplatesController {
     /** */
     _onValidateCompile() {
         if (this._compileResultInfo === null) { return; }
-        void this._validate(this._compileResultInfo, '{expression}', 'term-kanji', false, true);
+        void this._validate(this._compileResultInfo, '{expression}', false, true);
     }
 
     /**
@@ -170,7 +178,17 @@ export class AnkiTemplatesController {
         const infoNode = /** @type {HTMLElement} */ (this._renderResult);
         infoNode.hidden = true;
         this._cachedDictionaryEntryText = null;
-        void this._validate(infoNode, field, 'term-kanji', true, false);
+        void this._validate(infoNode, field, true, false);
+    }
+
+    /** */
+    async _updateExampleText() {
+        const languageSummaries = await this._application.api.getLanguageSummaries();
+        const options = await this._settingsController.getOptions();
+        const activeLanguage = /** @type {import('language').LanguageSummary} */ (languageSummaries.find(({iso}) => iso === options.general.language));
+        this._renderTextInput.lang = options.general.language;
+        this._renderTextInput.value = activeLanguage.exampleText;
+        this._renderResult.lang = options.general.language;
     }
 
     /**
@@ -213,18 +231,17 @@ export class AnkiTemplatesController {
         }
         return {
             dictionaryEntry: /** @type {import('dictionary').TermDictionaryEntry} */ (this._cachedDictionaryEntryValue),
-            text: this._cachedDictionaryEntryText
+            text: this._cachedDictionaryEntryText,
         };
     }
 
     /**
      * @param {HTMLElement} infoNode
      * @param {string} field
-     * @param {import('anki-templates-internal').CreateModeNoTest} mode
      * @param {boolean} showSuccessResult
      * @param {boolean} invalidateInput
      */
-    async _validate(infoNode, field, mode, showSuccessResult, invalidateInput) {
+    async _validate(infoNode, field, showSuccessResult, invalidateInput) {
         /** @type {Error[]} */
         const allErrors = [];
         const text = /** @type {HTMLInputElement} */ (this._renderTextInput).value;
@@ -239,27 +256,37 @@ export class AnkiTemplatesController {
                     url: window.location.href,
                     sentence: {
                         text: sentenceText,
-                        offset: 0
+                        offset: 0,
                     },
                     documentTitle: document.title,
                     query: sentenceText,
-                    fullQuery: sentenceText
+                    fullQuery: sentenceText,
                 };
-                const template = this._getAnkiTemplate(options);
+                const template = await this._getAnkiTemplate(options);
                 const {general: {resultOutputMode, glossaryLayoutMode, compactTags}} = options;
+                const fields = {
+                    field: {
+                        value: field,
+                        overwriteMode: 'skip',
+                    },
+                };
+                const cardFormat = /** @type {import('settings').AnkiCardFormat} */ ({
+                    type: 'term',
+                    name: '',
+                    deck: '',
+                    model: '',
+                    fields,
+                    icon: 'big-circle',
+                });
                 const {note, errors} = await this._ankiNoteBuilder.createNote(/** @type {import('anki-note-builder').CreateNoteDetails} */ ({
                     dictionaryEntry,
-                    mode,
                     context,
                     template,
-                    deckName: '',
-                    modelName: '',
-                    fields: [
-                        ['field', field]
-                    ],
+                    cardFormat,
                     resultOutputMode,
                     glossaryLayoutMode,
-                    compactTags
+                    compactTags,
+                    dictionaryStylesMap: this._ankiNoteBuilder.getDictionaryStylesMap(options.dictionaries),
                 }));
                 result = note.fields.field;
                 allErrors.push(...errors);
@@ -296,12 +323,13 @@ export class AnkiTemplatesController {
 
     /**
      * @param {import('settings').ProfileOptions} options
-     * @returns {string}
+     * @returns {Promise<string>}
      */
-    _getAnkiTemplate(options) {
+    async _getAnkiTemplate(options) {
         let staticTemplates = options.anki.fieldTemplates;
         if (typeof staticTemplates !== 'string') { staticTemplates = this._defaultFieldTemplates; }
-        const dynamicTemplates = getDynamicTemplates(options);
+        const dictionaryInfo = await this._application.api.getDictionaryInfo();
+        const dynamicTemplates = getDynamicTemplates(options, dictionaryInfo);
         return staticTemplates + '\n' + dynamicTemplates;
     }
 }

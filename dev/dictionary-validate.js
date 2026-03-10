@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  * Copyright (C) 2020-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -99,7 +99,7 @@ export async function validateDictionary(mode, archiveData, schemas) {
         [/^term_meta_bank_(\d+)\.json$/, schemas.termMetaBankV3],
         [/^kanji_bank_(\d+)\.json$/, version === 1 ? schemas.kanjiBankV1 : schemas.kanjiBankV3],
         [/^kanji_meta_bank_(\d+)\.json$/, schemas.kanjiMetaBankV3],
-        [/^tag_bank_(\d+)\.json$/, schemas.tagBankV3]
+        [/^tag_bank_(\d+)\.json$/, schemas.tagBankV3],
     ];
 
     await validateDictionaryBanks(mode, entries, schemasDetails);
@@ -118,7 +118,7 @@ export function getSchemas() {
         tagBankV3: readSchema('../ext/data/schemas/dictionary-tag-bank-v3-schema.json'),
         termBankV1: readSchema('../ext/data/schemas/dictionary-term-bank-v1-schema.json'),
         termBankV3: readSchema('../ext/data/schemas/dictionary-term-bank-v3-schema.json'),
-        termMetaBankV3: readSchema('../ext/data/schemas/dictionary-term-meta-bank-v3-schema.json')
+        termMetaBankV3: readSchema('../ext/data/schemas/dictionary-term-meta-bank-v3-schema.json'),
     };
 }
 
@@ -131,14 +131,17 @@ export async function testDictionaryFiles(mode, dictionaryFileNames) {
     const schemas = getSchemas();
 
     for (const dictionaryFileName of dictionaryFileNames) {
+        // eslint-disable-next-line no-restricted-syntax
         const start = performance.now();
         try {
             console.log(`Validating ${dictionaryFileName}...`);
             const source = fs.readFileSync(dictionaryFileName);
             await validateDictionary(mode, source.buffer, schemas);
+            // eslint-disable-next-line no-restricted-syntax
             const end = performance.now();
             console.log(`No issues detected (${((end - start) / 1000).toFixed(2)}s)`);
         } catch (e) {
+            // eslint-disable-next-line no-restricted-syntax
             const end = performance.now();
             console.log(`Encountered an error (${((end - start) / 1000).toFixed(2)}s)`);
             console.warn(e);

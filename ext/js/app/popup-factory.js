@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  * Copyright (C) 2019-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -62,7 +62,8 @@ export class PopupFactory {
             ['popupFactoryUpdateTheme',          this._onApiUpdateTheme.bind(this)],
             ['popupFactorySetCustomOuterCss',    this._onApiSetCustomOuterCss.bind(this)],
             ['popupFactoryGetFrameSize',         this._onApiGetFrameSize.bind(this)],
-            ['popupFactorySetFrameSize',         this._onApiSetFrameSize.bind(this)]
+            ['popupFactorySetFrameSize',         this._onApiSetFrameSize.bind(this)],
+            ['popupFactoryIsPointerOver',        this._onApiIsPointerOver.bind(this)],
         ]);
         /* eslint-enable @stylistic/no-multi-spaces */
     }
@@ -78,7 +79,7 @@ export class PopupFactory {
         parentPopupId = null,
         depth = null,
         popupWindow = false,
-        childrenSupported = false
+        childrenSupported = false,
     }) {
         // Find by existing id
         if (id !== null) {
@@ -124,7 +125,7 @@ export class PopupFactory {
                 this._application,
                 id,
                 depth,
-                currentFrameId
+                currentFrameId,
             );
             this._popups.set(id, popup);
             return popup;
@@ -138,7 +139,7 @@ export class PopupFactory {
                 id,
                 depth,
                 currentFrameId,
-                childrenSupported
+                childrenSupported,
             );
             if (parent !== null) {
                 if (parent.child !== null) {
@@ -159,7 +160,7 @@ export class PopupFactory {
                 id,
                 parentPopupId,
                 frameId,
-                childrenSupported
+                childrenSupported,
             });
             id = info.id;
             const popup = new PopupProxy(
@@ -167,7 +168,7 @@ export class PopupFactory {
                 id,
                 info.depth,
                 info.frameId,
-                useFrameOffsetForwarder ? this._frameOffsetForwarder : null
+                useFrameOffsetForwarder ? this._frameOffsetForwarder : null,
             );
             this._popups.set(id, popup);
             return popup;
@@ -188,7 +189,7 @@ export class PopupFactory {
             promises.push(promise);
         }
 
-        /** @type {undefined|unknown} */
+        /** @type {undefined|Error} */
         let error = void 0;
         /** @type {{popup: import('popup').PopupAny, token: string}[]} */
         const results = [];
@@ -249,7 +250,7 @@ export class PopupFactory {
         return {
             id: popup.id,
             depth: popup.depth,
-            frameId: popup.frameId
+            frameId: popup.frameId,
         };
     }
 
@@ -351,6 +352,12 @@ export class PopupFactory {
         return await popup.setFrameSize(width, height);
     }
 
+    /** @type {import('cross-frame-api').ApiHandler<'popupFactoryIsPointerOver'>} */
+    async _onApiIsPointerOver({id}) {
+        const popup = this._getPopup(id);
+        return popup.isPointerOver();
+    }
+
     // Private functions
 
     /**
@@ -402,7 +409,7 @@ export class PopupFactory {
             const promise = popup.clearVisibleOverride(token)
                 .then(
                     (v) => v,
-                    () => false
+                    () => false,
                 );
             promises.push(promise);
         }

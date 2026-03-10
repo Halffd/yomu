@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  * Copyright (C) 2020-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -124,8 +124,8 @@ const tests = [
             {term: 'kujtohem', source: 'kujtohuni', rule: 'v', reasons: ['imperative second-person plural present']},
 
             {term: 'kthej', source: 'kthye', rule: 'v', reasons: ['aorist third-person singular indicative']},
-            {term: 'shkëlqej', source: 'shkëlqyer', rule: 'v', reasons: ['participle']}
-        ]
+            {term: 'shkëlqej', source: 'shkëlqyer', rule: 'v', reasons: ['participle']},
+        ],
     },
     {
         category: 'nouns',
@@ -136,9 +136,9 @@ const tests = [
             {term: 'gëzoj', source: 'gëzim', rule: 'v', reasons: ['nominalization']},
             {term: 'zbuloj', source: 'zbulim', rule: 'v', reasons: ['nominalization']},
             {term: 'përkthej', source: 'përkthim', rule: 'v', reasons: ['nominalization']},
-            {term: 'lëviz', source: 'lëvizje', rule: 'v', reasons: ['nominalization']}
-        ]
-    }
+            {term: 'lëviz', source: 'lëvizje', rule: 'v', reasons: ['nominalization']},
+        ],
+    },
 ];
 /* eslint-enable @stylistic/no-multi-spaces */
 

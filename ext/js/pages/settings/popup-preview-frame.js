@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  * Copyright (C) 2019-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,11 +16,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import * as wanakana from '../../../lib/wanakana.js';
 import {Frontend} from '../../app/frontend.js';
+import {ThemeController} from '../../app/theme-controller.js';
 import {createApiMap, invokeApiMapHandler} from '../../core/api-map.js';
+import {EventListenerCollection} from '../../core/event-listener-collection.js';
 import {querySelectorNotNull} from '../../dom/query-selector.js';
 import {TextSourceRange} from '../../dom/text-source-range.js';
+import {isComposing} from '../../language/ime-utilities.js';
+import {convertToKanaIME} from '../../language/ja/japanese-wanakana.js';
 
 export class PopupPreviewFrame {
     /**
@@ -51,12 +54,14 @@ export class PopupPreviewFrame {
         this._exampleText = querySelectorNotNull(document, '#example-text');
         /** @type {HTMLInputElement} */
         this._exampleTextInput = querySelectorNotNull(document, '#example-text-input');
+        /** @type {EventListenerCollection} */
+        this._exampleTextInputEvents = new EventListenerCollection();
         /** @type {string} */
         this._targetOrigin = chrome.runtime.getURL('/').replace(/\/$/, '');
         /** @type {import('language').LanguageSummary[]} */
         this._languageSummaries = [];
-        /** @type {boolean} */
-        this._wanakanaBound = false;
+        /** @type {ThemeController} */
+        this._themeController = new ThemeController(document.documentElement);
 
         /* eslint-disable @stylistic/no-multi-spaces */
         /** @type {import('popup-preview-frame').ApiMap} */
@@ -65,7 +70,8 @@ export class PopupPreviewFrame {
             ['setCustomCss',           this._setCustomCss.bind(this)],
             ['setCustomOuterCss',      this._setCustomOuterCss.bind(this)],
             ['updateOptionsContext',   this._updateOptionsContext.bind(this)],
-            ['setLanguageExampleText', this._setLanguageExampleText.bind(this)]
+            ['setLanguageExampleText', this._setLanguageExampleText.bind(this)],
+            ['updateSearch',           this._updateSearch.bind(this)],
         ]);
         /* eslint-enable @stylistic/no-multi-spaces */
     }
@@ -74,10 +80,9 @@ export class PopupPreviewFrame {
     async prepare() {
         window.addEventListener('message', this._onMessage.bind(this), false);
 
+        this._themeController.prepare();
+
         // Setup events
-        /** @type {HTMLInputElement} */
-        const darkThemeCheckbox = querySelectorNotNull(document, '#theme-dark-checkbox');
-        darkThemeCheckbox.addEventListener('change', this._onThemeDarkCheckboxChanged.bind(this), false);
         this._exampleText.addEventListener('click', this._onExampleTextClick.bind(this), false);
         this._exampleTextInput.addEventListener('blur', this._onExampleTextInputBlur.bind(this), false);
         this._exampleTextInput.addEventListener('input', this._onExampleTextInputInput.bind(this), false);
@@ -103,7 +108,7 @@ export class PopupPreviewFrame {
             pageType: 'web',
             allowRootFramePopupProxy: false,
             childrenSupported: false,
-            hotkeyHandler: this._hotkeyHandler
+            hotkeyHandler: this._hotkeyHandler,
         });
         this._frontend.setOptionsContextOverride(this._optionsContext);
         await this._frontend.prepare();
@@ -137,6 +142,9 @@ export class PopupPreviewFrame {
         options.general.popupHorizontalTextPosition = 'below';
         options.general.popupVerticalTextPosition = 'before';
         options.scanning.selectText = false;
+        this._themeController.theme = options.general.popupTheme;
+        this._themeController.siteOverride = true;
+        this._themeController.updateTheme();
         return options;
     }
 
@@ -163,23 +171,6 @@ export class PopupPreviewFrame {
         const {action, params} = event.data;
         const callback = () => {}; // NOP
         invokeApiMapHandler(this._windowMessageHandlers, action, params, [], callback);
-    }
-
-    /**
-     * @param {Event} e
-     */
-    _onThemeDarkCheckboxChanged(e) {
-        const element = /** @type {HTMLInputElement} */ (e.currentTarget);
-        document.documentElement.classList.toggle('dark', element.checked);
-        if (this._themeChangeTimeout !== null) {
-            clearTimeout(this._themeChangeTimeout);
-        }
-        this._themeChangeTimeout = setTimeout(() => {
-            this._themeChangeTimeout = null;
-            const popup = /** @type {Frontend} */ (this._frontend).popup;
-            if (popup === null) { return; }
-            void popup.updateTheme();
-        }, 300);
     }
 
     /** */
@@ -267,19 +258,36 @@ export class PopupPreviewFrame {
     _setLanguageExampleText({language}) {
         const activeLanguage = /** @type {import('language').LanguageSummary} */ (this._languageSummaries.find(({iso}) => iso === language));
 
-        if (this._exampleTextInput !== null) {
-            if (language === 'ja') {
-                wanakana.bind(this._exampleTextInput);
-                this._wanakanaBound = true;
-            } else if (this._wanakanaBound) {
-                wanakana.unbind(this._exampleTextInput);
-                this._wanakanaBound = false;
-            }
+        this._exampleTextInputEvents.removeAllEventListeners();
+        if (this._exampleTextInput !== null && language === 'ja') {
+            this._exampleTextInputEvents.addEventListener(this._exampleTextInput, 'input', this._onSearchInput.bind(this), false);
         }
 
         this._exampleTextInput.lang = language;
         this._exampleTextInput.value = activeLanguage.exampleText;
         this._exampleTextInput.dispatchEvent(new Event('input'));
+    }
+
+    /**
+     * @param {InputEvent} e
+     */
+    _onSearchInput(e) {
+        const element = /** @type {HTMLTextAreaElement} */ (e.currentTarget);
+        this._searchTextKanaConversion(element, e);
+    }
+
+    /**
+     * @param {HTMLTextAreaElement} element
+     * @param {InputEvent} event
+     */
+    _searchTextKanaConversion(element, event) {
+        const platform = document.documentElement.dataset.platform ?? 'unknown';
+        const browser = document.documentElement.dataset.browser ?? 'unknown';
+        if (isComposing(event, platform, browser)) { return; }
+
+        const {kanaString, newSelectionStart} = convertToKanaIME(element.value, element.selectionStart);
+        element.value = kanaString;
+        element.setSelectionRange(newSelectionStart, newSelectionStart);
     }
 
     /** */
@@ -308,5 +316,7 @@ export class PopupPreviewFrame {
         }
 
         this._setInfoVisible(!this._popupShown);
+
+        this._themeController.updateTheme();
     }
 }

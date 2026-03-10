@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  * Copyright (C) 2020-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -15,6 +15,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+
+import {getFrequencyHarmonic} from '../data/anki-note-data-creator.js';
+
 
 /**
  * @param {import('dictionary').TermDictionaryEntry} dictionaryEntry
@@ -51,20 +54,24 @@ export function groupTermTags(dictionaryEntry) {
 
 /**
  * @param {import('dictionary').TermDictionaryEntry} dictionaryEntry
+ * @param {import('dictionary-importer').Summary[]} dictionaryInfo
  * @returns {import('dictionary-data-util').DictionaryFrequency<import('dictionary-data-util').TermFrequency>[]}
  */
-export function groupTermFrequencies(dictionaryEntry) {
+export function groupTermFrequencies(dictionaryEntry, dictionaryInfo) {
     const {headwords, frequencies: sourceFrequencies} = dictionaryEntry;
 
     /** @type {import('dictionary-data-util').TermFrequenciesMap1} */
     const map1 = new Map();
-    for (const {headwordIndex, dictionary, hasReading, frequency, displayValue} of sourceFrequencies) {
+    /** @type {Map<string, string>} */
+    const aliasMap = new Map();
+    for (const {headwordIndex, dictionary, dictionaryAlias, hasReading, frequency, displayValue} of sourceFrequencies) {
         const {term, reading} = headwords[headwordIndex];
 
         let map2 = map1.get(dictionary);
         if (typeof map2 === 'undefined') {
             map2 = new Map();
             map1.set(dictionary, map2);
+            aliasMap.set(dictionary, dictionaryAlias);
         }
 
         const readingKey = hasReading ? reading : null;
@@ -79,32 +86,63 @@ export function groupTermFrequencies(dictionaryEntry) {
     }
 
     const results = [];
+
     for (const [dictionary, map2] of map1.entries()) {
+        /** @type {import('dictionary-data-util').TermFrequency[]} */
         const frequencies = [];
+        const dictionaryAlias = aliasMap.get(dictionary) ?? dictionary;
         for (const {term, reading, values} of map2.values()) {
-            frequencies.push({
+            const termFrequency = {
                 term,
                 reading,
-                values: [...values.values()]
-            });
+                values: [...values.values()],
+            };
+            frequencies.push(termFrequency);
         }
-        results.push({dictionary, frequencies});
+        const currentDictionaryInfo = dictionaryInfo.find(({title}) => title === dictionary);
+        const freqCount = currentDictionaryInfo?.counts?.termMeta.freq ?? 0;
+        results.push({dictionary, frequencies, dictionaryAlias, freqCount});
     }
+
+    const averageFrequencies = [];
+    for (let i = 0; i < dictionaryEntry.headwords.length; i++) {
+        const averageFrequency = getFrequencyHarmonic(dictionaryEntry, i);
+        averageFrequencies.push({
+            term: dictionaryEntry.headwords[i].term,
+            reading: dictionaryEntry.headwords[i].reading,
+            values: [{
+                frequency: averageFrequency,
+                displayValue: averageFrequency.toString(),
+            }],
+        });
+    }
+
+    results.push({
+        dictionary: 'Average',
+        frequencies: averageFrequencies,
+        dictionaryAlias: 'Average',
+        freqCount: averageFrequencies.length,
+    });
+
     return results;
 }
 
 /**
  * @param {import('dictionary').KanjiFrequency[]} sourceFrequencies
+ * @param {import('dictionary-importer').Summary[]} dictionaryInfo
  * @returns {import('dictionary-data-util').DictionaryFrequency<import('dictionary-data-util').KanjiFrequency>[]}
  */
-export function groupKanjiFrequencies(sourceFrequencies) {
+export function groupKanjiFrequencies(sourceFrequencies, dictionaryInfo) {
     /** @type {import('dictionary-data-util').KanjiFrequenciesMap1} */
     const map1 = new Map();
-    for (const {dictionary, character, frequency, displayValue} of sourceFrequencies) {
+    /** @type {Map<string, string>} */
+    const aliasMap = new Map();
+    for (const {dictionary, dictionaryAlias, character, frequency, displayValue} of sourceFrequencies) {
         let map2 = map1.get(dictionary);
         if (typeof map2 === 'undefined') {
             map2 = new Map();
             map1.set(dictionary, map2);
+            aliasMap.set(dictionary, dictionaryAlias);
         }
 
         let frequencyData = map2.get(character);
@@ -119,13 +157,16 @@ export function groupKanjiFrequencies(sourceFrequencies) {
     const results = [];
     for (const [dictionary, map2] of map1.entries()) {
         const frequencies = [];
+        const dictionaryAlias = aliasMap.get(dictionary) ?? dictionary;
         for (const {character, values} of map2.values()) {
             frequencies.push({
                 character,
-                values: [...values.values()]
+                values: [...values.values()],
             });
         }
-        results.push({dictionary, frequencies});
+        const currentDictionaryInfo = dictionaryInfo.find(({title}) => title === dictionary);
+        const freqCount = currentDictionaryInfo?.counts?.kanjiMeta.freq ?? 0;
+        results.push({dictionary, frequencies, dictionaryAlias, freqCount});
     }
     return results;
 }
@@ -137,8 +178,11 @@ export function groupKanjiFrequencies(sourceFrequencies) {
 export function getGroupedPronunciations(dictionaryEntry) {
     const {headwords, pronunciations: termPronunciations} = dictionaryEntry;
 
+    /** @type {Set<string>} */
     const allTerms = new Set();
     const allReadings = new Set();
+    /** @type {Map<string, string>} */
+    const aliasMap = new Map();
     for (const {term, reading} of headwords) {
         allTerms.add(term);
         allReadings.add(reading);
@@ -146,12 +190,13 @@ export function getGroupedPronunciations(dictionaryEntry) {
 
     /** @type {Map<string, import('dictionary-data-util').GroupedPronunciationInternal[]>} */
     const groupedPronunciationsMap = new Map();
-    for (const {headwordIndex, dictionary, pronunciations} of termPronunciations) {
+    for (const {headwordIndex, dictionary, dictionaryAlias, pronunciations} of termPronunciations) {
         const {term, reading} = headwords[headwordIndex];
         let dictionaryGroupedPronunciationList = groupedPronunciationsMap.get(dictionary);
         if (typeof dictionaryGroupedPronunciationList === 'undefined') {
             dictionaryGroupedPronunciationList = [];
             groupedPronunciationsMap.set(dictionary, dictionaryGroupedPronunciationList);
+            aliasMap.set(dictionary, dictionaryAlias);
         }
         for (const pronunciation of pronunciations) {
             let groupedPronunciation = findExistingGroupedPronunciation(reading, pronunciation, dictionaryGroupedPronunciationList);
@@ -159,7 +204,7 @@ export function getGroupedPronunciations(dictionaryEntry) {
                 groupedPronunciation = {
                     pronunciation,
                     terms: new Set(),
-                    reading
+                    reading,
                 };
                 dictionaryGroupedPronunciationList.push(groupedPronunciation);
             }
@@ -173,6 +218,7 @@ export function getGroupedPronunciations(dictionaryEntry) {
     for (const [dictionary, dictionaryGroupedPronunciationList] of groupedPronunciationsMap.entries()) {
         /** @type {import('dictionary-data-util').GroupedPronunciation[]} */
         const pronunciations2 = [];
+        const dictionaryAlias = aliasMap.get(dictionary) ?? dictionary;
         for (const groupedPronunciation of dictionaryGroupedPronunciationList) {
             const {pronunciation, terms, reading} = groupedPronunciation;
             const exclusiveTerms = !areSetsEqual(terms, allTerms) ? getSetIntersection(terms, allTerms) : [];
@@ -185,11 +231,11 @@ export function getGroupedPronunciations(dictionaryEntry) {
                 terms: [...terms],
                 reading,
                 exclusiveTerms,
-                exclusiveReadings
+                exclusiveReadings,
             });
         }
 
-        results2.push({dictionary, pronunciations: pronunciations2});
+        results2.push({dictionary, dictionaryAlias, pronunciations: pronunciations2});
     }
     return results2;
 }
@@ -287,13 +333,40 @@ export function isNonNounVerbOrAdjective(wordClasses) {
             case 'vs':
                 isVerbOrAdjective = true;
                 isSuruVerb = true;
-                // Falls through
+                break;
             case 'n':
                 isNoun = true;
                 break;
         }
     }
     return isVerbOrAdjective && !(isSuruVerb && isNoun);
+}
+
+/**
+ * @param {string} current
+ * @param {string} latest
+ * @returns {boolean}
+ */
+export function compareRevisions(current, latest) {
+    const simpleVersionTest = /^(\d+\.)*\d+$/; // dot-separated integers, so 4.7 or 24.1.1.1 are ok, 1.0.0-alpha is not
+    if (!simpleVersionTest.test(current) || !simpleVersionTest.test(latest)) {
+        return current < latest;
+    }
+
+    const currentParts = current.split('.').map((part) => Number.parseInt(part, 10));
+    const latestParts = latest.split('.').map((part) => Number.parseInt(part, 10));
+
+    if (currentParts.length !== latestParts.length) {
+        return current < latest;
+    }
+
+    for (let i = 0; i < currentParts.length; i++) {
+        if (currentParts[i] !== latestParts[i]) {
+            return currentParts[i] < latestParts[i];
+        }
+    }
+
+    return false;
 }
 
 // Private
@@ -330,7 +403,7 @@ function arePronunciationsEquivalent({pronunciation: pronunciation1}, pronunciat
             // This cast is valid based on the type check at the start of the function.
             const pitchAccent2 = /** @type {import('dictionary').PitchAccent} */ (pronunciation2);
             return (
-                pronunciation1.position === pitchAccent2.position &&
+                pronunciation1.positions === pitchAccent2.positions &&
                 areArraysEqual(pronunciation1.nasalPositions, pitchAccent2.nasalPositions) &&
                 areArraysEqual(pronunciation1.devoicePositions, pitchAccent2.devoicePositions)
             );

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  * Copyright (C) 2019-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -121,7 +121,7 @@ export class ScrollElement {
         const t = this._easeInOutCubic((time - this._animationStartTime) / (this._animationEndTime - this._animationStartTime));
         this._scroll(
             this._lerp(this._animationStartX, this._animationEndX, t),
-            this._lerp(this._animationStartY, this._animationEndY, t)
+            this._lerp(this._animationStartY, this._animationEndY, t),
         );
 
         this._animationRequestId = window.requestAnimationFrame(this._requestAnimationFrameCallback);

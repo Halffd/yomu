@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -40,27 +40,46 @@ export type TextDeinflectionOptionsArrays = [
     emphatic: [collapseEmphatic: boolean, collapseEmphaticFull: boolean][],
 ];
 
+export type TextProcessorRuleChainCandidate = string[];
+
+export type VariantAndTextProcessorRuleChainCandidatesMap = Map<string, TextProcessorRuleChainCandidate[]>;
+
+export type TermDictionaryEntry = Omit<Dictionary.TermDictionaryEntry, 'inflectionRuleChainCandidates'> & {
+    inflectionRuleChainCandidates: InflectionRuleChainCandidate[];
+    textProcessorRuleChainCandidates: TextProcessorRuleChainCandidate[];
+};
+
+export type InflectionRuleChainCandidate = {
+    source: Dictionary.InflectionSource;
+    inflectionRules: string[];
+};
+
 export type DatabaseDeinflection = {
     originalText: string;
     transformedText: string;
     deinflectedText: string;
     conditions: number;
-    inflectionRuleChainCandidates: Dictionary.InflectionRuleChainCandidate[];
+    textProcessorRuleChainCandidates: TextProcessorRuleChainCandidate[];
+    inflectionRuleChainCandidates: InflectionRuleChainCandidate[];
     databaseEntries: DictionaryDatabase.TermEntry[];
 };
 
-export type TextProcessorOptionsSpace = Map<string, Language.TextProcessorOptions<unknown>>;
+export type DictionaryEntryGroup = {
+    ids: Set<number>;
+    dictionaryEntries: TermDictionaryEntry[];
+};
 
 export type TextProcessorMap = Map<
     string,
     {
-        textPreprocessors: Language.TextProcessorWithId<unknown>[];
-        preprocessorOptionsSpace: TextProcessorOptionsSpace;
-        textPostprocessors: Language.TextProcessorWithId<unknown>[];
-        postprocessorOptionsSpace: TextProcessorOptionsSpace;
+        textPreprocessors: Language.TextProcessorWithId[];
+        textPostprocessors: Language.TextProcessorWithId[];
     }
 >;
 
-export type TextProcessorVariant = Map<string, unknown>;
+export type ReadingNormalizerMap = Map<
+    string,
+    Language.ReadingNormalizer
+>;
 
-export type TextCache = Map<string, Map<string, Map<unknown, string>>>;
+export type TextCache = Map<string, Map<string, string[]>>;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  * Copyright (C) 2021-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -66,7 +66,7 @@ export class SentenceTerminationCharactersController {
             path: 'sentenceParsing.terminationCharacters',
             start: terminationCharacters.length,
             deleteCount: 0,
-            items: [terminationCharacterEntry]
+            items: [terminationCharacterEntry],
         }]);
 
         await this._updateOptions();
@@ -87,7 +87,7 @@ export class SentenceTerminationCharactersController {
             path: 'sentenceParsing.terminationCharacters',
             start: index,
             deleteCount: 1,
-            items: []
+            items: [],
         }]);
 
         await this._updateOptions();
@@ -153,7 +153,7 @@ export class SentenceTerminationCharactersController {
             character1: '"',
             character2: '"',
             includeCharacterAtStart: false,
-            includeCharacterAtEnd: false
+            includeCharacterAtEnd: false,
         };
         await this.addEntry(newEntry);
     }

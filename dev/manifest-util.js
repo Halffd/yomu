@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  * Copyright (C) 2021-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -99,7 +99,7 @@ export class ManifestUtil {
         const {stdout, stderr, status} = childProcess.spawnSync(command, args, {
             cwd: dirname,
             stdio: 'pipe',
-            shell: false
+            shell: false,
         });
         if (status !== 0) {
             const message = stderr.toString('utf8').trim();

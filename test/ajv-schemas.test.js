@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024  Yomitan Authors
+ * Copyright (C) 2024-2025  Yomitan Authors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -59,8 +59,8 @@ describe('Ajv schema compilation', () => {
                 logger: {
                     log,
                     warn: log,
-                    error: log
-                }
+                    error: log,
+                },
             });
             standaloneCode(ajv);
             if (messages.length > 0) {

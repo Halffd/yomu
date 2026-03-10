@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  * Copyright (C) 2016-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -82,7 +82,7 @@ export class OptionsUtil {
             profiles.push({
                 name: 'Default',
                 options: defaultProfileOptions,
-                conditionGroups: []
+                conditionGroups: [],
             });
         }
 
@@ -257,12 +257,12 @@ export class OptionsUtil {
                 const replacements = [
                     [
                         '{{#*inline "audio"}}{{/inline}}',
-                        '{{#*inline "audio"}}\n    {{~#if definition.audioFileName~}}\n        [sound:{{definition.audioFileName}}]\n    {{~/if~}}\n{{/inline}}'
+                        '{{#*inline "audio"}}\n    {{~#if definition.audioFileName~}}\n        [sound:{{definition.audioFileName}}]\n    {{~/if~}}\n{{/inline}}',
                     ],
                     [
                         '{{#*inline "tags"}}\n    {{~#each definition.definitionTags}}{{name}}{{#unless @last}}, {{/unless}}{{/each~}}\n{{/inline}}',
-                        '{{#*inline "tags"}}\n    {{~#mergeTags definition group merge}}{{this}}{{/mergeTags~}}\n{{/inline}}'
-                    ]
+                        '{{#*inline "tags"}}\n    {{~#mergeTags definition group merge}}{{this}}{{/mergeTags~}}\n{{/inline}}',
+                    ],
                 ];
 
                 for (const [pattern, replacement] of replacements) {
@@ -278,7 +278,7 @@ export class OptionsUtil {
                 }
 
                 options.anki.fieldTemplates = fieldTemplates;
-            }
+            },
         ];
     }
 
@@ -293,6 +293,9 @@ export class OptionsUtil {
                 resultOutputMode: 'group',
                 debugInfo: false,
                 maxResults: 32,
+                fontFamily: '',
+                fontSize: 14,
+                lineHeight: '1.5',
                 showAdvanced: false,
                 popupDisplayMode: 'default',
                 popupWidth: 400,
@@ -321,7 +324,7 @@ export class OptionsUtil {
                 showPitchAccentGraph: false,
                 showIframePopupsInRootFrame: false,
                 useSecurePopupFrameUrl: true,
-                usePopupShadowDom: true
+                usePopupShadowDom: true,
             },
 
             audio: {
@@ -330,7 +333,7 @@ export class OptionsUtil {
                 volume: 100,
                 autoPlay: false,
                 customSourceUrl: '',
-                textToSpeechVoice: ''
+                textToSpeechVoice: '',
             },
 
             scanning: {
@@ -343,12 +346,13 @@ export class OptionsUtil {
                 length: 10,
                 modifier: 'shift',
                 deepDomScan: false,
-                popupNestingMaxDepth: 0,
+                popupNestingMaxDepth: 10,
                 enablePopupSearch: false,
                 enableOnPopupExpressions: false,
                 enableOnSearchPage: true,
                 enableSearchTags: false,
-                layoutAwareScan: false
+                layoutAwareScan: false,
+                scanAltText: true,
             },
 
             translation: {
@@ -357,7 +361,7 @@ export class OptionsUtil {
                 convertAlphabeticCharacters: 'false',
                 convertHiraganaToKatakana: 'false',
                 convertKatakanaToHiragana: 'variant',
-                collapseEmphaticSequences: 'false'
+                collapseEmphaticSequences: 'false',
             },
 
             dictionaries: {},
@@ -367,7 +371,7 @@ export class OptionsUtil {
                 enableMecabParser: false,
                 selectedParser: null,
                 termSpacing: true,
-                readingMode: 'hiragana'
+                readingMode: 'hiragana',
             },
 
             anki: {
@@ -379,8 +383,8 @@ export class OptionsUtil {
                 terms: {deck: '', model: '', fields: {}},
                 kanji: {deck: '', model: '', fields: {}},
                 duplicateScope: 'collection',
-                fieldTemplates: null
-            }
+                fieldTemplates: null,
+            },
         };
     }
 
@@ -542,7 +546,46 @@ export class OptionsUtil {
             this._updateVersion32,
             this._updateVersion33,
             this._updateVersion34,
-            this._updateVersion35
+            this._updateVersion35,
+            this._updateVersion36,
+            this._updateVersion37,
+            this._updateVersion38,
+            this._updateVersion39,
+            this._updateVersion40,
+            this._updateVersion41,
+            this._updateVersion42,
+            this._updateVersion43,
+            this._updateVersion44,
+            this._updateVersion45,
+            this._updateVersion46,
+            this._updateVersion47,
+            this._updateVersion48,
+            this._updateVersion49,
+            this._updateVersion50,
+            this._updateVersion51,
+            this._updateVersion52,
+            this._updateVersion53,
+            this._updateVersion54,
+            this._updateVersion55,
+            this._updateVersion56,
+            this._updateVersion57,
+            this._updateVersion58,
+            this._updateVersion59,
+            this._updateVersion60,
+            this._updateVersion61,
+            this._updateVersion62,
+            this._updateVersion63,
+            this._updateVersion64,
+            this._updateVersion65,
+            this._updateVersion66,
+            this._updateVersion67,
+            this._updateVersion68,
+            this._updateVersion69,
+            this._updateVersion70,
+            this._updateVersion71,
+            this._updateVersion72,
+            this._updateVersion73,
+            this._updateVersion74,
         ];
         /* eslint-enable @typescript-eslint/unbound-method */
         if (typeof targetVersion === 'number' && targetVersion < result.length) {
@@ -558,8 +601,8 @@ export class OptionsUtil {
     _updateVersion1(options) {
         options.global = {
             database: {
-                prefixWildcardsSupported: false
-            }
+                prefixWildcardsSupported: false,
+            },
         };
     }
 
@@ -613,20 +656,29 @@ export class OptionsUtil {
             searchTerms: true,
             searchKanji: true,
             scanOnTouchMove: false,
-            scanOnPenHover: true,
+            scanOnPenHover: false,
             scanOnPenPress: true,
             scanOnPenRelease: false,
-            preventTouchScrolling: true
+            preventTouchScrolling: true,
+            minimumTouchTime: 0,
         });
         for (const {options: profileOptions} of options.profiles) {
             profileOptions.general.usePopupWindow = false;
             profileOptions.scanning.hideDelay = 0;
             profileOptions.scanning.pointerEventsEnabled = false;
             profileOptions.scanning.preventMiddleMouse = {
+                onTextHover: false,
                 onWebPages: false,
                 onPopupPages: false,
                 onSearchPages: false,
-                onSearchQuery: false
+                onSearchQuery: false,
+            };
+            profileOptions.scanning.preventBackForward = {
+                onTextHover: false,
+                onWebPages: false,
+                onPopupPages: false,
+                onSearchPages: false,
+                onSearchQuery: false,
             };
 
             const {modifier, middleMouse} = profileOptions.scanning;
@@ -649,21 +701,21 @@ export class OptionsUtil {
                 include: modifierInput,
                 exclude: 'mouse0',
                 types: {mouse: true, touch: false, pen: false},
-                options: createInputDefaultOptions()
+                options: createInputDefaultOptions(),
             });
             if (middleMouse) {
                 scanningInputs.push({
                     include: 'mouse2',
                     exclude: '',
                     types: {mouse: true, touch: false, pen: false},
-                    options: createInputDefaultOptions()
+                    options: createInputDefaultOptions(),
                 });
             }
             scanningInputs.push({
                 include: '',
                 exclude: '',
                 types: {mouse: false, touch: true, pen: true},
-                options: createInputDefaultOptions()
+                options: createInputDefaultOptions(),
             });
             profileOptions.scanning.inputs = scanningInputs;
         }
@@ -773,7 +825,7 @@ export class OptionsUtil {
         for (const profile of options.profiles) {
             profile.options.translation.textReplacements = {
                 searchOriginal: true,
-                groups: []
+                groups: [],
             };
             profile.options.sentenceParsing = {
                 scanExtent: profile.options.anki.sentenceExt,
@@ -790,8 +842,8 @@ export class OptionsUtil {
                     {enabled: true, character1: '。', character2: null, includeCharacterAtStart: false, includeCharacterAtEnd: true},
                     {enabled: true, character1: '！', character2: null, includeCharacterAtStart: false, includeCharacterAtEnd: true},
                     {enabled: true, character1: '？', character2: null, includeCharacterAtStart: false, includeCharacterAtEnd: true},
-                    {enabled: true, character1: '…', character2: null, includeCharacterAtStart: false, includeCharacterAtEnd: true}
-                ]
+                    {enabled: true, character1: '…', character2: null, includeCharacterAtStart: false, includeCharacterAtEnd: true},
+                ],
             };
             delete profile.options.anki.sentenceExt;
             profile.options.general.popupActionBarLocation = 'top';
@@ -813,8 +865,8 @@ export class OptionsUtil {
                     {action: 'addNoteTermKana',   key: 'KeyR',      modifiers: ['alt'],  scopes: ['popup', 'search'], enabled: true},
                     {action: 'playAudio',         key: 'KeyP',      modifiers: ['alt'],  scopes: ['popup', 'search'], enabled: true},
                     {action: 'viewNote',          key: 'KeyV',      modifiers: ['alt'],  scopes: ['popup', 'search'], enabled: true},
-                    {action: 'copyHostSelection', key: 'KeyC',      modifiers: ['ctrl'], scopes: ['popup'], enabled: true}
-                ]
+                    {action: 'copyHostSelection', key: 'KeyC',      modifiers: ['ctrl'], scopes: ['popup'], enabled: true},
+                ],
             };
             /* eslint-enable @stylistic/no-multi-spaces */
             profile.options.anki.suspendNewCards = false;
@@ -826,14 +878,14 @@ export class OptionsUtil {
                 useLeft: false,
                 useTop: false,
                 windowType: 'popup',
-                windowState: 'normal'
+                windowState: 'normal',
             };
             profile.options.audio.customSourceType = 'audio';
             profile.options.clipboard = {
                 enableBackgroundMonitor: profile.options.general.enableClipboardPopups,
                 enableSearchPageMonitor: false,
                 autoSearchContent: true,
-                maximumSearchLength: profile.options.general.maximumClipboardSearchLength
+                maximumSearchLength: profile.options.general.maximumClipboardSearchLength,
             };
             delete profile.options.general.enableClipboardPopups;
             delete profile.options.general.enableClipboardMonitor;
@@ -972,7 +1024,7 @@ export class OptionsUtil {
     _updateVersion14(options) {
         for (const profile of options.profiles) {
             profile.options.accessibility = {
-                forceGoogleDocsHtmlRendering: false
+                forceGoogleDocsHtmlRendering: false,
             };
         }
     }
@@ -1010,7 +1062,7 @@ export class OptionsUtil {
             const terminationCharacters = profile.options.sentenceParsing.terminationCharacters;
             const newAdditions = [];
             for (const character of additions) {
-                if (terminationCharacters.findIndex((value) => (value.character1 === character && value.character2 === null)) < 0) {
+                if (!terminationCharacters.some((value) => (value.character1 === character && value.character2 === null))) {
                     newAdditions.push(character);
                 }
             }
@@ -1020,7 +1072,7 @@ export class OptionsUtil {
                     character1: character,
                     character2: null,
                     includeCharacterAtStart: false,
-                    includeCharacterAtEnd: true
+                    includeCharacterAtEnd: true,
                 });
             }
         }
@@ -1188,7 +1240,7 @@ export class OptionsUtil {
             'convertAlphabeticCharacters',
             'convertHiraganaToKatakana',
             'convertKatakanaToHiragana',
-            'collapseEmphaticSequences'
+            'collapseEmphaticSequences',
         ];
 
         for (const {options: profileOptions} of options.profiles) {
@@ -1257,7 +1309,7 @@ export class OptionsUtil {
         for (const profile of options.profiles) {
             profile.options.inputs.hotkeys.push(
                 {action: 'profilePrevious', key: 'Minus', modifiers: ['alt'], scopes: ['popup', 'search'], enabled: true},
-                {action: 'profileNext', key: 'Equal', modifiers: ['alt'], scopes: ['popup', 'search'], enabled: true}
+                {action: 'profileNext', key: 'Equal', modifiers: ['alt'], scopes: ['popup', 'search'], enabled: true},
             );
         }
     }
@@ -1286,6 +1338,498 @@ export class OptionsUtil {
         await this._applyAnkiFieldTemplatesPatch(options, '/data/templates/anki-field-templates-upgrade-v35.handlebars');
     }
 
+    /**
+     *  - Added handlebars for onyomi reading in hiragana.
+     *  @type {import('options-util').UpdateFunction}
+     */
+    async _updateVersion36(options) {
+        await this._applyAnkiFieldTemplatesPatch(options, '/data/templates/anki-field-templates-upgrade-v36.handlebars');
+    }
+
+    /**
+     *  - Removed `No pitch accent data` return from pitch handlebars when no data is found
+     *  @type {import('options-util').UpdateFunction}
+     */
+    async _updateVersion37(options) {
+        await this._applyAnkiFieldTemplatesPatch(options, '/data/templates/anki-field-templates-upgrade-v37.handlebars');
+    }
+
+    /**
+     *  - Updated `conjugation` handlebars for new inflection chain format.
+     *  @type {import('options-util').UpdateFunction}
+     */
+    async _updateVersion38(options) {
+        await this._applyAnkiFieldTemplatesPatch(options, '/data/templates/anki-field-templates-upgrade-v38.handlebars');
+    }
+
+    /**
+     *  - Add new setting enableContextMenuScanSelected
+     *  @type {import('options-util').UpdateFunction}
+     */
+    async _updateVersion39(options) {
+        for (const profile of options.profiles) {
+            profile.options.general.enableContextMenuScanSelected = true;
+        }
+    }
+
+    /**
+     *  - Added support for web hotkey scope to profilePrevious and profileNext
+     *  @type {import('options-util').UpdateFunction}
+     */
+    async _updateVersion40(options) {
+        for (const profile of options.profiles) {
+            for (const hotkey of profile.options.inputs.hotkeys) {
+                if (hotkey.action === 'profilePrevious' || hotkey.action === 'profileNext') {
+                    hotkey.scopes = ['popup', 'search', 'web'];
+                }
+            }
+        }
+    }
+
+    /**
+     *  - Updated `glossary` handlebars to support dictionary css.
+     *  @type {import('options-util').UpdateFunction}
+     */
+    async _updateVersion41(options) {
+        await this._applyAnkiFieldTemplatesPatch(options, '/data/templates/anki-field-templates-upgrade-v41.handlebars');
+    }
+
+    /**
+     * - Added scanning.scanAltText
+     * @type {import('options-util').UpdateFunction}
+     */
+    async _updateVersion42(options) {
+        for (const profile of options.profiles) {
+            profile.options.scanning.scanAltText = true;
+        }
+    }
+
+    /**
+     * - Added option for sticky search header.
+     * @type {import('options-util').UpdateFunction}
+     */
+    _updateVersion43(options) {
+        for (const profile of options.profiles) {
+            profile.options.general.stickySearchHeader = false;
+        }
+    }
+
+    /**
+     * - Added general.fontFamily
+     * - Added general.fontSize
+     * - Added general.lineHeight
+     * @type {import('options-util').UpdateFunction}
+     */
+    async _updateVersion44(options) {
+        for (const profile of options.profiles) {
+            profile.options.general.fontFamily = 'sans-serif';
+            profile.options.general.fontSize = 14;
+            profile.options.general.lineHeight = '1.5';
+        }
+    }
+
+    /**
+     * - Renamed `selection-text` to `popup-selection-text`
+     * @type {import('options-util').UpdateFunction}
+     */
+    async _updateVersion45(options) {
+        await this._applyAnkiFieldTemplatesPatch(options, '/data/templates/anki-field-templates-upgrade-v45.handlebars');
+        const oldMarkerRegex = new RegExp('{selection-text}', 'g');
+        const newMarker = '{popup-selection-text}';
+        for (const profile of options.profiles) {
+            const termsFields = profile.options.anki.terms.fields;
+            for (const key of Object.keys(termsFields)) {
+                termsFields[key] = termsFields[key].replace(oldMarkerRegex, newMarker);
+            }
+            const kanjiFields = profile.options.anki.kanji.fields;
+            for (const key of Object.keys(kanjiFields)) {
+                kanjiFields[key] = kanjiFields[key].replace(oldMarkerRegex, newMarker);
+            }
+        }
+    }
+
+    /**
+     * - Set default font to empty
+     * @type {import('options-util').UpdateFunction}
+     */
+    async _updateVersion46(options) {
+        for (const profile of options.profiles) {
+            if (profile.options.general.fontFamily === 'sans-serif') {
+                profile.options.general.fontFamily = '';
+            }
+        }
+    }
+
+    /**
+     * - Added scanning.scanWithoutMousemove
+     * @type {import('options-util').UpdateFunction}
+     */
+    async _updateVersion47(options) {
+        for (const profile of options.profiles) {
+            profile.options.scanning.scanWithoutMousemove = true;
+        }
+    }
+
+    /**
+     * - Added general.showDebug
+     * @type {import('options-util').UpdateFunction}
+     */
+    async _updateVersion48(options) {
+        for (const profile of options.profiles) {
+            profile.options.general.showDebug = false;
+        }
+    }
+
+    /**
+     * - Added dictionary alias
+     * @type {import('options-util').UpdateFunction}
+     */
+    async _updateVersion49(options) {
+        await this._applyAnkiFieldTemplatesPatch(options, '/data/templates/anki-field-templates-upgrade-v49.handlebars');
+        for (const {options: profileOptions} of options.profiles) {
+            if (Array.isArray(profileOptions.dictionaries)) {
+                for (const dictionary of profileOptions.dictionaries) {
+                    dictionary.alias = dictionary.name;
+                }
+            }
+        }
+    }
+
+    /**
+     * - Generalized jpod101-alternate to language-pod-101
+     * @type {import('options-util').UpdateFunction}
+     */
+    async _updateVersion50(options) {
+        for (const profile of options.profiles) {
+            for (const source of profile.options.audio.sources) {
+                if (source.type === 'jpod101-alternate') {
+                    source.type = 'language-pod-101';
+                }
+            }
+        }
+    }
+
+    /**
+     * - Add scanning.scanResolution
+     * @type {import('options-util').UpdateFunction}
+     */
+    async _updateVersion51(options) {
+        for (const profile of options.profiles) {
+            profile.options.scanning.scanResolution = 'character';
+        }
+    }
+
+    /**
+     * - Remove scanning.scanAltText
+     * @type {import('options-util').UpdateFunction}
+     */
+    async _updateVersion52(options) {
+        for (const profile of options.profiles) {
+            delete profile.options.scanning.scanAltText;
+        }
+    }
+
+    /**
+     * - Added profile id
+     * @type {import('options-util').UpdateFunction}
+     */
+    async _updateVersion53(options) {
+        for (let i = 0; i < options.profiles.length; i++) {
+            options.profiles[i].id = `profile-${i}`;
+        }
+    }
+
+    /**
+     * - Renamed anki.displayTags to anki.displayTagsAndFlags
+     * @type {import('options-util').UpdateFunction}
+     */
+    async _updateVersion54(options) {
+        for (const profile of options.profiles) {
+            profile.options.anki.displayTagsAndFlags = profile.options.anki.displayTags;
+            delete profile.options.anki.displayTags;
+        }
+    }
+
+    /**
+     * - Remove scanning.touchInputEnabled
+     * - Remove scanning.pointerEventsEnabled
+     * @type {import('options-util').UpdateFunction}
+     */
+    async _updateVersion55(options) {
+        for (const profile of options.profiles) {
+            delete profile.options.scanning.touchInputEnabled;
+            delete profile.options.scanning.pointerEventsEnabled;
+        }
+    }
+
+    /**
+     * - Sorted dictionaries by priority
+     * - Removed priority from dictionaries
+     * @type {import('options-util').UpdateFunction}
+     */
+    async _updateVersion56(options) {
+        for (const {options: profileOptions} of options.profiles) {
+            if (Array.isArray(profileOptions.dictionaries)) {
+                profileOptions.dictionaries.sort((/** @type {{ priority: number; }} */ a, /** @type {{ priority: number; }} */ b) => {
+                    return b.priority - a.priority;
+                });
+                for (const dictionary of profileOptions.dictionaries) {
+                    delete dictionary.priority;
+                }
+            }
+        }
+    }
+
+    /**
+     *  - Added scanning.inputs[].options.minimumTouchTime.
+     *  @type {import('options-util').UpdateFunction}
+     */
+    async _updateVersion57(options) {
+        for (const profile of options.profiles) {
+            for (const input of profile.options.scanning.inputs) {
+                input.options.minimumTouchTime = 0;
+            }
+        }
+    }
+
+    /**
+     *  - Added audio.options.playFallbackSound
+     *  @type {import('options-util').UpdateFunction}
+     */
+    async _updateVersion58(options) {
+        for (const profile of options.profiles) {
+            profile.options.audio.playFallbackSound = true;
+        }
+    }
+
+    /**
+     *  - Added overwriteMode to anki.fields
+     *  @type {import('options-util').UpdateFunction}
+     */
+    async _updateVersion59(options) {
+        for (const profile of options.profiles) {
+            for (const type of ['terms', 'kanji']) {
+                const fields = profile.options.anki[type].fields;
+                for (const [field, value] of Object.entries(fields)) {
+                    fields[field] = {value, overwriteMode: 'coalesce'};
+                }
+            }
+        }
+    }
+
+    /**
+     *  - Replaced audio.playFallbackSound with audio.fallbackSoundType
+     *  @type {import('options-util').UpdateFunction}
+     */
+    async _updateVersion60(options) {
+        for (const profile of options.profiles) {
+            profile.options.audio.fallbackSoundType = profile.options.audio.playFallbackSound ? 'click' : 'none';
+            delete profile.options.audio.playFallbackSound;
+        }
+    }
+
+    /**
+     *  - Added sentence-furigana-plain handlebar
+     *  @type {import('options-util').UpdateFunction}
+     */
+    async _updateVersion61(options) {
+        await this._applyAnkiFieldTemplatesPatch(options, '/data/templates/anki-field-templates-upgrade-v61.handlebars');
+    }
+
+    /**
+     *  - Added options.general.averageFrequency
+     *  @type {import('options-util').UpdateFunction}
+     */
+    async _updateVersion62(options) {
+        for (const profile of options.profiles) {
+            profile.options.general.averageFrequency = false;
+        }
+    }
+
+    /**
+     *  - Added selectable tags to phonetic transcriptions handlebar
+     *  @type {import('options-util').UpdateFunction}
+     */
+    async _updateVersion63(options) {
+        await this._applyAnkiFieldTemplatesPatch(options, '/data/templates/anki-field-templates-upgrade-v63.handlebars');
+    }
+
+    /**
+     *  - Added multiple anki card formats
+     *  - Updated expression template to remove modeTermKana
+     *  - Updated hotkeys to use generic note actions
+     *  @type {import('options-util').UpdateFunction}
+     */
+    async _updateVersion64(options) {
+        await this._applyAnkiFieldTemplatesPatch(options, '/data/templates/anki-field-templates-upgrade-v64.handlebars');
+
+        for (const profile of options.profiles) {
+            const oldTerms = profile.options.anki.terms;
+
+            const updatedCardFormats = [{
+                name: 'Expression',
+                icon: 'big-circle',
+                deck: oldTerms.deck,
+                model: oldTerms.model,
+                fields: oldTerms.fields,
+                type: 'term',
+            }];
+
+            if (Object.values(oldTerms.fields).some((field) => field.value.includes('{expression}'))) {
+                updatedCardFormats.push({
+                    name: 'Reading',
+                    icon: 'small-circle',
+                    deck: oldTerms.deck,
+                    model: oldTerms.model,
+                    fields: Object.fromEntries(
+                        Object.entries(oldTerms.fields).map(([key, field]) => [
+                            key,
+                            {...field, value: field.value.replace(/{expression}/g, '{reading}')},
+                        ]),
+                    ),
+                    type: 'term',
+                });
+            }
+
+            const language = profile.options.general.language;
+            const logographLanguages = ['ja', 'zh', 'yue'];
+            if (logographLanguages.includes(language)) {
+                const oldKanji = profile.options.anki.kanji;
+                const kanjiNote = {
+                    name: language === 'ja' ? 'Kanji' : 'Hanzi',
+                    icon: 'big-circle',
+                    deck: oldKanji.deck,
+                    model: oldKanji.model,
+                    fields: oldKanji.fields,
+                    type: 'kanji',
+                };
+                updatedCardFormats.push(kanjiNote);
+            }
+
+            profile.options.anki.cardFormats = [...updatedCardFormats];
+
+            delete profile.options.anki.terms;
+            delete profile.options.anki.kanji;
+
+            if (!profile.options.inputs || !profile.options.inputs.hotkeys) {
+                continue;
+            }
+
+            for (const hotkey of profile.options.inputs.hotkeys) {
+                if (!('argument' in hotkey)) {
+                    hotkey.argument = '';
+                }
+                switch (hotkey.action) {
+                    case 'addNoteTermKanji':
+                        hotkey.action = 'addNote';
+                        hotkey.argument = '0';
+                        break;
+                    case 'addNoteTermKana':
+                        hotkey.action = 'addNote';
+                        hotkey.argument = `${Math.min(1, updatedCardFormats.length - 1)}`;
+                        break;
+                    case 'addNoteKanji':
+                        hotkey.action = 'addNote';
+                        hotkey.argument = `${updatedCardFormats.length - 1}`;
+                        break;
+                    case 'viewNotes':
+                        hotkey.action = 'viewNotes';
+                        hotkey.argument = '0';
+                        break;
+                }
+            }
+        }
+    }
+
+    /**
+     *  - Added general.enableYomitanApi
+     *  - Added general.yomitanApiServer
+     *  @type {import('options-util').UpdateFunction}
+     */
+    async _updateVersion65(options) {
+        for (const profile of options.profiles) {
+            profile.options.general.enableYomitanApi = false;
+            profile.options.general.yomitanApiServer = 'http://127.0.0.1:8766';
+        }
+    }
+
+    /**
+     *  - Added glossary-plain handlebars
+     *  @type {import('options-util').UpdateFunction}
+     */
+    async _updateVersion66(options) {
+        await this._applyAnkiFieldTemplatesPatch(options, '/data/templates/anki-field-templates-upgrade-v66.handlebars');
+    }
+
+    /**
+     * - Added dynamic handlebars for single frequency dictionaries.
+     *  @type {import('options-util').UpdateFunction}
+     */
+    async _updateVersion67(options) {
+        await this._applyAnkiFieldTemplatesPatch(options, '/data/templates/anki-field-templates-upgrade-v67.handlebars');
+    }
+
+    /**
+     *  - Changed pitch-accent-item param name
+     *  @type {import('options-util').UpdateFunction}
+     */
+    async _updateVersion68(options) {
+        await this._applyAnkiFieldTemplatesPatch(options, '/data/templates/anki-field-templates-upgrade-v68.handlebars');
+    }
+
+    /**
+     *  - Change default Yomitan API port to 19633
+     *  @type {import('options-util').UpdateFunction}
+     */
+    async _updateVersion69(options) {
+        for (const profile of options.profiles) {
+            profile.options.general.yomitanApiServer = 'http://127.0.0.1:19633';
+        }
+    }
+
+    /**
+     *  - Added audio.enableDefaultAudioSources
+     *  @type {import('options-util').UpdateFunction}
+     */
+    async _updateVersion70(options) {
+        for (const profile of options.profiles) {
+            profile.options.audio.enableDefaultAudioSources = true;
+        }
+    }
+
+    /**
+     *  - Added global.dataTransmissionConsentShown
+     *  @type {import('options-util').UpdateFunction}
+     */
+    async _updateVersion71(options) {
+        options.global.dataTransmissionConsentShown = false;
+    }
+
+    /**
+     *  - Always put dict glosses in a list for the `glossary` handlebar (and brief and no-dictionary)
+     *  @type {import('options-util').UpdateFunction}
+     */
+    async _updateVersion72(options) {
+        await this._applyAnkiFieldTemplatesPatch(options, '/data/templates/anki-field-templates-upgrade-v71.handlebars');
+    }
+
+    /**
+     *  - Added anki.targetTags
+     *  @type {import('options-util').UpdateFunction}
+     */
+    async _updateVersion73(options) {
+        for (const profile of options.profiles) {
+            profile.options.anki.targetTags = [];
+        }
+    }
+
+    /**
+     *  - Fix glossary-plain and glossary-plain-no-dictionary not working when resultOutputMode (Result grouping mode) == split (No grouping)
+     *  @type {import('options-util').UpdateFunction}
+     */
+    async _updateVersion74(options) {
+        await this._applyAnkiFieldTemplatesPatch(options, '/data/templates/anki-field-templates-upgrade-v74.handlebars');
+    }
 
     /**
      * @param {string} url

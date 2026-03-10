@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  * Copyright (C) 2020-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -52,7 +52,7 @@ export class RequestBuilder {
     async fetchAnonymous(url, init) {
         const id = this._getNewRuleId();
         const originUrl = this._getOriginURL(url);
-        url = encodeURI(decodeURI(url));
+        url = encodeURI(decodeURIComponent(url));
 
         this._ruleIds.add(id);
         try {
@@ -63,29 +63,29 @@ export class RequestBuilder {
                 condition: {
                     urlFilter: `|${this._escapeDnrUrl(url)}|`,
                     resourceTypes: [
-                        /** @type {chrome.declarativeNetRequest.ResourceType} */ ('xmlhttprequest')
-                    ]
+                        /** @type {chrome.declarativeNetRequest.ResourceType} */ ('xmlhttprequest'),
+                    ],
                 },
                 action: {
                     type: /** @type {chrome.declarativeNetRequest.RuleActionType} */ ('modifyHeaders'),
                     requestHeaders: [
                         {
                             operation: /** @type {chrome.declarativeNetRequest.HeaderOperation} */ ('remove'),
-                            header: 'Cookie'
+                            header: 'Cookie',
                         },
                         {
                             operation: /** @type {chrome.declarativeNetRequest.HeaderOperation} */ ('set'),
                             header: 'Origin',
-                            value: originUrl
-                        }
+                            value: originUrl,
+                        },
                     ],
                     responseHeaders: [
                         {
                             operation: /** @type {chrome.declarativeNetRequest.HeaderOperation} */ ('remove'),
-                            header: 'Set-Cookie'
-                        }
-                    ]
-                }
+                            header: 'Set-Cookie',
+                        },
+                    ],
+                },
             }];
 
             await this._updateSessionRules({addRules});

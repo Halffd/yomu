@@ -7,7 +7,7 @@
                     "${title}",
                     {
                         "index": 0,
-                        "priority": 0
+                        "alias": "kanjiDictAlias"
                     }
                 ]
             ],
@@ -30,7 +30,7 @@
                     "${title}",
                     {
                         "index": 0,
-                        "priority": 0,
+                        "alias": "termsDictAlias",
                         "allowSecondarySearches": false,
                         "partsOfSpeechFilter": true,
                         "useDeinflections": true
@@ -150,23 +150,30 @@
             "options": "default"
         },
         {
-            "name": "Search using different modes",
+            "name": "Search using different modes - simple",
             "func": "findTerms",
             "mode": "simple",
             "text": "打ち込む",
             "options": "default"
         },
         {
-            "name": "Search using different modes",
+            "name": "Search using different modes - group",
             "func": "findTerms",
             "mode": "group",
             "text": "打ち込む",
             "options": "default"
         },
         {
-            "name": "Search using different modes",
+            "name": "Search using different modes - merge",
             "func": "findTerms",
             "mode": "merge",
+            "text": "打ち込む",
+            "options": "default"
+        },
+        {
+            "name": "Search using different modes - term",
+            "func": "findTerms",
+            "mode": "term",
             "text": "打ち込む",
             "options": "default"
         },
@@ -369,7 +376,33 @@
             ]
         },
         {
-            "name": "Test text preprocessors - convertAlphabeticCharacters",
+            "name": "Test text preprocessors - alphabeticWidthVariants 1",
+            "func": "findTerms",
+            "mode": "split",
+            "text": "Ｅｎｇｌｉｓｈ",
+            "options": [
+                "default",
+                {
+                    "type": "terms",
+                    "removeNonJapaneseCharacters": false
+                }
+            ]
+        },
+        {
+            "name": "Test text preprocessors - alphabeticWidthVariants 2",
+            "func": "findTerms",
+            "mode": "split",
+            "text": "USB",
+            "options": [
+                "default",
+                {
+                    "type": "terms",
+                    "removeNonJapaneseCharacters": false
+                }
+            ]
+        },
+        {
+            "name": "Test text preprocessors - alphabeticToHiragana",
             "func": "findTerms",
             "mode": "split",
             "text": "utsu",
@@ -483,6 +516,32 @@
                     "language": "en",
                     "removeNonJapaneseCharacters": false,
                     "searchResolution": "word"
+                }
+            ]
+        },
+        {
+            "name": "Find terms using primary reading 1",
+            "func": "findTerms",
+            "mode": "split",
+            "text": "自重",
+            "options": [
+                "default",
+                {
+                    "type": "terms",
+                    "primaryReading": "じちょう"
+                }
+            ]
+        },
+        {
+            "name": "Find terms using primary reading 2",
+            "func": "findTerms",
+            "mode": "split",
+            "text": "自重",
+            "options": [
+                "default",
+                {
+                    "type": "terms",
+                    "primaryReading": "じじゅう"
                 }
             ]
         }

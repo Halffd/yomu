@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  * Copyright (C) 2020-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -87,6 +87,17 @@ function setupPermissionsToggles() {
 }
 
 await Application.main(true, async (application) => {
+    const modalController = new ModalController([]);
+    await modalController.prepare();
+
+    const settingsController = new SettingsController(application);
+    await settingsController.prepare();
+
+    const settingsDisplayController = new SettingsDisplayController(settingsController, modalController);
+    await settingsDisplayController.prepare();
+
+    document.body.hidden = false;
+
     const documentFocusController = new DocumentFocusController();
     documentFocusController.prepare();
 
@@ -102,24 +113,16 @@ await Application.main(true, async (application) => {
     /** @type {HTMLInputElement} */
     const permissionCheckbox2 = querySelectorNotNull(document, '#permission-checkbox-allow-file-url-access');
     /** @type {HTMLInputElement[]} */
-    // This collection is actually used, not sure why this eslint-disable is needed.
-    // eslint-disable-next-line sonarjs/no-unused-collection
     const permissionsCheckboxes = [permissionCheckbox1, permissionCheckbox2];
 
     const permissions = await Promise.all([
         isAllowedIncognitoAccess(),
-        isAllowedFileSchemeAccess()
+        isAllowedFileSchemeAccess(),
     ]);
 
     for (let i = 0, ii = permissions.length; i < ii; ++i) {
         permissionsCheckboxes[i].checked = permissions[i];
     }
-
-    const modalController = new ModalController();
-    modalController.prepare();
-
-    const settingsController = new SettingsController(application);
-    await settingsController.prepare();
 
     const permissionsToggleController = new PermissionsToggleController(settingsController);
     void permissionsToggleController.prepare();
@@ -133,7 +136,4 @@ await Application.main(true, async (application) => {
     await promiseTimeout(100);
 
     document.documentElement.dataset.loaded = 'true';
-
-    const settingsDisplayController = new SettingsDisplayController(settingsController, modalController);
-    settingsDisplayController.prepare();
 });

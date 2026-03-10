@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -48,18 +48,27 @@ import type {
 export type FindTermsDetails = {
     matchType?: Translation.FindTermsMatchType;
     deinflect?: boolean;
+    primaryReading?: string;
 };
 
 export type ParseTextResultItem = {
     id: string;
     source: 'scanning-parser' | 'mecab';
     dictionary: null | string;
+    index: number;
     content: ParseTextLine[];
 };
 
 export type ParseTextSegment = {
     text: string;
     reading: string;
+    lemma?: string;
+    lemmaReading?: string;
+    headwords?: {
+        term: string;
+        reading: string;
+        sources: Dictionary.TermSource[];
+    }[][];
 };
 
 export type ParseTextLine = ParseTextSegment[];
@@ -140,7 +149,7 @@ type ApiSurface = {
     };
     parseText: {
         params: {
-            text: string;
+            text: string | string[];
             optionsContext: Settings.OptionsContext;
             scanLength: number;
             useInternalParser: boolean;
@@ -168,6 +177,12 @@ type ApiSurface = {
             note: Anki.Note;
         };
         return: Anki.NoteId | null;
+    };
+    updateAnkiNote: {
+        params: {
+            noteWithId: Anki.NoteWithId;
+        };
+        return: null;
     };
     getAnkiNoteInfo: {
         params: {
@@ -213,6 +228,7 @@ type ApiSurface = {
             source: Audio.AudioSourceInfo;
             term: string;
             reading: string;
+            languageSummary: Language.LanguageSummary;
         };
         return: AudioDownloader.Info[];
     };
@@ -344,6 +360,12 @@ type ApiSurface = {
         params: void;
         return: true;
     };
+    testYomitanApi: {
+        params: {
+            url: string;
+        };
+        return: true;
+    };
     isTextLookupWorthy: {
         params: {
             text: string;
@@ -382,6 +404,14 @@ type ApiSurface = {
         params: void;
         return: Language.LanguageSummary[];
     };
+    heartbeat: {
+        params: void;
+        return: void;
+    };
+    forceSync: {
+        params: void;
+        return: void;
+    };
 };
 
 type ApiExtraArgs = [sender: chrome.runtime.MessageSender];
@@ -409,4 +439,78 @@ export type ApiMessageAny = {[name in ApiNames]: ApiMessage<name>}[ApiNames];
 type ApiMessage<TName extends ApiNames> = {
     action: TName;
     params: ApiParams<TName>;
+};
+
+// postMessage API (i.e., API endpoints called via postMessage, either through ServiceWorker on Chrome or a MessageChannel port on Firefox)
+
+type PmApiSurface = {
+    drawMedia: {
+        params: {
+            requests: DrawMediaRequest[];
+        };
+        return: void;
+    };
+    connectToDatabaseWorker: {
+        params: void;
+        return: void;
+    };
+    drawBufferToCanvases: {
+        params: {
+            buffer: ArrayBuffer;
+            width: number;
+            height: number;
+            canvasIndexes: number[];
+            generation: number;
+        };
+        return: void;
+    };
+    drawDecodedImageToCanvases: {
+        params: {
+            decodedImage: VideoFrame | ImageBitmap;
+            canvasIndexes: number[];
+            generation: number;
+        };
+        return: void;
+    };
+    registerOffscreenPort: {
+        params: void;
+        return: void;
+    };
+    registerDatabasePort: {
+        params: void;
+        return: void;
+    };
+};
+
+type DrawMediaRequest = {
+    path: string;
+    dictionary: string;
+    canvas: OffscreenCanvas;
+};
+
+type PmApiExtraArgs = [ports: readonly MessagePort[] | null];
+
+export type PmApiNames = BaseApiNames<PmApiSurface>;
+
+export type PmApiMap = BaseApiMap<PmApiSurface, PmApiExtraArgs>;
+
+export type PmApiMapInit = BaseApiMapInit<PmApiSurface, PmApiExtraArgs>;
+
+export type PmApiHandler<TName extends PmApiNames> = BaseApiHandler<PmApiSurface[TName], PmApiExtraArgs>;
+
+export type PmApiHandlerNoExtraArgs<TName extends PmApiNames> = BaseApiHandler<PmApiSurface[TName], []>;
+
+export type PmApiParams<TName extends PmApiNames> = BaseApiParams<PmApiSurface[TName]>;
+
+export type PmApiParam<TName extends PmApiNames, TParamName extends BaseApiParamNames<PmApiSurface[TName]>> = BaseApiParam<PmApiSurface[TName], TParamName>;
+
+export type PmApiReturn<TName extends PmApiNames> = BaseApiReturn<PmApiSurface[TName]>;
+
+export type PmApiParamsAny = BaseApiParamsAny<PmApiSurface>;
+
+export type PmApiMessageAny = {[name in PmApiNames]: PmApiMessage<name>}[PmApiNames];
+
+type PmApiMessage<TName extends PmApiNames> = {
+    action: TName;
+    params: PmApiParams<TName>;
 };

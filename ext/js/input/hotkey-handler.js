@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  * Copyright (C) 2021-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -52,7 +52,7 @@ export class HotkeyHandler extends EventDispatcher {
         this._isPrepared = true;
         this._updateEventHandlers();
         crossFrameApi.registerHandlers([
-            ['hotkeyHandlerForwardHotkey', this._onMessageForwardHotkey.bind(this)]
+            ['hotkeyHandlerForwardHotkey', this._onMessageForwardHotkey.bind(this)],
         ]);
     }
 
@@ -114,7 +114,7 @@ export class HotkeyHandler extends EventDispatcher {
                 key,
                 modifiers: [...modifiers],
                 scopes: [...scopes],
-                enabled
+                enabled,
             });
         }
         this._updateHotkeyRegistrations();

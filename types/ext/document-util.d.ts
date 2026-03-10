@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,6 +30,10 @@ export type GetRangeFromPointOptions = {
      * Whether or not zoom coordinates should be normalized.
      */
     normalizeCssZoom: boolean;
+    /**
+     * ISO-639 code of the language.
+     */
+    language: string | null;
 };
 
 export type ToNumberConstraints = {

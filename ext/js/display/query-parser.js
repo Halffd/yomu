@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  * Copyright (C) 2019-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,8 +18,8 @@
 
 import {EventDispatcher} from '../core/event-dispatcher.js';
 import {log} from '../core/log.js';
+import {trimTrailingWhitespacePlusSpace} from '../data/string-util.js';
 import {querySelectorNotNull} from '../dom/query-selector.js';
-import {convertToRomaji} from '../language/ja/japanese-wanakana.js';
 import {convertHiraganaToKatakana, convertKatakanaToHiragana, isStringEntirelyKana} from '../language/ja/japanese.js';
 import {TextScanner} from '../language/text-scanner.js';
 
@@ -68,7 +68,7 @@ export class QueryParser extends EventDispatcher {
             searchTerms: true,
             searchKanji: false,
             searchOnClick: true,
-            textSourceGenerator
+            textSourceGenerator,
         });
         /** @type {?(import('../language/ja/japanese-wanakana.js'))} */
         this._japaneseWanakanaModule = null;
@@ -118,11 +118,14 @@ export class QueryParser extends EventDispatcher {
             }
             this._textScanner.language = language;
             this._textScanner.setOptions(scanning);
+            this._textScanner.setEnabled(true);
         }
-        this._textScanner.setEnabled(true);
+
         if (selectedParserChanged && this._parseResults.length > 0) {
             this._renderParseResult();
         }
+
+        this._queryParser.lang = language;
     }
 
     /**
@@ -132,6 +135,9 @@ export class QueryParser extends EventDispatcher {
         this._text = text;
         this._setPreview(text);
 
+        if (this._useInternalParser === false && this._useMecabParser === false) {
+            return;
+        }
         /** @type {?import('core').TokenObject} */
         const token = {};
         this._setTextToken = token;
@@ -154,7 +160,7 @@ export class QueryParser extends EventDispatcher {
     /**
      * @param {import('text-scanner').EventArgument<'searchSuccess'>} details
      */
-    _onSearchSuccess({type, dictionaryEntries, sentence, inputInfo, textSource, optionsContext}) {
+    _onSearchSuccess({type, dictionaryEntries, sentence, inputInfo, textSource, optionsContext, pageTheme}) {
         this.trigger('searched', {
             textScanner: this._textScanner,
             type,
@@ -163,7 +169,8 @@ export class QueryParser extends EventDispatcher {
             inputInfo,
             textSource,
             optionsContext,
-            sentenceOffset: this._getSentenceOffset(textSource)
+            sentenceOffset: this._getSentenceOffset(textSource),
+            pageTheme: pageTheme,
         });
     }
 
@@ -209,7 +216,7 @@ export class QueryParser extends EventDispatcher {
             path: 'parsing.selectedParser',
             value,
             scope: 'profile',
-            optionsContext
+            optionsContext,
         };
         void this._api.modifySettings([modification], 'search');
     }
@@ -294,28 +301,31 @@ export class QueryParser extends EventDispatcher {
     _createParseResult(data) {
         let offset = 0;
         const fragment = document.createDocumentFragment();
-        for (const term of data) {
+        for (let i = 0; i < data.length; i++) {
+            const term = data[i];
             const termNode = document.createElement('span');
             termNode.className = 'query-parser-term';
             termNode.dataset.offset = `${offset}`;
             for (const {text, reading} of term) {
+                // trimEnd only for final text
+                const trimmedText = i === data.length - 1 ? text.trimEnd() : trimTrailingWhitespacePlusSpace(text);
                 if (reading.length === 0) {
                     try {
-                        if (isStringEntirelyKana(text)) {
-                            const r0 = convertKatakanaToHiragana(text);
+                        if (isStringEntirelyKana(trimmedText)) {
+                            const r0 = convertKatakanaToHiragana(trimmedText);
                             const r1 = convertToRomaji(r0);
-                            termNode.appendChild(this._createSegment(text, r1, offset));
+                            termNode.appendChild(this._createSegment(trimmedText, r1, offset));
                         } else {
-                            termNode.appendChild(document.createTextNode(text));
+                            termNode.appendChild(document.createTextNode(trimmedText));
                         }
                     } catch (e) {
-                        termNode.appendChild(document.createTextNode(text));
+                        termNode.appendChild(document.createTextNode(trimmedText));
                     }
                 } else {
-                    const reading2 = this._convertReading(text, reading);
-                    termNode.appendChild(this._createSegment(text, reading2, offset));
+                    const reading2 = this._convertReading(trimmedText, reading);
+                    termNode.appendChild(this._createSegment(trimmedText, reading2, offset));
                 }
-                offset += text.length;
+                offset += trimmedText.length;
             }
             fragment.appendChild(termNode);
         }

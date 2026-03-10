@@ -86,6 +86,7 @@
                                     "debugInfo",
                                     "maxResults",
                                     "showAdvanced",
+                                    "showDebug",
                                     "popupDisplayMode",
                                     "popupWidth",
                                     "popupHeight",
@@ -99,7 +100,9 @@
                                     "popupScaleRelativeToPageZoom",
                                     "popupScaleRelativeToVisualViewport",
                                     "showGuide",
+                                    "enableContextMenuScanSelected",
                                     "compactTags",
+                                    "averageFrequency",
                                     "glossaryLayoutMode",
                                     "mainDictionary",
                                     "popupTheme",
@@ -120,7 +123,14 @@
                                     "frequencyDisplayMode",
                                     "termDisplayMode",
                                     "sortFrequencyDictionary",
-                                    "sortFrequencyDictionaryOrder"
+                                    "sortFrequencyDictionaryOrder",
+                                    "stickySearchHeader",
+                                    "fontFamily",
+                                    "fontSize",
+                                    "lineHeight",
+                                    "enableYomitanApi",
+                                    "yomitanApiServer",
+                                    "yomitanApiAllowCssSanitizationBypass"
                                 ],
                                 "properties": {
                                     "enable": {
@@ -133,8 +143,20 @@
                                     },
                                     "resultOutputMode": {
                                         "type": "string",
-                                        "enum": ["group", "merge", "split"],
+                                        "enum": ["group", "merge", "split", "term"],
                                         "default": "group"
+                                    },
+                                    "fontFamily": {
+                                        "type": "string",
+                                        "default": ""
+                                    },
+                                    "fontSize": {
+                                        "type": "number",
+                                        "default": 14
+                                    },
+                                    "lineHeight": {
+                                        "type": "string",
+                                        "default": "1.5"
                                     },
                                     "debugInfo": {
                                         "type": "boolean",
@@ -146,6 +168,10 @@
                                         "default": 32
                                     },
                                     "showAdvanced": {
+                                        "type": "boolean",
+                                        "default": false
+                                    },
+                                    "showDebug": {
                                         "type": "boolean",
                                         "default": false
                                     },
@@ -206,13 +232,21 @@
                                         "type": "boolean",
                                         "default": true
                                     },
+                                    "enableContextMenuScanSelected": {
+                                        "type": "boolean",
+                                        "default": true
+                                    },
                                     "compactTags": {
+                                        "type": "boolean",
+                                        "default": false
+                                    },
+                                    "averageFrequency": {
                                         "type": "boolean",
                                         "default": false
                                     },
                                     "glossaryLayoutMode": {
                                         "type": "string",
-                                        "enum": ["default", "compact"],
+                                        "enum": ["default", "compact", "compact-popup-anki"],
                                         "default": "default"
                                     },
                                     "mainDictionary": {
@@ -220,13 +254,13 @@
                                     },
                                     "popupTheme": {
                                         "type": "string",
-                                        "enum": ["light", "dark", "browser"],
-                                        "default": "light"
+                                        "enum": ["light", "dark", "browser", "site"],
+                                        "default": "site"
                                     },
                                     "popupOuterTheme": {
                                         "type": "string",
-                                        "enum": ["light", "dark", "browser", "site"],
-                                        "default": "light"
+                                        "enum": ["light", "dark", "browser", "site", "none"],
+                                        "default": "site"
                                     },
                                     "customPopupCss": {
                                         "type": "string",
@@ -301,6 +335,22 @@
                                         "type": "string",
                                         "enum": ["ascending", "descending"],
                                         "default": "descending"
+                                    },
+                                    "stickySearchHeader": {
+                                        "type": "boolean",
+                                        "default": false
+                                    },
+                                    "enableYomitanApi": {
+                                        "type": "boolean",
+                                        "default": false
+                                    },
+                                    "yomitanApiServer": {
+                                        "type": "string",
+                                        "default": "http://127.0.0.1:19633"
+                                    },
+                                    "yomitanApiAllowCssSanitizationBypass": {
+                                        "type": "boolean",
+                                        "default": false
                                     }
                                 }
                             },
@@ -361,7 +411,9 @@
                                     "enabled",
                                     "volume",
                                     "autoPlay",
-                                    "sources"
+                                    "fallbackSoundType",
+                                    "sources",
+                                    "enableDefaultAudioSources"
                                 ],
                                 "properties": {
                                     "enabled": {
@@ -378,6 +430,11 @@
                                         "type": "boolean",
                                         "default": false
                                     },
+                                    "fallbackSoundType": {
+                                        "type": "string",
+                                        "enum": ["none", "click", "bloop"],
+                                        "default": "click"
+                                    },
                                     "sources": {
                                         "type": "array",
                                         "items": {
@@ -393,8 +450,10 @@
                                                     "type": "string",
                                                     "enum": [
                                                         "jpod101",
-                                                        "jpod101-alternate",
+                                                        "language-pod-101",
                                                         "jisho",
+                                                        "lingua-libre",
+                                                        "wiktionary",
                                                         "text-to-speech",
                                                         "text-to-speech-reading",
                                                         "custom",
@@ -412,13 +471,11 @@
                                                 }
                                             }
                                         },
-                                        "default": [
-                                            {
-                                                "type": "jpod101",
-                                                "url": "",
-                                                "voice": ""
-                                            }
-                                        ]
+                                        "default": []
+                                    },
+                                    "enableDefaultAudioSources": {
+                                        "type": "boolean",
+                                        "default": true
                                     }
                                 }
                             },
@@ -427,8 +484,7 @@
                                 "required": [
                                     "inputs",
                                     "preventMiddleMouse",
-                                    "touchInputEnabled",
-                                    "pointerEventsEnabled",
+                                    "preventBackForward",
                                     "selectText",
                                     "alphanumeric",
                                     "autoHideResults",
@@ -445,7 +501,12 @@
                                     "matchTypePrefix",
                                     "hidePopupOnCursorExit",
                                     "hidePopupOnCursorExitDelay",
-                                    "normalizeCssZoom"
+                                    "reducedMotionScrolling",
+                                    "reducedMotionScrollingScale",
+                                    "reducedMotionScrollingSwipeThreshold",
+                                    "normalizeCssZoom",
+                                    "scanWithoutMousemove",
+                                    "scanResolution"
                                 ],
                                 "properties": {
                                     "inputs": {
@@ -468,12 +529,13 @@
                                                     "scanOnTouchPress": false,
                                                     "scanOnTouchRelease": false,
                                                     "scanOnPenMove": true,
-                                                    "scanOnPenHover": true,
+                                                    "scanOnPenHover": false,
                                                     "scanOnPenReleaseHover": false,
                                                     "scanOnPenPress": true,
                                                     "scanOnPenRelease": false,
                                                     "preventTouchScrolling": false,
-                                                    "preventPenScrolling": false
+                                                    "preventPenScrolling": false,
+                                                    "minimumTouchTime": 0
                                                 }
                                             },
                                             {
@@ -493,12 +555,13 @@
                                                     "scanOnTouchPress": false,
                                                     "scanOnTouchRelease": false,
                                                     "scanOnPenMove": true,
-                                                    "scanOnPenHover": true,
+                                                    "scanOnPenHover": false,
                                                     "scanOnPenReleaseHover": false,
                                                     "scanOnPenPress": true,
                                                     "scanOnPenRelease": false,
                                                     "preventTouchScrolling": true,
-                                                    "preventPenScrolling": true
+                                                    "preventPenScrolling": true,
+                                                    "minimumTouchTime": 0
                                                 }
                                             }
                                         ],
@@ -557,7 +620,8 @@
                                                         "scanOnPenPress",
                                                         "scanOnPenRelease",
                                                         "preventTouchScrolling",
-                                                        "preventPenScrolling"
+                                                        "preventPenScrolling",
+                                                        "minimumTouchTime"
                                                     ],
                                                     "properties": {
                                                         "showAdvanced": {
@@ -594,7 +658,7 @@
                                                         },
                                                         "scanOnPenHover": {
                                                             "type": "boolean",
-                                                            "default": true
+                                                            "default": false
                                                         },
                                                         "scanOnPenReleaseHover": {
                                                             "type": "boolean",
@@ -615,6 +679,10 @@
                                                         "preventPenScrolling": {
                                                             "type": "boolean",
                                                             "default": true
+                                                        },
+                                                        "minimumTouchTime": {
+                                                            "type": "number",
+                                                            "default": 0
                                                         }
                                                     }
                                                 }
@@ -624,6 +692,7 @@
                                     "preventMiddleMouse": {
                                         "type": "object",
                                         "required": [
+                                            "onTextHover",
                                             "onWebPages",
                                             "onPopupPages",
                                             "onSearchPages",
@@ -648,13 +717,33 @@
                                             }
                                         }
                                     },
-                                    "touchInputEnabled": {
-                                        "type": "boolean",
-                                        "default": true
-                                    },
-                                    "pointerEventsEnabled": {
-                                        "type": "boolean",
-                                        "default": false
+                                    "preventBackForward": {
+                                        "type": "object",
+                                        "required": [
+                                            "onTextHover",
+                                            "onWebPages",
+                                            "onPopupPages",
+                                            "onSearchPages",
+                                            "onSearchQuery"
+                                        ],
+                                        "properties": {
+                                            "onWebPages": {
+                                                "type": "boolean",
+                                                "default": false
+                                            },
+                                            "onPopupPages": {
+                                                "type": "boolean",
+                                                "default": false
+                                            },
+                                            "onSearchPages": {
+                                                "type": "boolean",
+                                                "default": false
+                                            },
+                                            "onSearchQuery": {
+                                                "type": "boolean",
+                                                "default": false
+                                            }
+                                        }
                                     },
                                     "selectText": {
                                         "type": "boolean",
@@ -690,7 +779,7 @@
                                     "popupNestingMaxDepth": {
                                         "type": "integer",
                                         "minimum": 0,
-                                        "default": 0
+                                        "default": 10
                                     },
                                     "enablePopupSearch": {
                                         "type": "boolean",
@@ -710,7 +799,7 @@
                                     },
                                     "layoutAwareScan": {
                                         "type": "boolean",
-                                        "default": false
+                                        "default": true
                                     },
                                     "matchTypePrefix": {
                                         "type": "boolean",
@@ -725,9 +814,34 @@
                                         "minimum": 0,
                                         "default": 0
                                     },
+                                    "reducedMotionScrolling": {
+                                        "type": "boolean",
+                                        "default": false
+                                    },
+                                    "reducedMotionScrollingScale": {
+                                        "type": "number",
+                                        "default": 1
+                                    },
+                                    "reducedMotionScrollingSwipeThreshold": {
+                                        "type": "number",
+                                        "minimum": 0,
+                                        "default": 40
+                                    },
                                     "normalizeCssZoom": {
                                         "type": "boolean",
                                         "default": true
+                                    },
+                                    "scanWithoutMousemove": {
+                                        "type": "boolean",
+                                        "default": true
+                                    },
+                                    "scanResolution": {
+                                        "type": "string",
+                                        "enum": [
+                                            "character",
+                                            "word"
+                                        ],
+                                        "default": "character"
                                     }
                                 }
                             },
@@ -795,7 +909,7 @@
                                     "type": "object",
                                     "required": [
                                         "name",
-                                        "priority",
+                                        "alias",
                                         "enabled",
                                         "allowSecondarySearches",
                                         "definitionsCollapsible",
@@ -807,9 +921,9 @@
                                             "type": "string",
                                             "default": ""
                                         },
-                                        "priority": {
-                                            "type": "number",
-                                            "default": 0
+                                        "alias": {
+                                            "type": "string",
+                                            "default": ""
                                         },
                                         "enabled": {
                                             "type": "boolean",
@@ -875,17 +989,19 @@
                                     "server",
                                     "tags",
                                     "screenshot",
-                                    "terms",
-                                    "kanji",
+                                    "cardFormats",
                                     "duplicateScope",
                                     "duplicateScopeCheckAllModels",
                                     "checkForDuplicates",
+                                    "duplicateBehavior",
                                     "fieldTemplates",
                                     "suspendNewCards",
-                                    "displayTags",
+                                    "displayTagsAndFlags",
+                                    "targetTags",
                                     "noteGuiMode",
                                     "apiKey",
-                                    "downloadTimeout"
+                                    "downloadTimeout",
+                                    "forceSync"
                                 ],
                                 "properties": {
                                     "enable": {
@@ -925,55 +1041,86 @@
                                             }
                                         }
                                     },
-                                    "terms": {
-                                        "type": "object",
-                                        "required": [
-                                            "deck",
-                                            "model",
-                                            "fields"
-                                        ],
-                                        "properties": {
-                                            "deck": {
-                                                "type": "string",
-                                                "default": ""
-                                            },
-                                            "model": {
-                                                "type": "string",
-                                                "default": ""
-                                            },
-                                            "fields": {
-                                                "type": "object",
-                                                "additionalProperties": {
+                                    "cardFormats": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "required": [
+                                                "name",
+                                                "icon",
+                                                "deck",
+                                                "model",
+                                                "fields",
+                                                "type"
+                                            ],
+                                            "properties": {
+                                                "name": {
                                                     "type": "string",
                                                     "default": ""
-                                                }
-                                            }
-                                        }
-                                    },
-                                    "kanji": {
-                                        "type": "object",
-                                        "required": [
-                                            "deck",
-                                            "model",
-                                            "fields"
-                                        ],
-                                        "properties": {
-                                            "deck": {
-                                                "type": "string",
-                                                "default": ""
-                                            },
-                                            "model": {
-                                                "type": "string",
-                                                "default": ""
-                                            },
-                                            "fields": {
-                                                "type": "object",
-                                                "additionalProperties": {
+                                                },
+                                                "icon": {
+                                                    "type": "string",
+                                                    "enum": ["big-circle", "small-circle", "big-square", "big-diamond"],
+                                                    "default": "big-circle"
+                                                },
+                                                "deck": {
                                                     "type": "string",
                                                     "default": ""
+                                                },
+                                                "model": {
+                                                    "type": "string",
+                                                    "default": ""
+                                                },
+                                                "type": {
+                                                    "type": "string",
+                                                    "enum": ["term", "kanji"],
+                                                    "default": "term"
+                                                },
+                                                "fields": {
+                                                    "type": "object",
+                                                    "additionalProperties": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "value": {
+                                                                "type": "string",
+                                                                "default": ""
+                                                            },
+                                                            "overwriteMode": {
+                                                                "type": "string",
+                                                                "enum": ["coalesce", "coalesce-new", "skip", "append", "prepend", "overwrite"],
+                                                                "default": "coalesce"
+                                                            }
+                                                        }
+                                                    }
                                                 }
                                             }
-                                        }
+                                        },
+                                        "default": [
+                                            {
+                                                "name": "Expression",
+                                                "icon": "big-circle",
+                                                "deck": "",
+                                                "model": "",
+                                                "fields": {},
+                                                "type": "term"
+                                            },
+                                            {
+                                                "name": "Reading",
+                                                "icon": "small-circle",
+                                                "deck": "",
+                                                "model": "",
+                                                "fields": {},
+                                                "type": "term"
+                                            },
+                                            {
+                                                "name": "Kanji",
+                                                "icon": "big-circle",
+                                                "deck": "",
+                                                "model": "",
+                                                "fields": {},
+                                                "type": "kanji"
+                                            }
+                                        ]
                                     },
                                     "duplicateScope": {
                                         "type": "string",
@@ -990,8 +1137,8 @@
                                     },
                                     "duplicateBehavior": {
                                         "type": "string",
-                                        "enum": ["prevent", "new"],
-                                        "default": "prevent"
+                                        "enum": ["prevent", "overwrite", "new"],
+                                        "default": "new"
                                     },
                                     "fieldTemplates": {
                                         "type": ["string", "null"],
@@ -1001,10 +1148,17 @@
                                         "type": "boolean",
                                         "default": false
                                     },
-                                    "displayTags": {
+                                    "displayTagsAndFlags": {
                                         "type": "string",
-                                        "enum": ["never", "always", "non-standard"],
+                                        "enum": ["never", "always", "non-standard", "custom"],
                                         "default": "never"
+                                    },
+                                    "targetTags": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "default": []
                                     },
                                     "noteGuiMode": {
                                         "type": "string",
@@ -1019,6 +1173,10 @@
                                         "type": "number",
                                         "default": 0,
                                         "minimum": 0
+                                    },
+                                    "forceSync": {
+                                        "type": "boolean",
+                                        "default": false
                                     }
                                 }
                             },
@@ -1164,13 +1322,13 @@
                                             {"action": "nextEntry",         "argument": "1", "key": "ArrowDown", "modifiers": ["alt"],  "scopes": ["popup", "search"], "enabled": true},
                                             {"action": "historyBackward",   "argument": "",  "key": "KeyB",      "modifiers": ["alt"],  "scopes": ["popup", "search"], "enabled": true},
                                             {"action": "historyForward",    "argument": "",  "key": "KeyF",      "modifiers": ["alt"],  "scopes": ["popup", "search"], "enabled": true},
-                                            {"action": "profilePrevious",   "argument": "",  "key": "Minus",     "modifiers": ["alt"],  "scopes": ["popup", "search"], "enabled": true},
-                                            {"action": "profileNext",       "argument": "",  "key": "Equal",     "modifiers": ["alt"],  "scopes": ["popup", "search"], "enabled": true},
-                                            {"action": "addNoteKanji",      "argument": "",  "key": "KeyK",      "modifiers": ["alt"],  "scopes": ["popup", "search"], "enabled": true},
-                                            {"action": "addNoteTermKanji",  "argument": "",  "key": "KeyE",      "modifiers": ["alt"],  "scopes": ["popup", "search"], "enabled": true},
-                                            {"action": "addNoteTermKana",   "argument": "",  "key": "KeyR",      "modifiers": ["alt"],  "scopes": ["popup", "search"], "enabled": true},
+                                            {"action": "profilePrevious",   "argument": "",  "key": "Minus",     "modifiers": ["alt"],  "scopes": ["popup", "search", "web"], "enabled": true},
+                                            {"action": "profileNext",       "argument": "",  "key": "Equal",     "modifiers": ["alt"],  "scopes": ["popup", "search", "web"], "enabled": true},
+                                            {"action": "addNote",           "argument": "0", "key": "KeyE",      "modifiers": ["alt"],  "scopes": ["popup", "search"], "enabled": true},
+                                            {"action": "addNote",           "argument": "1", "key": "KeyR",      "modifiers": ["alt"],  "scopes": ["popup", "search"], "enabled": true},
+                                            {"action": "addNote",           "argument": "2", "key": "KeyK",      "modifiers": ["alt"],  "scopes": ["popup", "search"], "enabled": true},
                                             {"action": "playAudio",         "argument": "",  "key": "KeyP",      "modifiers": ["alt"],  "scopes": ["popup", "search"], "enabled": true},
-                                            {"action": "viewNotes",         "argument": "",  "key": "KeyV",      "modifiers": ["alt"],  "scopes": ["popup", "search"], "enabled": true},
+                                            {"action": "viewNotes",         "argument": "0", "key": "KeyV",      "modifiers": ["alt"],  "scopes": ["popup", "search"], "enabled": true},
                                             {"action": "copyHostSelection", "argument": "",  "key": "KeyC",      "modifiers": ["ctrl"], "scopes": ["popup"],           "enabled": true}
                                         ]
                                     }
@@ -1229,7 +1387,8 @@
         "global": {
             "type": "object",
             "required": [
-                "database"
+                "database",
+                "dataTransmissionConsentShown"
             ],
             "properties": {
                 "database": {
@@ -1243,6 +1402,10 @@
                             "default": false
                         }
                     }
+                },
+                "dataTransmissionConsentShown": {
+                    "type": "boolean",
+                    "default": false
                 }
             }
         }

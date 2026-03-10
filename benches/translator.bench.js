@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,11 +21,14 @@ import path from 'path';
 import {bench, describe} from 'vitest';
 import {parseJson} from '../dev/json.js';
 import {createTranslatorContext} from '../test/fixtures/translator-test.js';
+import {setupStubs} from '../test/utilities/database.js';
 import {createFindKanjiOptions, createFindTermsOptions} from '../test/utilities/translator.js';
+
+setupStubs();
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 const dictionaryName = 'Test Dictionary 2';
-const translator = await createTranslatorContext(path.join(dirname, '..', 'test', 'data/dictionaries/valid-dictionary1'), dictionaryName);
+const {translator} = await createTranslatorContext(path.join(dirname, '..', 'test', 'data/dictionaries/valid-dictionary1'), dictionaryName);
 
 describe('Translator', () => {
     const testInputsFilePath = path.join(dirname, '..', 'test', 'data/translator-test-inputs.json');

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,12 +25,12 @@ export default defineConfig({
             ...configDefaults.exclude,
             'dev/lib/**',
             'test/playwright/**',
-            'test/json.test.js'
+            'test/json.test.js',
         ],
         poolOptions: {
             threads: {
-                useAtomics: true
-            }
-        }
-    }
+                useAtomics: true,
+            },
+        },
+    },
 });

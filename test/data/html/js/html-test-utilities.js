@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  * Copyright (C) 2021-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -161,7 +161,7 @@ class HtmlTestUtilities {
         if (template !== null && templateContentContainer !== null) {
             const mode = (container instanceof HTMLElement ? container.dataset.shadowMode : void 0);
             const shadow = templateContentContainer.attachShadow({
-                mode: (mode === 'open' || mode === 'closed' ? mode : 'open')
+                mode: (mode === 'open' || mode === 'closed' ? mode : 'open'),
             });
 
             const containerStyles = document.querySelector('#container-styles');

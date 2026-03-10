@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -80,7 +80,7 @@ export function invokeApiMapHandler(map, name, params, extraParams, callback, ha
         if (promiseOrResult instanceof Promise) {
             /** @type {Promise<unknown>} */ (promiseOrResult).then(
                 (result) => { callback({result}); },
-                (error) => { callback({error: ExtensionError.serialize(error)}); }
+                (error) => { callback({error: ExtensionError.serialize(error)}); },
             );
             return true;
         } else {

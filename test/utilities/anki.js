@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,13 +22,13 @@ import {AnkiTemplateRenderer} from '../../ext/js/templates/anki-template-rendere
 
 /**
  * @param {import('dictionary').DictionaryEntryType} type
- * @returns {import('anki-note-builder').Field[]}
+ * @returns {import('settings').AnkiFields}
  */
 function createTestFields(type) {
-    /** @type {import('anki-note-builder').Field[]} */
-    const fields = [];
+    /** @type {import('settings').AnkiFields} */
+    const fields = {};
     for (const marker of getStandardFieldMarkers(type)) {
-        fields.push([marker, `{${marker}}`]);
+        fields[marker] = {value: `{${marker}}`, overwriteMode: 'coalesce'};
     }
     return fields;
 }
@@ -36,16 +36,29 @@ function createTestFields(type) {
 /**
  * @param {import('dictionary').DictionaryEntry} dictionaryEntry
  * @param {import('settings').ResultOutputMode} mode
+ * @param {string} styles
  * @returns {import('anki-templates').NoteData}
  * @throws {Error}
  */
-export function createTestAnkiNoteData(dictionaryEntry, mode) {
+export function createTestAnkiNoteData(dictionaryEntry, mode, styles = '') {
     const marker = '{marker}';
+    /** @type {Map<string, string>} */
+    const dictionaryStylesMap = new Map();
+    if (styles !== '') {
+        dictionaryStylesMap.set('Test Dictionary 2', styles);
+    }
     /** @type {import('anki-templates-internal').CreateDetails} */
     const data = {
         dictionaryEntry,
         resultOutputMode: mode,
-        mode: 'test',
+        cardFormat: {
+            type: 'term',
+            name: 'test',
+            deck: 'deck',
+            model: 'model',
+            fields: {},
+            icon: 'big-circle',
+        },
         glossaryLayoutMode: 'default',
         compactTags: false,
         context: {
@@ -53,9 +66,10 @@ export function createTestAnkiNoteData(dictionaryEntry, mode) {
             sentence: {text: '', offset: 0},
             documentTitle: 'title',
             query: 'query',
-            fullQuery: 'fullQuery'
+            fullQuery: 'fullQuery',
         },
-        media: {}
+        media: {},
+        dictionaryStylesMap,
     };
     return createAnkiNoteData(marker, data);
 }
@@ -65,10 +79,11 @@ export function createTestAnkiNoteData(dictionaryEntry, mode) {
  * @param {import('settings').ResultOutputMode} mode
  * @param {string} template
  * @param {?import('vitest').ExpectStatic} expect
+ * @param {string} styles
  * @returns {Promise<import('anki').NoteFields[]>}
  */
-export async function getTemplateRenderResults(dictionaryEntries, mode, template, expect) {
-    const ankiTemplateRenderer = new AnkiTemplateRenderer();
+export async function getTemplateRenderResults(dictionaryEntries, mode, template, expect, styles = '') {
+    const ankiTemplateRenderer = new AnkiTemplateRenderer(document, window);
     await ankiTemplateRenderer.prepare();
     const clozePrefix = 'cloze-prefix';
     const clozeSuffix = 'cloze-suffix';
@@ -91,21 +106,30 @@ export async function getTemplateRenderResults(dictionaryEntries, mode, template
             url: 'url:',
             sentence: {
                 text: `${clozePrefix}${source}${clozeSuffix}`,
-                offset: clozePrefix.length
+                offset: clozePrefix.length,
             },
             documentTitle: 'title',
             query: 'query',
-            fullQuery: 'fullQuery'
+            fullQuery: 'fullQuery',
         };
+        /** @type {Map<string, string>} */
+        const dictionaryStylesMap = new Map();
+        if (styles) {
+            dictionaryStylesMap.set('Test Dictionary 2', styles);
+        }
         /** @type {import('anki-note-builder').CreateNoteDetails} */
         const details = {
             dictionaryEntry,
-            mode: 'test',
+            cardFormat: {
+                type: dictionaryEntry.type,
+                name: 'test',
+                deck: 'deckName',
+                model: 'modelName',
+                fields: createTestFields(dictionaryEntry.type),
+                icon: 'big-circle',
+            },
             context,
             template,
-            deckName: 'deckName',
-            modelName: 'modelName',
-            fields: createTestFields(dictionaryEntry.type),
             tags: ['yomitan'],
             duplicateScope: 'collection',
             duplicateScopeCheckAllModels: false,
@@ -113,7 +137,8 @@ export async function getTemplateRenderResults(dictionaryEntries, mode, template
             glossaryLayoutMode: 'default',
             compactTags: false,
             requirements: [],
-            mediaOptions: null
+            mediaOptions: null,
+            dictionaryStylesMap,
         };
         const {note: {fields: noteFields}, errors} = await ankiNoteBuilder.createNote(details);
         for (const error of errors) {

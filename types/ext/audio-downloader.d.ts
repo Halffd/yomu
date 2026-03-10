@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,11 +16,13 @@
  */
 
 import type * as Audio from './audio';
+import type * as Language from './language';
 
 export type GetInfoHandler = (
     term: string,
     reading: string,
-    details?: Audio.AudioSourceInfo,
+    details: Audio.AudioSourceInfo,
+    languageSummary: Language.LanguageSummary,
 ) => Promise<Info[]>;
 
 export type Info = Info1 | Info2;
@@ -51,4 +53,30 @@ export type CustomAudioList = {
 export type CustomAudioListSource = {
     url: string;
     name?: string;
+};
+
+export type WikimediaCommonsLookupResponse = {
+    query: {
+        search: WikimediaCommonsLookupResult[];
+    };
+};
+
+export type WikimediaCommonsFileResponse = {
+    query: {
+        pages: Record<string, WikimediaCommonsFileResult>;
+    };
+};
+
+export type WikimediaCommonsLookupResult = {
+    title: string;
+};
+
+export type WikimediaCommonsFileResult = {
+    title: string;
+    imageinfo: WikimediaCommonsFileResultImageInfo[];
+};
+
+export type WikimediaCommonsFileResultImageInfo = {
+    url: string;
+    user: string;
 };

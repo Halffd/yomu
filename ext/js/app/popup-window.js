@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  * Copyright (C) 2020-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -263,6 +263,13 @@ export class PopupWindow extends EventDispatcher {
         return false;
     }
 
+    /**
+     * @returns {Promise<boolean>}
+     */
+    async isPointerOver() {
+        return false;
+    }
+
     // Private
 
     /**
@@ -286,7 +293,7 @@ export class PopupWindow extends EventDispatcher {
                     this._popupTabId,
                     frameId,
                     'displayPopupMessage2',
-                    message
+                    message,
                 ));
             } catch (e) {
                 if (this._application.webExtension.unloaded) {
@@ -307,7 +314,7 @@ export class PopupWindow extends EventDispatcher {
             this._popupTabId,
             frameId,
             'displayPopupMessage2',
-            message
+            message,
         ));
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  * Copyright (C) 2020-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -17,7 +17,7 @@
  */
 
 import {ExtensionError} from '../core/extension-error.js';
-import {deferPromise} from '../core/utilities.js';
+import {deferPromise, sanitizeCSS} from '../core/utilities.js';
 import {convertHiraganaToKatakana, convertKatakanaToHiragana} from '../language/ja/japanese.js';
 import {cloneFieldMarkerPattern, getRootDeckName} from './anki-util.js';
 
@@ -46,12 +46,9 @@ export class AnkiNoteBuilder {
      */
     async createNote({
         dictionaryEntry,
-        mode,
+        cardFormat,
         context,
         template,
-        deckName,
-        modelName,
-        fields,
         tags = [],
         requirements = [],
         duplicateScope = 'collection',
@@ -59,8 +56,11 @@ export class AnkiNoteBuilder {
         resultOutputMode = 'split',
         glossaryLayoutMode = 'default',
         compactTags = false,
-        mediaOptions = null
+        mediaOptions = null,
+        dictionaryStylesMap = new Map(),
     }) {
+        const {deck: deckName, model: modelName, fields: fieldsSettings} = cardFormat;
+        const fields = Object.entries(fieldsSettings);
         let duplicateScopeDeckName = null;
         let duplicateScopeCheckChildren = false;
         if (duplicateScope === 'deck-root') {
@@ -80,9 +80,19 @@ export class AnkiNoteBuilder {
             }
         }
 
-        const commonData = this._createData(dictionaryEntry, mode, context, resultOutputMode, glossaryLayoutMode, compactTags, media);
+        // Make URL field blank if URL source is Yomitan
+        try {
+            const url = new URL(context.url);
+            if (url.protocol === new URL(import.meta.url).protocol) {
+                context.url = '';
+            }
+        } catch (e) {
+            // Ignore
+        }
+
+        const commonData = this._createData(dictionaryEntry, cardFormat, context, resultOutputMode, glossaryLayoutMode, compactTags, media, dictionaryStylesMap);
         const formattedFieldValuePromises = [];
-        for (const [, fieldValue] of fields) {
+        for (const [, {value: fieldValue}] of fields) {
             const formattedFieldValuePromise = this._formatField(fieldValue, commonData, template);
             formattedFieldValuePromises.push(formattedFieldValuePromise);
         }
@@ -116,9 +126,9 @@ export class AnkiNoteBuilder {
                 duplicateScopeOptions: {
                     deckName: duplicateScopeDeckName,
                     checkChildren: duplicateScopeCheckChildren,
-                    checkAllModels: duplicateScopeCheckAllModels
-                }
-            }
+                    checkAllModels: duplicateScopeCheckAllModels,
+                },
+            },
         };
         return {note, errors: allErrors, requirements: [...uniqueRequirements.values()]};
     }
@@ -129,14 +139,15 @@ export class AnkiNoteBuilder {
      */
     async getRenderingData({
         dictionaryEntry,
-        mode,
+        cardFormat,
         context,
         resultOutputMode = 'split',
         glossaryLayoutMode = 'default',
         compactTags = false,
-        marker
+        marker,
+        dictionaryStylesMap,
     }) {
-        const commonData = this._createData(dictionaryEntry, mode, context, resultOutputMode, glossaryLayoutMode, compactTags, void 0);
+        const commonData = this._createData(dictionaryEntry, cardFormat, context, resultOutputMode, glossaryLayoutMode, compactTags, void 0, dictionaryStylesMap);
         return await this._templateRenderer.getModifiedData({marker, commonData}, 'ankiNote');
     }
 
@@ -171,27 +182,44 @@ export class AnkiNoteBuilder {
         return {type, term, reading};
     }
 
+    /**
+     * @param {import('settings').DictionariesOptions} dictionaries
+     * @returns {Map<string, string>}
+     */
+    getDictionaryStylesMap(dictionaries) {
+        const styleMap = new Map();
+        for (const dictionary of dictionaries) {
+            const {name, styles} = dictionary;
+            if (typeof styles === 'string') {
+                styleMap.set(name, sanitizeCSS(styles));
+            }
+        }
+        return styleMap;
+    }
+
     // Private
 
     /**
      * @param {import('dictionary').DictionaryEntry} dictionaryEntry
-     * @param {import('anki-templates-internal').CreateMode} mode
+     * @param {import('settings').AnkiCardFormat} cardFormat
      * @param {import('anki-templates-internal').Context} context
      * @param {import('settings').ResultOutputMode} resultOutputMode
      * @param {import('settings').GlossaryLayoutMode} glossaryLayoutMode
      * @param {boolean} compactTags
      * @param {import('anki-templates').Media|undefined} media
+     * @param {Map<string, string>} dictionaryStylesMap
      * @returns {import('anki-note-builder').CommonData}
      */
-    _createData(dictionaryEntry, mode, context, resultOutputMode, glossaryLayoutMode, compactTags, media) {
+    _createData(dictionaryEntry, cardFormat, context, resultOutputMode, glossaryLayoutMode, compactTags, media, dictionaryStylesMap) {
         return {
             dictionaryEntry,
-            mode,
+            cardFormat,
             context,
             resultOutputMode,
             glossaryLayoutMode,
             compactTags,
-            media
+            media,
+            dictionaryStylesMap,
         };
     }
 
@@ -314,7 +342,7 @@ export class AnkiNoteBuilder {
                 templateItems.push({
                     type: /** @type {import('anki-templates').RenderMode} */ ('ankiNote'),
                     commonData,
-                    datas
+                    datas,
                 });
             }
             items.push({template, templateItems});
@@ -370,7 +398,7 @@ export class AnkiNoteBuilder {
         let injectScreenshot = false;
         let injectClipboardImage = false;
         let injectClipboardText = false;
-        let injectSelectionText = false;
+        let injectPopupSelectionText = false;
         /** @type {import('anki-note-builder').TextFuriganaDetails[]} */
         const textFuriganaDetails = [];
         /** @type {import('api').InjectAnkiNoteMediaDictionaryMediaDetails[]} */
@@ -382,7 +410,7 @@ export class AnkiNoteBuilder {
                 case 'screenshot': injectScreenshot = true; break;
                 case 'clipboardImage': injectClipboardImage = true; break;
                 case 'clipboardText': injectClipboardText = true; break;
-                case 'selectionText': injectSelectionText = true; break;
+                case 'popupSelectionText': injectPopupSelectionText = true; break;
                 case 'textFurigana':
                     {
                         const {text, readingMode} = requirement;
@@ -409,8 +437,8 @@ export class AnkiNoteBuilder {
         if (injectAudio && dictionaryEntryDetails.type !== 'kanji') {
             const audioOptions = mediaOptions.audio;
             if (typeof audioOptions === 'object' && audioOptions !== null) {
-                const {sources, preferredAudioIndex, idleTimeout} = audioOptions;
-                audioDetails = {sources, preferredAudioIndex, idleTimeout};
+                const {sources, preferredAudioIndex, idleTimeout, languageSummary, enableDefaultAudioSources} = audioOptions;
+                audioDetails = {sources, preferredAudioIndex, idleTimeout, languageSummary, enableDefaultAudioSources};
             }
         }
         if (injectScreenshot) {
@@ -427,19 +455,19 @@ export class AnkiNoteBuilder {
             const textParsingOptions = mediaOptions.textParsing;
             if (typeof textParsingOptions === 'object' && textParsingOptions !== null) {
                 const {optionsContext, scanLength} = textParsingOptions;
-                textFuriganaPromise = this._getTextFurigana(textFuriganaDetails, optionsContext, scanLength);
+                textFuriganaPromise = this._getTextFurigana(textFuriganaDetails, optionsContext, scanLength, dictionaryEntryDetails);
             }
         }
 
         // Inject media
-        const selectionText = injectSelectionText ? this._getSelectionText() : null;
+        const popupSelectionText = injectPopupSelectionText ? this._getPopupSelectionText() : null;
         const injectedMedia = await this._api.injectAnkiNoteMedia(
             timestamp,
             dictionaryEntryDetails,
             audioDetails,
             screenshotDetails,
             clipboardDetails,
-            dictionaryMediaDetails
+            dictionaryMediaDetails,
         );
         const {audioFileName, screenshotFileName, clipboardImageFileName, clipboardText, dictionaryMedia: dictionaryMediaArray, errors} = injectedMedia;
         const textFurigana = textFuriganaPromise !== null ? await textFuriganaPromise : [];
@@ -461,9 +489,9 @@ export class AnkiNoteBuilder {
             screenshot: (typeof screenshotFileName === 'string' ? {value: screenshotFileName} : void 0),
             clipboardImage: (typeof clipboardImageFileName === 'string' ? {value: clipboardImageFileName} : void 0),
             clipboardText: (typeof clipboardText === 'string' ? {value: clipboardText} : void 0),
-            selectionText: (typeof selectionText === 'string' ? {value: selectionText} : void 0),
+            popupSelectionText: (typeof popupSelectionText === 'string' ? {value: popupSelectionText} : void 0),
             textFurigana,
-            dictionaryMedia
+            dictionaryMedia,
         };
         return {media, errors};
     }
@@ -471,7 +499,7 @@ export class AnkiNoteBuilder {
     /**
      * @returns {string}
      */
-    _getSelectionText() {
+    _getPopupSelectionText() {
         const selection = document.getSelection();
         return selection !== null ? selection.toString() : '';
     }
@@ -480,9 +508,10 @@ export class AnkiNoteBuilder {
      * @param {import('anki-note-builder').TextFuriganaDetails[]} entries
      * @param {import('settings').OptionsContext} optionsContext
      * @param {number} scanLength
+     * @param {?import('api.d.ts').InjectAnkiNoteMediaDefinitionDetails} readingOverride
      * @returns {Promise<import('anki-templates').TextFuriganaSegment[]>}
      */
-    async _getTextFurigana(entries, optionsContext, scanLength) {
+    async _getTextFurigana(entries, optionsContext, scanLength, readingOverride) {
         const results = [];
         for (const {text, readingMode} of entries) {
             const parseResults = await this._api.parseText(text, optionsContext, scanLength, true, false);
@@ -493,48 +522,84 @@ export class AnkiNoteBuilder {
                 break;
             }
             if (data !== null) {
-                const value = this._createFuriganaHtml(data, readingMode);
-                results.push({text, readingMode, details: {value}});
+                const valueHtml = createFuriganaHtml(data, readingMode, readingOverride);
+                const valuePlain = createFuriganaPlain(data, readingMode, readingOverride);
+                results.push({text, readingMode, detailsHtml: {value: valueHtml}, detailsPlain: {value: valuePlain}});
             }
         }
         return results;
     }
+}
 
-    /**
-     * @param {import('api').ParseTextLine[]} data
-     * @param {?import('anki-templates').TextFuriganaReadingMode} readingMode
-     * @returns {string}
-     */
-    _createFuriganaHtml(data, readingMode) {
-        let result = '';
-        for (const term of data) {
-            result += '<span class="term">';
-            for (const {text, reading} of term) {
-                if (reading.length > 0) {
-                    const reading2 = this._convertReading(reading, readingMode);
-                    result += `<ruby>${text}<rt>${reading2}</rt></ruby>`;
-                } else {
-                    result += text;
-                }
+/**
+ * @param {import('api').ParseTextLine[]} data
+ * @param {?import('anki-templates').TextFuriganaReadingMode} readingMode
+ * @param {?import('api.d.ts').InjectAnkiNoteMediaDefinitionDetails} readingOverride
+ * @returns {string}
+ */
+export function createFuriganaHtml(data, readingMode, readingOverride) {
+    let result = '';
+    for (const term of data) {
+        result += '<span class="term">';
+        for (const {text, reading} of term) {
+            if (reading.length > 0) {
+                const reading2 = getReading(text, reading, readingMode, readingOverride);
+                result += `<ruby>${text}<rt>${reading2}</rt></ruby>`;
+            } else {
+                result += text;
             }
-            result += '</span>';
         }
-        return result;
+        result += '</span>';
     }
+    return result;
+}
 
-    /**
-     * @param {string} reading
-     * @param {?import('anki-templates').TextFuriganaReadingMode} readingMode
-     * @returns {string}
-     */
-    _convertReading(reading, readingMode) {
-        switch (readingMode) {
-            case 'hiragana':
-                return convertKatakanaToHiragana(reading);
-            case 'katakana':
-                return convertHiraganaToKatakana(reading);
-            default:
-                return reading;
+/**
+ * @param {import('api').ParseTextLine[]} data
+ * @param {?import('anki-templates').TextFuriganaReadingMode} readingMode
+ * @param {?import('api.d.ts').InjectAnkiNoteMediaDefinitionDetails} readingOverride
+ * @returns {string}
+ */
+export function createFuriganaPlain(data, readingMode, readingOverride) {
+    let result = '';
+    for (const term of data) {
+        for (const {text, reading} of term) {
+            if (reading.length > 0) {
+                const reading2 = getReading(text, reading, readingMode, readingOverride);
+                result += ` ${text}[${reading2}]`;
+            } else {
+                result += text;
+            }
         }
     }
+    result = result.trimStart();
+    return result;
+}
+
+/**
+ * @param {string} reading
+ * @param {?import('anki-templates').TextFuriganaReadingMode} readingMode
+ * @returns {string}
+ */
+function convertReading(reading, readingMode) {
+    switch (readingMode) {
+        case 'hiragana':
+            return convertKatakanaToHiragana(reading);
+        case 'katakana':
+            return convertHiraganaToKatakana(reading);
+        default:
+            return reading;
+    }
+}
+
+/**
+ * @param {string} text
+ * @param {string} reading
+ * @param {?import('anki-templates').TextFuriganaReadingMode} readingMode
+ * @param {?import('api.d.ts').InjectAnkiNoteMediaDefinitionDetails} readingOverride
+ * @returns {string}
+ */
+function getReading(text, reading, readingMode, readingOverride) {
+    const shouldOverride = readingOverride?.type === 'term' && readingOverride.term === text && readingOverride.reading.length > 0;
+    return convertReading(shouldOverride ? readingOverride.reading : reading, readingMode);
 }

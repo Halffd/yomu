@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024  Yomitan Authors
+ * Copyright (C) 2024-2025  Yomitan Authors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -73,5 +73,18 @@ export class MultiLanguageTransformer {
         const languageTransformer = this._languageTransformers.get(language);
         if (typeof languageTransformer === 'undefined') { return [LanguageTransformer.createTransformedText(sourceText, 0, [])]; }
         return languageTransformer.transform(sourceText);
+    }
+
+    /**
+     * @param {string} language
+     * @param {string[]} inflectionRules
+     * @returns {import('dictionary').InflectionRuleChain}
+     */
+    getUserFacingInflectionRules(language, inflectionRules) {
+        const languageTransformer = this._languageTransformers.get(language);
+        if (typeof languageTransformer === 'undefined') {
+            return inflectionRules.map((rule) => ({name: rule}));
+        }
+        return languageTransformer.getUserFacingInflectionRules(inflectionRules);
     }
 }

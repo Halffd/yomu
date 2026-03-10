@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,15 +25,15 @@ export const root = path.join(dirname, '..', '..');
 
 export const test = base.extend({
     // eslint-disable-next-line no-empty-pattern
-    context: async ({}, use) => {
+    context: async ({}, /** @type {(r: import('playwright').BrowserContext) => Promise<void>} */ use) => {
         const pathToExtension = path.join(root, 'ext');
         const context = await chromium.launchPersistentContext('', {
             // Disabled: headless: false,
             args: [
                 '--headless=new',
                 `--disable-extensions-except=${pathToExtension}`,
-                `--load-extension=${pathToExtension}`
-            ]
+                `--load-extension=${pathToExtension}`,
+            ],
         });
         await use(context);
         await context.close();
@@ -46,7 +46,7 @@ export const test = base.extend({
 
         const extensionId = background.url().split('/')[2];
         await use(extensionId);
-    }
+    },
 });
 
 export const expect = test.expect;
@@ -59,7 +59,7 @@ export function getMockModelFields() {
         ['Word', '{expression}'],
         ['Reading', '{furigana-plain}'],
         ['Sentence', '{clipboard-text}'],
-        ['Audio', '{audio}']
+        ['Audio', '{audio}'],
     ]);
 }
 
@@ -78,7 +78,7 @@ export async function mockAnkiRouteHandler(route) {
         const responseJson = {
             status: 200,
             contentType: 'text/json',
-            body: JSON.stringify(body)
+            body: JSON.stringify(body),
         };
         await route.fulfill(responseJson);
     } catch {
@@ -108,7 +108,7 @@ export function getExpectedAddNoteBody() {
                     Word: '読む',
                     Reading: '読[よ]む',
                     Audio: '[sound:mock_audio.mp3]',
-                    Sentence: '読むの例文'
+                    Sentence: '読むの例文',
                 },
                 tags: ['yomitan'],
                 deckName: 'Mock Deck',
@@ -119,11 +119,11 @@ export function getExpectedAddNoteBody() {
                     duplicateScopeOptions: {
                         deckName: null,
                         checkChildren: false,
-                        checkAllModels: false
-                    }
-                }
-            }
-        }
+                        checkAllModels: false,
+                    },
+                },
+            },
+        },
     };
 }
 
@@ -139,6 +139,7 @@ function getResponseBody(action) {
         case 'modelNames': return ['Mock Model'];
         case 'modelFieldNames': return [...getMockModelFields().keys()];
         case 'canAddNotes': return [true, true];
+        case 'canAddNotesWithErrorDetail': return [{canAdd: true}, {canAdd: true}];
         case 'storeMediaFile': return 'mock_audio.mp3';
         case 'addNote': return 102312488912;
         case 'multi': return [];

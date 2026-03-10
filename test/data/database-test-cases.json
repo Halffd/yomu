@@ -3,8 +3,10 @@
     "title": "Test Dictionary",
     "revision": "test",
     "sequenced": true,
+    "styles": "ul[data-sc-content='glossary'] {\n    color: #ffff00;\n}",
     "version": 3,
     "importDate": 0,
+    "importSuccess": true,
     "prefixWildcardsSupported": true,
     "counts": {
       "kanji": {
@@ -21,13 +23,13 @@
         "total": 15
       },
       "termMeta": {
-        "total": 39,
+        "total": 40,
         "freq": 31,
-        "pitch": 7,
+        "pitch": 8,
         "ipa": 1
       },
       "terms": {
-        "total": 30
+        "total": 34
       }
     }
   },
@@ -36,8 +38,8 @@
       {
         "kanji": 2,
         "kanjiMeta": 6,
-        "terms": 30,
-        "termMeta": 39,
+        "terms": 34,
+        "termMeta": 40,
         "tagMeta": 15,
         "media": 6
       }
@@ -45,8 +47,8 @@
     "total": {
       "kanji": 2,
       "kanjiMeta": 6,
-      "terms": 30,
-      "termMeta": 39,
+      "terms": 34,
+      "termMeta": 40,
       "tagMeta": 15,
       "media": 6
     }
@@ -615,7 +617,7 @@
           }
         ],
         "expectedResults": {
-          "total": 12,
+          "total": 13,
           "modes": [
             [
               "freq",
@@ -623,7 +625,7 @@
             ],
             [
               "pitch",
-              2
+              3
             ]
           ]
         }

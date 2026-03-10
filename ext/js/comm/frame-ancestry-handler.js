@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  * Copyright (C) 2021-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -51,7 +51,7 @@ export class FrameAncestryHandler {
         if (this._isPrepared) { return; }
         window.addEventListener('message', this._onWindowMessage.bind(this), false);
         this._crossFrameApi.registerHandlers([
-            ['frameAncestryHandlerRequestFrameInfoResponse', this._onFrameAncestryHandlerRequestFrameInfoResponse.bind(this)]
+            ['frameAncestryHandlerRequestFrameInfoResponse', this._onFrameAncestryHandlerRequestFrameInfoResponse.bind(this)],
         ]);
         this._isPrepared = true;
     }
@@ -234,7 +234,7 @@ export class FrameAncestryHandler {
     _requestFrameInfo(targetWindow, originFrameId, childFrameId, uniqueId, nonce) {
         targetWindow.postMessage({
             action: this._requestMessageId,
-            params: {originFrameId, childFrameId, uniqueId, nonce}
+            params: {originFrameId, childFrameId, uniqueId, nonce},
         }, '*');
     }
 

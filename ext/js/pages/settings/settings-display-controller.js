@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  * Copyright (C) 2020-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,6 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {ThemeController} from '../../app/theme-controller.js';
 import {isInputElementFocused} from '../../dom/document-util.js';
 import {PopupMenu} from '../../dom/popup-menu.js';
 import {querySelectorNotNull} from '../../dom/query-selector.js';
@@ -39,10 +40,17 @@ export class SettingsDisplayController {
         this._onMoreToggleClickBind = this._onMoreToggleClick.bind(this);
         /** @type {(event: MouseEvent) => void} */
         this._onMenuButtonClickBind = this._onMenuButtonClick.bind(this);
+        /** @type {ThemeController} */
+        this._themeController = new ThemeController(document.documentElement);
+        /** @type {HTMLSelectElement | null}*/
+        this._themeDropdown = document.querySelector('[data-setting="general.popupTheme"]');
     }
 
     /** */
-    prepare() {
+    async prepare() {
+        this._themeController.prepare();
+        await this._setTheme();
+
         const onFabButtonClick = this._onFabButtonClick.bind(this);
         for (const fabButton of /** @type {NodeListOf<HTMLElement>} */ (document.querySelectorAll('.fab-button'))) {
             fabButton.addEventListener('click', onFabButtonClick, false);
@@ -70,20 +78,39 @@ export class SettingsDisplayController {
         const moreSelectorObserver = new SelectorObserver({
             selector: '.more-toggle',
             onAdded: this._onMoreSetup.bind(this),
-            onRemoved: this._onMoreCleanup.bind(this)
+            onRemoved: this._onMoreCleanup.bind(this),
         });
         moreSelectorObserver.observe(document.documentElement, false);
 
         const menuSelectorObserver = new SelectorObserver({
             selector: '[data-menu]',
             onAdded: this._onMenuSetup.bind(this),
-            onRemoved: this._onMenuCleanup.bind(this)
+            onRemoved: this._onMenuCleanup.bind(this),
         });
         menuSelectorObserver.observe(document.documentElement, false);
 
         window.addEventListener('keydown', this._onKeyDown.bind(this), false);
-        window.addEventListener('popstate', this._onPopState.bind(this), false);
-        this._updateScrollTarget();
+
+        if (this._themeDropdown) {
+            this._themeDropdown.addEventListener('change', this._updateTheme.bind(this), false);
+        }
+    }
+
+    /** */
+    async _setTheme() {
+        this._themeController.theme = (await this._settingsController.getOptions()).general.popupTheme;
+        this._themeController.siteOverride = true;
+        this._themeController.updateTheme();
+    }
+
+    /** */
+    async _updateTheme() {
+        const theme = this._themeDropdown?.value;
+        if (theme === 'site' || theme === 'light' || theme === 'dark' || theme === 'browser') {
+            this._themeController.theme = theme;
+        }
+        this._themeController.siteOverride = true;
+        this._themeController.updateTheme();
     }
 
     // Private
@@ -171,11 +198,6 @@ export class SettingsDisplayController {
         }
 
         e.preventDefault();
-    }
-
-    /** */
-    _onPopState() {
-        this._updateScrollTarget();
     }
 
     /**
@@ -270,20 +292,6 @@ export class SettingsDisplayController {
         }
     }
 
-    /** */
-    _updateScrollTarget() {
-        const hash = window.location.hash;
-        if (!hash.startsWith('#!')) { return; }
-
-        const content = this._contentNode;
-        const target = document.getElementById(hash.substring(2));
-        if (content === null || target === null) { return; }
-
-        const rect1 = content.getBoundingClientRect();
-        const rect2 = target.getBoundingClientRect();
-        content.scrollTop += rect2.top - rect1.top;
-    }
-
     /**
      * @param {HTMLElement} link
      * @returns {?Element}
@@ -310,7 +318,7 @@ export class SettingsDisplayController {
         }
 
         const modal = this._modalController.getTopVisibleModal();
-        if (modal !== null) {
+        if (modal !== null && !modal.forceInteract) {
             modal.setVisible(false);
         }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,25 +23,14 @@ import type * as StructuredContent from './structured-content';
 
 export type OnProgressCallback = (data: ProgressData) => void;
 
-/**
- * An enum representing the import step.
- * - `-2` `-1` - Dictionary import is uninitialized.
- * - `0` - Load dictionary archive and validate index step.
- * - `1` - Load schemas and get archive files step.
- * - `2` - Load and validate dictionary data step.
- * - `3` - Format dictionary data and extended data support step.
- * - `4` - Resolve async requirements and import media step.
- * - `5` - Add dictionary descriptor and import data step.
- */
-export type ImportStep = -2 | -1 | 0 | 1 | 2 | 3 | 4 | 5;
+export type ImportStep = {label: string, callback?: () => void};
 
-export type ImportStepCount = 6;
+export type ImportSteps = ImportStep[];
 
 export type ProgressData = {
-    stepIndex: ImportStep;
-    stepCount: ImportStepCount;
     index: number;
     count: number;
+    nextStep?: boolean;
 };
 
 export type ImportResult = {
@@ -51,16 +40,22 @@ export type ImportResult = {
 
 export type ImportDetails = {
     prefixWildcardsSupported: boolean;
+    yomitanVersion: string;
 };
 
 export type Summary = {
     title: string;
     revision: string;
     sequenced: boolean;
+    minimumYomitanVersion?: string;
     version: number;
     importDate: number;
     prefixWildcardsSupported: boolean;
-    counts: SummaryCounts;
+    counts?: SummaryCounts;
+    styles: string;
+    isUpdatable?: boolean;
+    indexUrl?: string;
+    downloadUrl?: string;
     author?: string;
     url?: string;
     description?: string;
@@ -68,6 +63,15 @@ export type Summary = {
     sourceLanguage?: string;
     targetLanguage?: string;
     frequencyMode?: 'occurrence-based' | 'rank-based';
+    importSuccess?: boolean;
+};
+
+export type SummaryDetails = {
+    prefixWildcardsSupported: boolean;
+    counts: SummaryCounts;
+    styles: string;
+    yomitanVersion: string;
+    importSuccess: boolean;
 };
 
 export type SummaryCounts = {
@@ -84,7 +88,7 @@ export type SummaryItemCount = {
 };
 
 export type SummaryMetaCount = {
-    total: number;
+    [total: string]: number;
     [key: string]: number;
 };
 

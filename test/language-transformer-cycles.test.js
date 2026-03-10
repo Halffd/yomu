@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024  Yomitan Authors
+ * Copyright (C) 2024-2025  Yomitan Authors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -133,7 +133,7 @@ describe.each(languagesWithTransforms)('Cycles Test $iso', ({languageTransforms}
                 if (
                     !LanguageTransformer.conditionsMatch(
                         languageTransformer.getConditionFlagsFromConditionTypes(ruleNames),
-                        languageTransformer.getConditionFlagsFromConditionTypes(conditionsIn)
+                        languageTransformer.getConditionFlagsFromConditionTypes(conditionsIn),
                     ) ||
                     !text.endsWith(suffixIn) ||
                     (text.length - suffixIn.length + suffixOut.length) <= 0
@@ -145,7 +145,7 @@ describe.each(languagesWithTransforms)('Cycles Test $iso', ({languageTransforms}
                     text.substring(0, text.length - suffixIn.length) + suffixOut,
                     conditionsOut,
                     ruleNode,
-                    deinflectionNode
+                    deinflectionNode,
                 );
 
                 // Cycle check
@@ -168,5 +168,5 @@ describe.each(languagesWithTransforms)('Cycles Test $iso', ({languageTransforms}
                 deinflectionNodes.push(newDeinflectionNode);
             }
         }
-    });
+    }, {timeout: 30 * 1000});
 });

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024  Yomitan Authors
+ * Copyright (C) 2024-2025  Yomitan Authors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,7 +39,7 @@ describe('Handlebars', () => {
         const template = '{{~test1~}}';
 
         const data = {
-            test1: '<div style="font-size: 4em;">Test</div>'
+            test1: '<div style="font-size: 4em;">Test</div>',
         };
 
         const instance1 = compile(template);
@@ -56,8 +56,8 @@ describe('Handlebars', () => {
 
         const data = {
             test1: {
-                test2: '<div style="font-size: 4em;">Test</div>'
-            }
+                test2: '<div style="font-size: 4em;">Test</div>',
+            },
         };
 
         const instance1 = compile(template);

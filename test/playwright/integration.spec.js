@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@ import {
     mockAnkiRouteHandler,
     root,
     test,
-    writeToClipboardFromPage
+    writeToClipboardFromPage,
 } from './playwright-util.js';
 
 test.beforeEach(async ({context}) => {
@@ -66,14 +66,16 @@ test('anki add', async ({context, page, extensionId}) => {
     // Open settings
     await page.goto(`chrome-extension://${extensionId}/settings.html`);
 
+    await expect(page.locator('id=dictionaries')).toBeVisible();
+
     // Load in test dictionary
     const dictionary = await createDictionaryArchiveData(path.join(root, 'test/data/dictionaries/valid-dictionary1'), 'valid-dictionary1');
     await page.locator('input[id="dictionary-import-file-input"]').setInputFiles({
         name: 'valid-dictionary1.zip',
         mimeType: 'application/x-zip',
-        buffer: Buffer.from(dictionary)
+        buffer: Buffer.from(dictionary),
     });
-    await expect(page.locator('id=dictionaries')).toHaveText('Dictionaries (1 installed, 1 enabled)', {timeout: 5 * 60 * 1000});
+    await expect(page.locator('id=dictionaries')).toHaveText('Dictionaries (1 installed, 1 enabled)', {timeout: 1 * 60 * 1000});
 
     // Connect to anki
     await page.locator('.toggle', {has: page.locator('[data-setting="anki.enable"]')}).click();
@@ -85,7 +87,7 @@ test('anki add', async ({context, page, extensionId}) => {
     await page.locator('select.anki-card-model').selectOption('Mock Model');
     const mockFields = getMockModelFields();
     for (const [modelField, value] of mockFields) {
-        await page.locator(`[data-setting="anki.terms.fields.${modelField}"]`).fill(value);
+        await page.locator(`[data-setting="anki.cardFormats[0].fields.${modelField}.value"]`).fill(value);
     }
     await page.locator('#anki-cards-modal > div > div.modal-footer > button:nth-child(2)').click();
     await writeToClipboardFromPage(page, '読むの例文');
@@ -98,7 +100,7 @@ test('anki add', async ({context, page, extensionId}) => {
         await expect(page.locator('#search-textbox')).toHaveValue('読む');
     }).toPass({timeout: 5000});
     await page.locator('#search-textbox').press('Enter');
-    await page.locator('[data-mode="term-kanji"]').click();
+    await page.locator('[data-action="save-note"][data-card-format-index="0"]').click();
     const addNoteReqBody = await addNotePromiseDetails.promise;
     expect(addNoteReqBody).toMatchObject(getExpectedAddNoteBody());
 });

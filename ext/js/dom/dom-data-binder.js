@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  * Copyright (C) 2020-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -25,16 +25,16 @@ import {SelectorObserver} from './selector-observer.js';
  */
 export class DOMDataBinder {
     /**
-     * @param {string} selector
+     * @param {string[]} selectors
      * @param {import('dom-data-binder').CreateElementMetadataCallback<T>} createElementMetadata
      * @param {import('dom-data-binder').CompareElementMetadataCallback<T>} compareElementMetadata
      * @param {import('dom-data-binder').GetValuesCallback<T>} getValues
      * @param {import('dom-data-binder').SetValuesCallback<T>} setValues
      * @param {import('dom-data-binder').OnErrorCallback<T>|null} [onError]
      */
-    constructor(selector, createElementMetadata, compareElementMetadata, getValues, setValues, onError = null) {
-        /** @type {string} */
-        this._selector = selector;
+    constructor(selectors, createElementMetadata, compareElementMetadata, getValues, setValues, onError = null) {
+        /** @type {string[]} */
+        this._selectors = selectors;
         /** @type {import('dom-data-binder').CreateElementMetadataCallback<T>} */
         this._createElementMetadata = createElementMetadata;
         /** @type {import('dom-data-binder').CompareElementMetadataCallback<T>} */
@@ -49,27 +49,31 @@ export class DOMDataBinder {
         this._updateTasks = new TaskAccumulator(this._onBulkUpdate.bind(this));
         /** @type {TaskAccumulator<import('dom-data-binder').ElementObserver<T>, import('dom-data-binder').AssignTaskValue>} */
         this._assignTasks = new TaskAccumulator(this._onBulkAssign.bind(this));
-        /** @type {SelectorObserver<import('dom-data-binder').ElementObserver<T>>} */
-        this._selectorObserver = new SelectorObserver({
+        /** @type {SelectorObserver<import('dom-data-binder').ElementObserver<T>>[]} */
+        this._selectorObservers = selectors.map((selector) => new SelectorObserver({
             selector,
             ignoreSelector: null,
             onAdded: this._createObserver.bind(this),
             onRemoved: this._removeObserver.bind(this),
             onChildrenUpdated: this._onObserverChildrenUpdated.bind(this),
-            isStale: this._isObserverStale.bind(this)
-        });
+            isStale: this._isObserverStale.bind(this),
+        }));
     }
 
     /**
      * @param {Element} element
      */
     observe(element) {
-        this._selectorObserver.observe(element, true);
+        for (const selectorObserver of this._selectorObservers) {
+            selectorObserver.observe(element, true);
+        }
     }
 
     /** */
     disconnect() {
-        this._selectorObserver.disconnect();
+        for (const selectorObserver of this._selectorObservers) {
+            selectorObserver.disconnect();
+        }
     }
 
     /** */
@@ -98,14 +102,16 @@ export class DOMDataBinder {
         }
         if (all) {
             targets.length = 0;
-            for (const observer of this._selectorObserver.datas()) {
-                targets.push([observer, null]);
+            for (const selectorObserver of this._selectorObservers) {
+                for (const observer of selectorObserver.datas()) {
+                    targets.push([observer, null]);
+                }
             }
         }
 
         const args = targets.map(([observer]) => ({
             element: observer.element,
-            metadata: observer.metadata
+            metadata: observer.metadata,
         }));
         const responses = await this._getValues(args);
         this._applyValues(targets, responses, true);
@@ -123,7 +129,7 @@ export class DOMDataBinder {
             args.push({
                 element: observer.element,
                 metadata: observer.metadata,
-                value: task.data.value
+                value: task.data.value,
             });
             targets.push([observer, task]);
         }
@@ -174,18 +180,20 @@ export class DOMDataBinder {
     _createObserver(element) {
         const metadata = this._createElementMetadata(element);
         if (typeof metadata === 'undefined') { return void 0; }
+        const type = this._getNormalizedElementType(element);
+        const eventType = 'change';
         /** @type {import('dom-data-binder').ElementObserver<T>} */
         const observer = {
             element,
-            type: this._getNormalizedElementType(element),
+            type,
             value: null,
             hasValue: false,
+            eventType,
             onChange: null,
-            metadata
+            metadata,
         };
         observer.onChange = this._onElementChange.bind(this, observer);
-
-        element.addEventListener('change', observer.onChange, false);
+        element.addEventListener(eventType, observer.onChange, false);
 
         void this._updateTasks.enqueue(observer, {all: false});
 
@@ -198,7 +206,7 @@ export class DOMDataBinder {
      */
     _removeObserver(element, observer) {
         if (observer.onChange === null) { return; }
-        element.removeEventListener('change', observer.onChange, false);
+        element.removeEventListener(observer.eventType, observer.onChange, false);
         observer.onChange = null;
     }
 
@@ -207,7 +215,7 @@ export class DOMDataBinder {
      * @param {import('dom-data-binder').ElementObserver<T>} observer
      */
     _onObserverChildrenUpdated(element, observer) {
-        if (observer.hasValue) {
+        if (observer.hasValue && this._getNormalizedElementType(element) !== 'element') {
             this._setElementValue(element, observer.value);
         }
     }
@@ -238,6 +246,9 @@ export class DOMDataBinder {
             case 'textarea':
             case 'select':
                 /** @type {HTMLInputElement|HTMLTextAreaElement|HTMLSelectElement} */ (element).value = typeof value === 'string' ? value : `${value}`;
+                break;
+            case 'element':
+                element.textContent = typeof value === 'string' ? value : `${value}`;
                 break;
         }
 
@@ -274,8 +285,9 @@ export class DOMDataBinder {
                 return /** @type {HTMLTextAreaElement} */ (element).value;
             case 'select':
                 return /** @type {HTMLSelectElement} */ (element).value;
+            case 'element':
+                return element.textContent;
         }
-        return null;
     }
 
     /**
@@ -302,6 +314,6 @@ export class DOMDataBinder {
             case 'SELECT':
                 return 'select';
         }
-        return null;
+        return 'element';
     }
 }

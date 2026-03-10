@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  * Copyright (C) 2017-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -24,14 +24,17 @@ import {EventDispatcher} from '../core/event-dispatcher.js';
 import {EventListenerCollection} from '../core/event-listener-collection.js';
 import {ExtensionError} from '../core/extension-error.js';
 import {log} from '../core/log.js';
+import {safePerformance} from '../core/safe-performance.js';
 import {toError} from '../core/to-error.js';
-import {clone, deepEqual, promiseTimeout} from '../core/utilities.js';
+import {addScopeToCss, clone, deepEqual, promiseTimeout} from '../core/utilities.js';
+import {setProfile} from '../data/profiles-util.js';
 import {PopupMenu} from '../dom/popup-menu.js';
 import {querySelectorNotNull} from '../dom/query-selector.js';
 import {ScrollElement} from '../dom/scroll-element.js';
 import {TextSourceGenerator} from '../dom/text-source-generator.js';
 import {HotkeyHelpController} from '../input/hotkey-help-controller.js';
 import {TextScanner} from '../language/text-scanner.js';
+import {checkPopupPreviewURL} from '../pages/settings/popup-preview-controller.js';
 import {canRun} from '../mod/aUtil.js';
 import {DisplayContentManager} from './display-content-manager.js';
 import {DisplayGenerator} from './display-generator.js';
@@ -96,7 +99,9 @@ export class Display extends EventDispatcher {
         /** @type {boolean} */
         this._historyHasChanged = false;
         /** @type {?Element} */
-        this._navigationHeader = document.querySelector('#navigation-header');
+        this._aboveStickyHeader = document.querySelector('#above-sticky-header');
+        /** @type {?Element} */
+        this._searchHeader = document.querySelector('#sticky-search-header');
         /** @type {import('display').PageType} */
         this._contentType = 'clear';
         /** @type {string} */
@@ -157,18 +162,22 @@ export class Display extends EventDispatcher {
         this._frameEndpoint = (pageType === 'popup' ? new FrameEndpoint(this._application.api) : null);
         /** @type {?import('environment').Browser} */
         this._browser = null;
+        /** @type {?import('environment').OperatingSystem} */
+        this._platform = null;
         /** @type {?HTMLTextAreaElement} */
         this._copyTextarea = null;
         /** @type {?TextScanner} */
         this._contentTextScanner = null;
         /** @type {?import('./display-notification.js').DisplayNotification} */
         this._tagNotification = null;
+        /** @type {?import('./display-notification.js').DisplayNotification} */
+        this._inflectionNotification = null;
         /** @type {HTMLElement} */
         this._footerNotificationContainer = querySelectorNotNull(document, '#content-footer');
         /** @type {OptionToggleHotkeyHandler} */
         this._optionToggleHotkeyHandler = new OptionToggleHotkeyHandler(this);
         /** @type {ElementOverflowController} */
-        this._elementOverflowController = new ElementOverflowController();
+        this._elementOverflowController = new ElementOverflowController(this);
         /** @type {boolean} */
         this._frameVisible = (pageType === 'search');
         /** @type {HTMLElement} */
@@ -182,37 +191,43 @@ export class Display extends EventDispatcher {
         /** @type {(event: MouseEvent) => void} */
         this._onTagClickBind = this._onTagClick.bind(this);
         /** @type {(event: MouseEvent) => void} */
+        this._onInflectionClickBind = this._onInflectionClick.bind(this);
+        /** @type {(event: MouseEvent) => void} */
         this._onMenuButtonClickBind = this._onMenuButtonClick.bind(this);
         /** @type {(event: import('popup-menu').MenuCloseEvent) => void} */
         this._onMenuButtonMenuCloseBind = this._onMenuButtonMenuClose.bind(this);
         /** @type {ThemeController} */
         this._themeController = new ThemeController(document.documentElement);
-        this.canRun = canRun;
+        /** @type {import('language').LanguageSummary[]} */
+        this._languageSummaries = [];
+        /** @type {import('dictionary-importer').Summary[]} */
+        this._dictionaryInfo = [];
+
         /* eslint-disable @stylistic/no-multi-spaces */
         this._hotkeyHandler.registerActions([
-            ['close', () => {this._onHotkeyClose();}],
-            ['nextEntry', this._onHotkeyActionMoveRelative.bind(this, 1)],
-            ['previousEntry', this._onHotkeyActionMoveRelative.bind(this, -1)],
-            ['lastEntry', () => {this._focusEntry(this._dictionaryEntries.length - 1, 0, true);}],
-            ['firstEntry', () => {this._focusEntry(0, 0, true);}],
-            ['historyBackward', () => {this._sourceTermView();}],
-            ['historyForward', () => {this._nextTermView();}],
-            ['profilePrevious', async () => {await this._setProfile(-1);}],
-            ['profileNext', async () => {await this._setProfile(1);}],
+            ['close',             () => { this._onHotkeyClose(); }],
+            ['nextEntry',         this._onHotkeyActionMoveRelative.bind(this, 1)],
+            ['previousEntry',     this._onHotkeyActionMoveRelative.bind(this, -1)],
+            ['lastEntry',         () => { this._focusEntry(this._dictionaryEntries.length - 1, 0, true); }],
+            ['firstEntry',        () => { this._focusEntry(0, 0, true); }],
+            ['historyBackward',   () => { this._sourceTermView(); }],
+            ['historyForward',    () => { this._nextTermView(); }],
+            ['profilePrevious',   async () => { await setProfile(-1, this._application); }],
+            ['profileNext',       async () => { await setProfile(1, this._application); }],
             ['copyHostSelection', () => this._copyHostSelection()],
-            ['nextEntryDifferentDictionary', () => {this._focusEntryWithDifferentDictionary(1, true);}],
-            ['previousEntryDifferentDictionary', () => {this._focusEntryWithDifferentDictionary(-1, true);}]
+            ['nextEntryDifferentDictionary',     () => { this._focusEntryWithDifferentDictionary(1, true); }],
+            ['previousEntryDifferentDictionary', () => { this._focusEntryWithDifferentDictionary(-1, true); }],
         ]);
         this.registerDirectMessageHandlers([
             ['displaySetOptionsContext', this._onMessageSetOptionsContext.bind(this)],
-            ['displaySetContent', this._onMessageSetContent.bind(this)],
-            ['displaySetCustomCss', this._onMessageSetCustomCss.bind(this)],
-            ['displaySetContentScale', this._onMessageSetContentScale.bind(this)],
-            ['displayConfigure', this._onMessageConfigure.bind(this)],
-            ['displayVisibilityChanged', this._onMessageVisibilityChanged.bind(this)]
+            ['displaySetContent',        this._onMessageSetContent.bind(this)],
+            ['displaySetCustomCss',      this._onMessageSetCustomCss.bind(this)],
+            ['displaySetContentScale',   this._onMessageSetContentScale.bind(this)],
+            ['displayConfigure',         this._onMessageConfigure.bind(this)],
+            ['displayVisibilityChanged', this._onMessageVisibilityChanged.bind(this)],
         ]);
         this.registerWindowMessageHandlers([
-            ['displayExtensionUnloaded', this._onMessageExtensionUnloaded.bind(this)]
+            ['displayExtensionUnloaded', this._onMessageExtensionUnloaded.bind(this)],
         ]);
         /* eslint-enable @stylistic/no-multi-spaces */
     }
@@ -300,17 +315,22 @@ export class Display extends EventDispatcher {
     /** */
     async prepare() {
         // Theme
-        this._themeController.siteTheme = 'light';
         this._themeController.prepare();
 
         // State setup
         const {documentElement} = document;
-        const {browser} = await this._application.api.getEnvironmentInfo();
+        const {browser, platform} = await this._application.api.getEnvironmentInfo();
         this._browser = browser;
+        this._platform = platform.os;
 
         if (documentElement !== null) {
             documentElement.dataset.browser = browser;
+            documentElement.dataset.platform = platform.os;
         }
+
+        this._languageSummaries = await this._application.api.getLanguageSummaries();
+
+        this._dictionaryInfo = await this._application.api.getDictionaryInfo();
 
         // Prepare
         await this._hotkeyHelpController.prepare(this._application.api);
@@ -326,7 +346,7 @@ export class Display extends EventDispatcher {
         this._application.on('extensionUnloaded', this._onExtensionUnloaded.bind(this));
         this._application.crossFrame.registerHandlers([
             ['displayPopupMessage1', this._onDisplayPopupMessage1.bind(this)],
-            ['displayPopupMessage2', this._onDisplayPopupMessage2.bind(this)]
+            ['displayPopupMessage2', this._onDisplayPopupMessage2.bind(this)],
         ]);
         window.addEventListener('message', this._onWindowMessage.bind(this), false);
 
@@ -337,6 +357,10 @@ export class Display extends EventDispatcher {
         }
 
         document.addEventListener('wheel', this._onWheel.bind(this), {passive: false});
+        if (this._contentScrollElement !== null) {
+            this._contentScrollElement.addEventListener('touchstart', this._onTouchStart.bind(this), {passive: true});
+            this._contentScrollElement.addEventListener('touchmove', this._onTouchMove.bind(this), {passive: false});
+        }
         if (this._closeButton !== null) {
             this._closeButton.addEventListener('click', this._onCloseButtonClick.bind(this), false);
         }
@@ -354,7 +378,7 @@ export class Display extends EventDispatcher {
     getContentOrigin() {
         return {
             tabId: this._contentOriginTabId,
-            frameId: this._contentOriginFrameId
+            frameId: this._contentOriginFrameId,
         };
     }
 
@@ -363,6 +387,16 @@ export class Display extends EventDispatcher {
         void this._onStateChanged();
         if (this._frameEndpoint !== null) {
             this._frameEndpoint.signal();
+        }
+    }
+
+    /**
+     * @param {Element} element
+     */
+    scrollUpToElementTop(element) {
+        const top = this._getElementTop(element);
+        if (this._windowScroll.y > top) {
+            this._windowScroll.toY(top);
         }
     }
 
@@ -382,7 +416,7 @@ export class Display extends EventDispatcher {
      * @param {Error} error
      */
     onError(error) {
-        if (this._application.webExtension.unloaded) {return;}
+        if (this._application.webExtension.unloaded) { return; }
         log.error(error);
     }
 
@@ -391,6 +425,16 @@ export class Display extends EventDispatcher {
      */
     getOptions() {
         return this._options;
+    }
+
+    /**
+     * @returns {import('language').LanguageSummary}
+     * @throws {Error}
+     */
+    getLanguageSummary() {
+        if (this._options === null) { throw new Error('Options is null'); }
+        const language = this._options.general.language;
+        return /** @type {import('language').LanguageSummary} */ (this._languageSummaries.find(({iso}) => iso === language));
     }
 
     /**
@@ -417,8 +461,10 @@ export class Display extends EventDispatcher {
         this._updateHotkeys(options);
         this._updateDocumentOptions(options);
         this._setTheme(options);
+        this._setStickyHeader(options);
         this._hotkeyHelpController.setOptions(options);
         this._displayGenerator.updateHotkeys();
+        this._displayGenerator.updateLanguage(options.general.language);
         this._hotkeyHelpController.setupNode(document.documentElement);
         this._elementOverflowController.setOptions(options);
 
@@ -435,14 +481,17 @@ export class Display extends EventDispatcher {
                 normalizeCssZoom: scanningOptions.normalizeCssZoom,
                 selectText: scanningOptions.selectText,
                 delay: scanningOptions.delay,
-                touchInputEnabled: scanningOptions.touchInputEnabled,
-                pointerEventsEnabled: scanningOptions.pointerEventsEnabled,
                 scanLength: scanningOptions.length,
                 layoutAwareScan: scanningOptions.layoutAwareScan,
-                preventMiddleMouse: scanningOptions.preventMiddleMouse.onSearchQuery,
+                preventMiddleMouseOnPage: scanningOptions.preventMiddleMouse.onSearchQuery,
+                preventMiddleMouseOnTextHover: scanningOptions.preventMiddleMouse.onTextHover,
+                preventBackForwardOnPage: scanningOptions.preventBackForward.onSearchQuery,
+                preventBackForwardOnTextHover: scanningOptions.preventBackForward.onTextHover,
                 matchTypePrefix: false,
-                sentenceParsingOptions
-            }
+                sentenceParsingOptions,
+                scanWithoutMousemove: scanningOptions.scanWithoutMousemove,
+                scanResolution: scanningOptions.scanResolution,
+            },
         });
 
         void this._updateNestedFrontend(options);
@@ -465,7 +514,7 @@ export class Display extends EventDispatcher {
 
         const urlSearchParams = new URLSearchParams();
         for (const [key, value] of Object.entries(params)) {
-            if (typeof value !== 'string') {continue;}
+            if (typeof value !== 'string') { continue; }
             urlSearchParams.append(key, value);
         }
         const url = `${location.protocol}//${location.host}${location.pathname}?${urlSearchParams.toString()}`;
@@ -483,6 +532,10 @@ export class Display extends EventDispatcher {
                 this._history.pushState(state, content, url);
                 break;
         }
+
+        if (this._options) {
+            this._setTheme(this._options);
+        }
     }
 
     /**
@@ -490,7 +543,7 @@ export class Display extends EventDispatcher {
      */
     setCustomCss(css) {
         if (this._styleNode === null) {
-            if (css.length === 0) {return;}
+            if (css.length === 0) { return; }
             this._styleNode = document.createElement('style');
         }
 
@@ -500,6 +553,19 @@ export class Display extends EventDispatcher {
         if (this._styleNode.parentNode !== parent) {
             parent.appendChild(this._styleNode);
         }
+    }
+
+    /**
+     * @param {string} fontFamily
+     * @param {number} fontSize
+     * @param {string} lineHeight
+     */
+    setFontOptions(fontFamily, fontSize, lineHeight) {
+        // Setting these directly rather than using the existing CSS variables
+        // minimizes problems and ensures everything scales correctly
+        document.documentElement.style.fontFamily = fontFamily;
+        document.documentElement.style.fontSize = `${fontSize}px`;
+        document.documentElement.style.lineHeight = lineHeight;
     }
 
     /**
@@ -540,7 +606,7 @@ export class Display extends EventDispatcher {
      */
     searchLast(updateOptionsContext) {
         const type = this._contentType;
-        if (type === 'clear') {return;}
+        if (type === 'clear') { return; }
         const query = this._query;
         const {state} = this._history;
         const hasState = typeof state === 'object' && state !== null;
@@ -553,7 +619,7 @@ export class Display extends EventDispatcher {
                     optionsContext: void 0,
                     url: window.location.href,
                     sentence: {text: query, offset: 0},
-                    documentTitle: document.title
+                    documentTitle: document.title,
                 }
         );
         if (!hasState || updateOptionsContext) {
@@ -566,8 +632,8 @@ export class Display extends EventDispatcher {
             params: this._createSearchParams(type, query, false, this._queryOffset),
             state: newState,
             content: {
-                contentOrigin: this.getContentOrigin()
-            }
+                contentOrigin: this.getContentOrigin(),
+            },
         };
         this.setContent(details);
     }
@@ -608,9 +674,9 @@ export class Display extends EventDispatcher {
      */
     getElementDictionaryEntryIndex(element) {
         const node = /** @type {?HTMLElement} */ (element.closest('.entry'));
-        if (node === null) {return -1;}
+        if (node === null) { return -1; }
         const {index} = node.dataset;
-        if (typeof index !== 'string') {return -1;}
+        if (typeof index !== 'string') { return -1; }
         const indexNumber = Number.parseInt(index, 10);
         return Number.isFinite(indexNumber) ? indexNumber : -1;
     }
@@ -656,7 +722,7 @@ export class Display extends EventDispatcher {
                 },
                 () => {
                     reject(new Error(`Invalid action: ${action}`));
-                }
+                },
             );
         });
     }
@@ -674,20 +740,8 @@ export class Display extends EventDispatcher {
         }
 
         try {
-            let action, params;
-
-            if (data2) {
-                ({action, params} = data2);
-            } else {
-                // Handle error or provide default values
-                try {
-                    ({action, params} = data);
-                } catch (ee) {
-                    console.error("Invalid or missing data2 object ", data, data2);
-                    console.error(ee);
-                }
-            }
-            const callback = () => { }; // NOP
+            const {action, params} = data2;
+            const callback = () => {}; // NOP
             invokeApiMapHandler(this._windowApiMap, action, params, [], callback);
         } catch (e) {
             // NOP
@@ -702,6 +756,7 @@ export class Display extends EventDispatcher {
 
     /** @type {import('display').DirectApiHandler<'displaySetContent'>} */
     _onMessageSetContent({details}) {
+        safePerformance.mark('invokeDisplaySetContent:end');
         this.setContent(details);
     }
 
@@ -746,40 +801,50 @@ export class Display extends EventDispatcher {
      */
     _authenticateMessageData(message) {
         if (this._frameEndpoint !== null && !this._frameEndpoint.authenticate(message)) {
-            return //throw new Error('Invalid authentication');
+            throw new Error('Invalid authentication');
         }
         return /** @type {import('frame-client').Message<T>} */ (message).data;
     }
 
     /** */
     async _onStateChanged() {
-        if (this._historyChangeIgnore) {return;}
+        if (this._historyChangeIgnore) { return; }
+
+        safePerformance.mark('display:_onStateChanged:start');
 
         /** @type {?import('core').TokenObject} */
         const token = {}; // Unique identifier token
         this._setContentToken = token;
         try {
             // Clear
+            safePerformance.mark('display:_onStateChanged:clear:start');
             this._closePopups();
             this._closeAllPopupMenus();
             this._eventListeners.removeAllEventListeners();
             this._contentManager.unloadAll();
             this._hideTagNotification(false);
+            this._hideInflectionNotification(false);
             this._triggerContentClear();
             this._dictionaryEntries = [];
             this._dictionaryEntryNodes = [];
             this._elementOverflowController.clearElements();
+            safePerformance.mark('display:_onStateChanged:clear:end');
+            safePerformance.measure('display:_onStateChanged:clear', 'display:_onStateChanged:clear:start', 'display:_onStateChanged:clear:end');
 
             // Prepare
+            safePerformance.mark('display:_onStateChanged:prepare:start');
             const urlSearchParams = new URLSearchParams(location.search);
             let type = urlSearchParams.get('type');
-            if (type === null && urlSearchParams.get('query') !== null) {type = 'terms';}
+            if (type === null && urlSearchParams.get('query') !== null) { type = 'terms'; }
 
             const fullVisible = urlSearchParams.get('full-visible');
             this._queryParserVisibleOverride = (fullVisible === null ? null : (fullVisible !== 'false'));
 
             this._historyHasChanged = true;
+            safePerformance.mark('display:_onStateChanged:prepare:end');
+            safePerformance.measure('display:_onStateChanged:prepare', 'display:_onStateChanged:prepare:start', 'display:_onStateChanged:prepare:end');
 
+            safePerformance.mark('display:_onStateChanged:setContent:start');
             // Set content
             switch (type) {
                 case 'terms':
@@ -796,9 +861,13 @@ export class Display extends EventDispatcher {
                     this._clearContent();
                     break;
             }
+            safePerformance.mark('display:_onStateChanged:setContent:end');
+            safePerformance.measure('display:_onStateChanged:setContent', 'display:_onStateChanged:setContent:start', 'display:_onStateChanged:setContent:end');
         } catch (e) {
             this.onError(toError(e));
         }
+        safePerformance.mark('display:_onStateChanged:end');
+        safePerformance.measure('display:_onStateChanged', 'display:_onStateChanged:start', 'display:_onStateChanged:end');
     }
 
     /**
@@ -809,8 +878,8 @@ export class Display extends EventDispatcher {
         const historyState = this._history.state;
         const historyMode = (
             eventType === 'click' ||
-                !(typeof historyState === 'object' && historyState !== null) ||
-                historyState.cause !== 'queryParser' ?
+            !(typeof historyState === 'object' && historyState !== null) ||
+            historyState.cause !== 'queryParser' ?
                 'new' :
                 'overwrite'
         );
@@ -822,12 +891,12 @@ export class Display extends EventDispatcher {
             state: {
                 sentence,
                 optionsContext,
-                cause: 'queryParser'
+                cause: 'queryParser',
             },
             content: {
                 dictionaryEntries,
-                contentOrigin: this.getContentOrigin()
-            }
+                contentOrigin: this.getContentOrigin(),
+            },
         };
         this.setContent(details);
     }
@@ -835,7 +904,7 @@ export class Display extends EventDispatcher {
     /** */
     _onExtensionUnloaded() {
         const type = 'unloaded';
-        if (this._contentType === type) {return;}
+        if (this._contentType === type) { return; }
         const {tabId, frameId} = this._application;
         /** @type {import('display').ContentDetails} */
         const details = {
@@ -844,8 +913,8 @@ export class Display extends EventDispatcher {
             params: {type},
             state: {},
             content: {
-                contentOrigin: {tabId, frameId}
-            }
+                contentOrigin: {tabId, frameId},
+            },
         };
         this.setContent(details);
     }
@@ -903,15 +972,15 @@ export class Display extends EventDispatcher {
         try {
             e.preventDefault();
             const {state} = this._history;
-            if (!(typeof state === 'object' && state !== null)) {return;}
+            if (!(typeof state === 'object' && state !== null)) { return; }
 
             let {sentence, url, documentTitle} = state;
-            if (typeof url !== 'string') {url = window.location.href;}
-            if (typeof documentTitle !== 'string') {documentTitle = document.title;}
+            if (typeof url !== 'string') { url = window.location.href; }
+            if (typeof documentTitle !== 'string') { documentTitle = document.title; }
             const optionsContext = this.getOptionsContext();
             const element = /** @type {Element} */ (e.currentTarget);
             let query = element.textContent;
-            if (query === null) {query = '';}
+            if (query === null) { query = ''; }
             const dictionaryEntries = await this._application.api.kanjiFind(query, optionsContext);
             /** @type {import('display').ContentDetails} */
             const details = {
@@ -923,12 +992,12 @@ export class Display extends EventDispatcher {
                     optionsContext,
                     url,
                     sentence,
-                    documentTitle
+                    documentTitle,
                 },
                 content: {
                     dictionaryEntries,
-                    contentOrigin: this.getContentOrigin()
-                }
+                    contentOrigin: this.getContentOrigin(),
+                },
             };
             this.setContent(details);
         } catch (error) {
@@ -937,9 +1006,50 @@ export class Display extends EventDispatcher {
     }
 
     /**
+     * @param {TouchEvent} e
+     */
+    _onTouchStart(e) {
+        const scanningOptions = /** @type {import('settings').ProfileOptions} */ (this._options).scanning;
+        if (!scanningOptions.reducedMotionScrolling || e.touches.length !== 1) {
+            return;
+        }
+
+        const start = e.touches[0].clientY;
+        /**
+         * @param {TouchEvent} endEvent
+         */
+        const onTouchEnd = (endEvent) => {
+            this._contentScrollElement.removeEventListener('touchend', onTouchEnd);
+
+            const end = endEvent.changedTouches[0].clientY;
+            const delta = start - end;
+            const threshold = scanningOptions.reducedMotionScrollingSwipeThreshold;
+
+            if (delta > threshold) {
+                this._scrollByPopupHeight(1, scanningOptions.reducedMotionScrollingScale);
+            } else if (delta < -threshold) {
+                this._scrollByPopupHeight(-1, scanningOptions.reducedMotionScrollingScale);
+            }
+        };
+
+        this._contentScrollElement.addEventListener('touchend', onTouchEnd, {passive: true});
+    }
+
+    /**
+     * @param {TouchEvent} e
+     */
+    _onTouchMove = (e) => {
+        const scanningOptions = /** @type {import('settings').ProfileOptions} */ (this._options).scanning;
+        if (scanningOptions.reducedMotionScrolling && e.cancelable) {
+            e.preventDefault();
+        }
+    };
+
+    /**
      * @param {WheelEvent} e
      */
     _onWheel(e) {
+        const scanningOptions = /** @type {import('settings').ProfileOptions} */ (this._options).scanning;
         if (e.altKey) {
             if (e.deltaY !== 0) {
                 this._focusEntry(this._index + (e.deltaY > 0 ? 1 : -1), 0, true);
@@ -947,6 +1057,9 @@ export class Display extends EventDispatcher {
             }
         } else if (e.shiftKey) {
             this._onHistoryWheel(e);
+        } else if (scanningOptions.reducedMotionScrolling) {
+            this._scrollByPopupHeight(e.deltaY > 0 ? 1 : -1, scanningOptions.reducedMotionScrollingScale);
+            e.preventDefault();
         }
     }
 
@@ -954,7 +1067,7 @@ export class Display extends EventDispatcher {
      * @param {WheelEvent} e
      */
     _onHistoryWheel(e) {
-        if (e.altKey) {return;}
+        if (e.altKey) { return; }
         const delta = -e.deltaX || e.deltaY;
         if (delta > 0) {
             this._sourceTermView();
@@ -998,15 +1111,16 @@ export class Display extends EventDispatcher {
      * @param {MouseEvent} e
      */
     _onDocumentElementClick(e) {
+        const enableBackForwardActions = this._options ? !(this._options.scanning.preventBackForward.onPopupPages) : true;
         switch (e.button) {
             case 3: // Back
-                if (this._history.hasPrevious()) {
+                if (enableBackForwardActions && this._history.hasPrevious()) {
                     e.preventDefault();
                     this._history.back();
                 }
                 break;
             case 4: // Forward
-                if (this._history.hasNext()) {
+                if (enableBackForwardActions && this._history.hasNext()) {
                     e.preventDefault();
                     this._history.forward();
                 }
@@ -1018,20 +1132,13 @@ export class Display extends EventDispatcher {
      * @param {MouseEvent} e
      */
     _onEntryClick(e) {
-        if (e.button !== 0) {return;}
+        if (e.button !== 0) { return; }
         const node = /** @type {HTMLElement} */ (e.currentTarget);
         const {index} = node.dataset;
-        if (typeof index !== 'string') {return;}
+        if (typeof index !== 'string') { return; }
         const indexNumber = Number.parseInt(index, 10);
-        if (!Number.isFinite(indexNumber)) {return;}
+        if (!Number.isFinite(indexNumber)) { return; }
         this._entrySetCurrent(indexNumber);
-    }
-
-    /**
-     * @param {import("../mod/aDict.js").aDict} d
-     */
-    setDict(d) {
-        this.dict = d;
     }
 
     /**
@@ -1040,6 +1147,14 @@ export class Display extends EventDispatcher {
     _onTagClick(e) {
         const node = /** @type {HTMLElement} */ (e.currentTarget);
         this._showTagNotification(node);
+    }
+
+    /**
+     * @param {MouseEvent} e
+     */
+    _onInflectionClick(e) {
+        const node = /** @type {HTMLElement} */ (e.currentTarget);
+        this._showInflectionNotification(node);
     }
 
     /**
@@ -1090,7 +1205,7 @@ export class Display extends EventDispatcher {
      */
     _showTagNotification(tagNode) {
         const parent = tagNode.parentNode;
-        if (parent === null || !(parent instanceof HTMLElement)) {return;}
+        if (parent === null || !(parent instanceof HTMLElement)) { return; }
 
         if (this._tagNotification === null) {
             this._tagNotification = this.createNotification(true);
@@ -1105,11 +1220,34 @@ export class Display extends EventDispatcher {
     }
 
     /**
+     * @param {HTMLSpanElement} inflectionNode
+     */
+    _showInflectionNotification(inflectionNode) {
+        const description = inflectionNode.title;
+        if (!description || !(inflectionNode instanceof HTMLSpanElement)) { return; }
+
+        if (this._inflectionNotification === null) {
+            this._inflectionNotification = this.createNotification(true);
+        }
+
+        this._inflectionNotification.setContent(description);
+        this._inflectionNotification.open();
+    }
+
+    /**
      * @param {boolean} animate
      */
     _hideTagNotification(animate) {
-        if (this._tagNotification === null) {return;}
+        if (this._tagNotification === null) { return; }
         this._tagNotification.close(animate);
+    }
+
+    /**
+     * @param {boolean} animate
+     */
+    _hideInflectionNotification(animate) {
+        if (this._inflectionNotification === null) { return; }
+        this._inflectionNotification.close(animate);
     }
 
     /**
@@ -1118,9 +1256,11 @@ export class Display extends EventDispatcher {
     _updateDocumentOptions(options) {
         const data = document.documentElement.dataset;
         data.ankiEnabled = `${options.anki.enable}`;
+        data.language = options.general.language;
         data.resultOutputMode = `${options.general.resultOutputMode}`;
         data.glossaryLayoutMode = `${options.general.glossaryLayoutMode}`;
         data.compactTags = `${options.general.compactTags}`;
+        data.averageFrequency = `${options.general.averageFrequency}`;
         data.frequencyDisplayMode = `${options.general.frequencyDisplayMode}`;
         data.termDisplayMode = `${options.general.termDisplayMode}`;
         data.enableSearchTags = `${options.scanning.enableSearchTags}`;
@@ -1139,43 +1279,97 @@ export class Display extends EventDispatcher {
      */
     _setTheme(options) {
         const {general} = options;
-        const {popupTheme} = general;
+        const {popupTheme, popupOuterTheme, fontFamily, fontSize, lineHeight} = general;
+        /** @type {string} */
+        let pageType = this._pageType;
+        try {
+            // eslint-disable-next-line no-underscore-dangle
+            const historyState = this._history._current.state;
+
+            const pageTheme = historyState?.pageTheme;
+            this._themeController.siteTheme = pageTheme ?? null;
+
+            if (checkPopupPreviewURL(historyState?.url)) {
+                pageType = 'popupPreview';
+            }
+        } catch (e) {
+            log.error(e);
+        }
         this._themeController.theme = popupTheme;
-        this._themeController.outerTheme = general.popupOuterTheme;
+        this._themeController.outerTheme = popupOuterTheme;
+        this._themeController.siteOverride = pageType === 'search' || pageType === 'popupPreview';
         this._themeController.updateTheme();
-        this.setCustomCss(general.customPopupCss);
+        const customCss = this._getCustomCss(options);
+        this.setCustomCss(customCss);
+        this.setFontOptions(fontFamily, fontSize, lineHeight);
+    }
+
+    /**
+     * @param {import('settings').ProfileOptions} options
+     * @returns {string}
+     */
+    _getCustomCss(options) {
+        const {general: {customPopupCss}, dictionaries} = options;
+        let customCss = customPopupCss;
+        for (const {name, enabled, styles = ''} of dictionaries) {
+            if (enabled) {
+                const escapedTitle = name.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+                customCss += '\n' + addScopeToCss(styles, `[data-dictionary="${escapedTitle}"]`);
+            }
+        }
+        this.setCustomCss(customCss);
+        return customCss;
     }
 
     /**
      * @param {boolean} isKanji
      * @param {string} source
+     * @param {string} primaryReading
      * @param {boolean} wildcardsEnabled
      * @param {import('settings').OptionsContext} optionsContext
      * @returns {Promise<import('dictionary').DictionaryEntry[]>}
      */
-    async _findDictionaryEntries(isKanji, source, wildcardsEnabled, optionsContext) {
+    async _findDictionaryEntries(isKanji, source, primaryReading, wildcardsEnabled, optionsContext) {
+        /** @type {import('dictionary').DictionaryEntry[]} */
+        let dictionaryEntries = [];
+        const {findDetails, source: source2} = this._getFindDetails(source, primaryReading, wildcardsEnabled);
         if (isKanji) {
-            return await this._application.api.kanjiFind(source, optionsContext);
-        } else {
-            /** @type {import('api').FindTermsDetails} */
-            const findDetails = {};
-            if (wildcardsEnabled) {
-                const match = /^([*\uff0a]*)([\w\W]*?)([*\uff0a]*)$/.exec(source);
-                if (match !== null) {
-                    if (match[1]) {
-                        findDetails.matchType = 'suffix';
-                        findDetails.deinflect = false;
-                    } else if (match[3]) {
-                        findDetails.matchType = 'prefix';
-                        findDetails.deinflect = false;
-                    }
-                    source = match[2];
-                }
-            }
+            dictionaryEntries = await this._application.api.kanjiFind(source, optionsContext);
+            if (dictionaryEntries.length > 0) { return dictionaryEntries; }
 
-            const {dictionaryEntries} = await this._application.api.termsFind(source, findDetails, optionsContext);
-            return dictionaryEntries;
+            dictionaryEntries = (await this._application.api.termsFind(source2, findDetails, optionsContext)).dictionaryEntries;
+        } else {
+            dictionaryEntries = (await this._application.api.termsFind(source2, findDetails, optionsContext)).dictionaryEntries;
+            if (dictionaryEntries.length > 0) { return dictionaryEntries; }
+
+            dictionaryEntries = await this._application.api.kanjiFind(source, optionsContext);
         }
+        return dictionaryEntries;
+    }
+
+    /**
+     * @param {string} source
+     * @param {string} primaryReading
+     * @param {boolean} wildcardsEnabled
+     * @returns {{findDetails: import('api').FindTermsDetails, source: string}}
+     */
+    _getFindDetails(source, primaryReading, wildcardsEnabled) {
+        /** @type {import('api').FindTermsDetails} */
+        const findDetails = {primaryReading};
+        if (wildcardsEnabled) {
+            const match = /^([*\uff0a]*)([\w\W]*?)([*\uff0a]*)$/.exec(source);
+            if (match !== null) {
+                if (match[1]) {
+                    findDetails.matchType = 'suffix';
+                    findDetails.deinflect = false;
+                } else if (match[3]) {
+                    findDetails.matchType = 'prefix';
+                    findDetails.deinflect = false;
+                }
+                source = match[2];
+            }
+        }
+        return {findDetails, source};
     }
 
     /**
@@ -1186,12 +1380,15 @@ export class Display extends EventDispatcher {
     async _setContentTermsOrKanji(type, urlSearchParams, token) {
         const lookup = (urlSearchParams.get('lookup') !== 'false');
         const wildcardsEnabled = (urlSearchParams.get('wildcards') !== 'off');
+        const hasEnabledDictionaries = this._options ? this._options.dictionaries.some(({enabled}) => enabled) : false;
 
         // Set query
+        safePerformance.mark('display:setQuery:start');
         let query = urlSearchParams.get('query');
-        if (query === null) {query = '';}
+        if (query === null) { query = ''; }
         let queryFull = urlSearchParams.get('full');
         queryFull = (queryFull !== null ? queryFull : query);
+        const primaryReading = urlSearchParams.get('primary_reading') ?? '';
         const queryOffsetString = urlSearchParams.get('offset');
         let queryOffset = 0;
         if (queryOffsetString !== null) {
@@ -1199,6 +1396,8 @@ export class Display extends EventDispatcher {
             queryOffset = Number.isFinite(queryOffset) ? Math.max(0, Math.min(queryFull.length - query.length, queryOffset)) : 0;
         }
         this._setQuery(query, queryFull, queryOffset);
+        safePerformance.mark('display:setQuery:end');
+        safePerformance.measure('display:setQuery', 'display:setQuery:start', 'display:setQuery:end');
 
         let {state, content} = this._history;
         let changeHistory = false;
@@ -1212,7 +1411,7 @@ export class Display extends EventDispatcher {
         }
 
         let {focusEntry, scrollX, scrollY, optionsContext} = state;
-        if (typeof focusEntry !== 'number') {focusEntry = 0;}
+        if (typeof focusEntry !== 'number') { focusEntry = 0; }
         if (!(typeof optionsContext === 'object' && optionsContext !== null)) {
             optionsContext = this.getOptionsContext();
             state.optionsContext = optionsContext;
@@ -1221,9 +1420,14 @@ export class Display extends EventDispatcher {
 
         let {dictionaryEntries} = content;
         if (!Array.isArray(dictionaryEntries)) {
-            dictionaryEntries = lookup && query.length > 0 ? await this._findDictionaryEntries(type === 'kanji', query, wildcardsEnabled, optionsContext) : [];
-            if (this._setContentToken !== token) {return;}
-            content.dictionaryEntries = dictionaryEntries;
+            safePerformance.mark('display:findDictionaryEntries:start');
+            dictionaryEntries = hasEnabledDictionaries && lookup && query.length > 0 ? await this._findDictionaryEntries(type === 'kanji', query, primaryReading, wildcardsEnabled, optionsContext) : [];
+            safePerformance.mark('display:findDictionaryEntries:end');
+            safePerformance.measure('display:findDictionaryEntries', 'display:findDictionaryEntries:start', 'display:findDictionaryEntries:end');
+            if (this._setContentToken !== token) { return; }
+            if (lookup) {
+                content.dictionaryEntries = dictionaryEntries;
+            }
             changeHistory = true;
         }
 
@@ -1243,11 +1447,11 @@ export class Display extends EventDispatcher {
         }
 
         await this._setOptionsContextIfDifferent(optionsContext);
-        if (this._setContentToken !== token) {return;}
+        if (this._setContentToken !== token) { return; }
 
         if (this._options === null) {
             await this.updateOptions();
-            if (this._setContentToken !== token) {return;}
+            if (this._setContentToken !== token) { return; }
         }
 
         if (changeHistory) {
@@ -1256,49 +1460,76 @@ export class Display extends EventDispatcher {
 
         this._dictionaryEntries = dictionaryEntries;
 
+        safePerformance.mark('display:updateNavigationAuto:start');
         this._updateNavigationAuto();
-        this._setNoContentVisible(dictionaryEntries.length === 0 && lookup);
+        safePerformance.mark('display:updateNavigationAuto:end');
+        safePerformance.measure('display:updateNavigationAuto', 'display:updateNavigationAuto:start', 'display:updateNavigationAuto:end');
+
+        this._setNoContentVisible(hasEnabledDictionaries && dictionaryEntries.length === 0 && lookup);
+        this._setNoDictionariesVisible(!hasEnabledDictionaries);
 
         const container = this._container;
         container.textContent = '';
 
+        safePerformance.mark('display:contentUpdate:start');
         this._triggerContentUpdateStart();
 
         if (!canRun(0)) {
-            for (let i = 0, ii = dictionaryEntries.length; i < ii; ++i) {
+            let i = 0;
+            for (const dictionaryEntry of dictionaryEntries) {
+                safePerformance.mark('display:createEntry:start');
+
                 if (i > 0) {
                     await promiseTimeout(1);
-                    if (this._setContentToken !== token) {return;}
+                    if (this._setContentToken !== token) { return; }
                 }
 
-                const dictionaryEntry = dictionaryEntries[i];
+                safePerformance.mark('display:createEntryReal:start');
+
                 const entry = (
                     dictionaryEntry.type === 'term' ?
-                        this._displayGenerator.createTermEntry(dictionaryEntry) :
-                        this._displayGenerator.createKanjiEntry(dictionaryEntry)
+                    this._displayGenerator.createTermEntry(dictionaryEntry, this._dictionaryInfo) :
+                    this._displayGenerator.createKanjiEntry(dictionaryEntry, this._dictionaryInfo)
                 );
                 entry.dataset.index = `${i}`;
                 this._dictionaryEntryNodes.push(entry);
                 this._addEntryEventListeners(entry);
                 this._triggerContentUpdateEntry(dictionaryEntry, entry, i);
+                if (this._setContentToken !== token) { return; }
                 container.appendChild(entry);
+
                 if (focusEntry === i) {
                     this._focusEntry(i, 0, false);
                 }
 
                 this._elementOverflowController.addElements(entry);
-            }
 
-            if (typeof scrollX === 'number' || typeof scrollY === 'number') {
-                let {x, y} = this._windowScroll;
-                if (typeof scrollX === 'number') {x = scrollX;}
-                if (typeof scrollY === 'number') {y = scrollY;}
-                this._windowScroll.stop();
-                this._windowScroll.to(x, y);
+                safePerformance.mark('display:createEntryReal:end');
+                safePerformance.measure('display:createEntryReal', 'display:createEntryReal:start', 'display:createEntryReal:end');
+
+                safePerformance.mark('display:createEntry:end');
+                safePerformance.measure('display:createEntry', 'display:createEntry:start', 'display:createEntry:end');
+
+                if (i === 0) {
+                    void this._contentManager.executeMediaRequests(); // prioritize loading media for first entry since it is visible
+                }
+                ++i;
             }
+            if (this._setContentToken !== token) { return; }
+            void this._contentManager.executeMediaRequests();
+        }
+
+        if (typeof scrollX === 'number' || typeof scrollY === 'number') {
+            let {x, y} = this._windowScroll;
+            if (typeof scrollX === 'number') { x = scrollX; }
+            if (typeof scrollY === 'number') { y = scrollY; }
+            this._windowScroll.stop();
+            this._windowScroll.to(x, y);
         }
 
         this._triggerContentUpdateComplete();
+        safePerformance.mark('display:contentUpdate:end');
+        safePerformance.measure('display:contentUpdate', 'display:contentUpdate:start', 'display:contentUpdate:end');
     }
 
     /** */
@@ -1316,6 +1547,7 @@ export class Display extends EventDispatcher {
 
         this._updateNavigation(false, false);
         this._setNoContentVisible(false);
+        this._setNoDictionariesVisible(false);
         this._setQuery('', '', 0);
 
         this._triggerContentUpdateStart();
@@ -1341,6 +1573,18 @@ export class Display extends EventDispatcher {
 
         if (noResults !== null) {
             noResults.hidden = !visible;
+        }
+    }
+
+    /**
+     * @param {boolean} visible
+     */
+    _setNoDictionariesVisible(visible) {
+        /** @type {?HTMLElement} */
+        const noDictionaries = document.querySelector('#no-dictionaries');
+
+        if (noDictionaries !== null) {
+            noDictionaries.hidden = !visible;
         }
     }
 
@@ -1460,8 +1704,13 @@ export class Display extends EventDispatcher {
         }
         let target = (index === 0 && definitionIndex <= 0) || node === null ? 0 : this._getElementTop(node);
 
-        if (this._navigationHeader !== null) {
-            target -= this._navigationHeader.getBoundingClientRect().height;
+        if (target !== 0) {
+            if (this._aboveStickyHeader !== null) {
+                target += this._aboveStickyHeader.getBoundingClientRect().height;
+            }
+            if (!this._options?.general.stickySearchHeader && this._searchHeader) {
+                target += this._searchHeader.getBoundingClientRect().height;
+            }
         }
 
         this._windowScroll.stop();
@@ -1479,22 +1728,22 @@ export class Display extends EventDispatcher {
      */
     _focusEntryWithDifferentDictionary(offset, smooth) {
         const sign = Math.sign(offset);
-        if (sign === 0) {return false;}
+        if (sign === 0) { return false; }
 
         let index = this._index;
         const count = Math.min(this._dictionaryEntries.length, this._dictionaryEntryNodes.length);
-        if (index < 0 || index >= count) {return false;}
+        if (index < 0 || index >= count) { return false; }
 
         const dictionaryEntry = this._dictionaryEntries[index];
         const visibleDefinitionIndex = this._getDictionaryEntryVisibleDefinitionIndex(index, sign);
-        if (visibleDefinitionIndex === null) {return false;}
+        if (visibleDefinitionIndex === null) { return false; }
 
         let focusDefinitionIndex = null;
         if (dictionaryEntry.type === 'term') {
             const {dictionary} = dictionaryEntry.definitions[visibleDefinitionIndex];
             for (let i = index; i >= 0 && i < count; i += sign) {
                 const otherDictionaryEntry = this._dictionaryEntries[i];
-                if (otherDictionaryEntry.type !== 'term') {continue;}
+                if (otherDictionaryEntry.type !== 'term') { continue; }
                 const {definitions} = otherDictionaryEntry;
                 const jj = definitions.length;
                 let j = (i === index ? visibleDefinitionIndex + sign : (sign > 0 ? 0 : jj - 1));
@@ -1509,10 +1758,25 @@ export class Display extends EventDispatcher {
             }
         }
 
-        if (focusDefinitionIndex === null) {return false;}
+        if (focusDefinitionIndex === null) { return false; }
 
         this._focusEntry(index, focusDefinitionIndex, smooth);
         return true;
+    }
+
+    /**
+     *
+     * @param {number} direction
+     * @param {number} scale
+     */
+    _scrollByPopupHeight(direction, scale) {
+        const popupHeight = this._contentScrollElement.clientHeight;
+        const contentBottom = this._contentScrollElement.scrollHeight - popupHeight;
+        const scrollAmount = popupHeight * scale * direction;
+        const target = Math.min(this._windowScroll.y + scrollAmount, contentBottom);
+
+        this._windowScroll.stop();
+        this._windowScroll.toY(Math.max(0, target));
     }
 
     /**
@@ -1526,13 +1790,13 @@ export class Display extends EventDispatcher {
         const {definitions} = this._dictionaryEntries[index];
         const nodes = this._getDictionaryEntryDefinitionNodes(index);
         const definitionCount = Math.min(definitions.length, nodes.length);
-        if (definitionCount <= 0) {return null;}
+        if (definitionCount <= 0) { return null; }
 
         let visibleIndex = null;
         let visibleCoverage = 0;
         for (let i = (sign > 0 ? 0 : definitionCount - 1); i >= 0 && i < definitionCount; i += sign) {
             const {top, bottom} = nodes[i].getBoundingClientRect();
-            if (bottom <= scrollTop || top >= scrollBottom) {continue;}
+            if (bottom <= scrollTop || top >= scrollBottom) { continue; }
             const top2 = Math.max(scrollTop, Math.min(scrollBottom, top));
             const bottom2 = Math.max(scrollTop, Math.min(scrollBottom, bottom));
             const coverage = (bottom2 - top2) / (bottom - top);
@@ -1597,7 +1861,7 @@ export class Display extends EventDispatcher {
     /** */
     _updateHistoryState() {
         const {state, content} = this._history;
-        if (!(typeof state === 'object' && state !== null)) {return;}
+        if (!(typeof state === 'object' && state !== null)) { return; }
 
         state.focusEntry = this._index;
         state.scrollX = this._windowScroll.x;
@@ -1670,7 +1934,7 @@ export class Display extends EventDispatcher {
      * @param {import('settings').OptionsContext} optionsContext
      */
     async _setOptionsContextIfDifferent(optionsContext) {
-        if (deepEqual(this._optionsContext, optionsContext)) {return;}
+        if (deepEqual(this._optionsContext, optionsContext)) { return; }
         await this.setOptionsContext(optionsContext);
     }
 
@@ -1679,7 +1943,7 @@ export class Display extends EventDispatcher {
      */
     _setContentScale(scale) {
         const body = document.body;
-        if (body === null) {return;}
+        if (body === null) { return; }
         body.style.fontSize = `${scale}em`;
     }
 
@@ -1688,7 +1952,7 @@ export class Display extends EventDispatcher {
      */
     async _updateNestedFrontend(options) {
         const {tabId, frameId} = this._application;
-        if (tabId === null || frameId === null) {return;}
+        if (tabId === null || frameId === null) { return; }
 
         const isSearchPage = (this._pageType === 'search');
         const isEnabled = (
@@ -1701,7 +1965,7 @@ export class Display extends EventDispatcher {
         );
 
         if (this._frontend === null) {
-            if (!isEnabled) {return;}
+            if (!isEnabled) { return; }
 
             try {
                 if (this._frontendSetupPromise === null) {
@@ -1727,7 +1991,7 @@ export class Display extends EventDispatcher {
 
         const [{PopupFactory}, {Frontend}] = await Promise.all([
             import('../app/popup-factory.js'),
-            import('../app/frontend.js')
+            import('../app/frontend.js'),
         ]);
 
         const popupFactory = new PopupFactory(this._application);
@@ -1744,7 +2008,7 @@ export class Display extends EventDispatcher {
             allowRootFramePopupProxy: true,
             childrenSupported: this._childrenSupported,
             hotkeyHandler: this._hotkeyHandler,
-            canUseWindowPopup: true
+            canUseWindowPopup: true,
         });
         this._frontend = frontend;
         await frontend.prepare();
@@ -1754,9 +2018,9 @@ export class Display extends EventDispatcher {
      * @returns {boolean}
      */
     _copyHostSelection() {
-        if (typeof this._contentOriginFrameId !== 'number') {return false;}
+        if (typeof this._contentOriginFrameId !== 'number') { return false; }
         const selection = window.getSelection();
-        if (selection !== null && selection.toString().length > 0) {return false;}
+        if (selection !== null && selection.toString().length > 0) { return false; }
         void this._copyHostSelectionSafe();
         return true;
     }
@@ -1779,7 +2043,7 @@ export class Display extends EventDispatcher {
                     /** @type {string} */
                     let text;
                     try {
-                        text = await this.invokeContentOrigin('frontendGetSelectionText', void 0);
+                        text = await this.invokeContentOrigin('frontendGetPopupSelectionText', void 0);
                     } catch (e) {
                         break;
                     }
@@ -1797,7 +2061,7 @@ export class Display extends EventDispatcher {
      */
     _copyText(text) {
         const parent = document.body;
-        if (parent === null) {return;}
+        if (parent === null) { return; }
 
         let textarea = this._copyTextarea;
         if (textarea === null) {
@@ -1821,6 +2085,9 @@ export class Display extends EventDispatcher {
         for (const node of entry.querySelectorAll('.headword-kanji-link')) {
             eventListeners.addEventListener(node, 'click', this._onKanjiLookupBind);
         }
+        for (const node of entry.querySelectorAll('.inflection[data-reason]')) {
+            eventListeners.addEventListener(node, 'click', this._onInflectionClickBind);
+        }
         for (const node of entry.querySelectorAll('.tag-label')) {
             eventListeners.addEventListener(node, 'click', this._onTagClickBind);
         }
@@ -1834,7 +2101,7 @@ export class Display extends EventDispatcher {
      * @param {import('settings').ProfileOptions} options
      */
     _updateContentTextScanner(options) {
-        if (!options.scanning.enablePopupSearch) {
+        if (!options.scanning.enablePopupSearch || (!options.scanning.enableOnSearchPage && this._pageType === 'search')) {
             if (this._contentTextScanner !== null) {
                 this._contentTextScanner.setEnabled(false);
                 this._contentTextScanner.clearSelection();
@@ -1851,10 +2118,11 @@ export class Display extends EventDispatcher {
                 searchKanji: false,
                 searchOnClick: true,
                 searchOnClickOnly: true,
-                textSourceGenerator: this._textSourceGenerator
+                textSourceGenerator: this._textSourceGenerator,
             });
             this._contentTextScanner.includeSelector = '.click-scannable,.click-scannable *';
             this._contentTextScanner.excludeSelector = '.scan-disable,.scan-disable *';
+            this._contentTextScanner.touchEventExcludeSelector = null;
             this._contentTextScanner.prepare();
             this._contentTextScanner.on('clear', this._onContentTextScannerClear.bind(this));
             this._contentTextScanner.on('searchSuccess', this._onContentTextScannerSearchSuccess.bind(this));
@@ -1881,19 +2149,22 @@ export class Display extends EventDispatcher {
                     scanOnPenPress: false,
                     scanOnPenRelease: false,
                     preventTouchScrolling: false,
-                    preventPenScrolling: false
-                }
+                    preventPenScrolling: false,
+                    minimumTouchTime: 0,
+                },
             }],
             deepContentScan: scanningOptions.deepDomScan,
             normalizeCssZoom: scanningOptions.normalizeCssZoom,
             selectText: false,
             delay: scanningOptions.delay,
-            touchInputEnabled: false,
-            pointerEventsEnabled: false,
             scanLength: scanningOptions.length,
             layoutAwareScan: scanningOptions.layoutAwareScan,
-            preventMiddleMouse: false,
-            sentenceParsingOptions
+            preventMiddleMouseOnPage: false,
+            preventMiddleMouseOnTextHover: false,
+            preventBackForwardOnPage: false,
+            preventBackForwardOnTextHover: false,
+            sentenceParsingOptions,
+            pageType: this._pageType,
         });
 
         this._contentTextScanner.setEnabled(true);
@@ -1918,19 +2189,20 @@ export class Display extends EventDispatcher {
             params: {
                 type,
                 query,
-                wildcards: 'off'
+                wildcards: 'off',
             },
             state: {
                 focusEntry: 0,
                 optionsContext: optionsContext !== null ? optionsContext : void 0,
                 url,
                 sentence: sentence !== null ? sentence : void 0,
-                documentTitle
+                documentTitle,
+                pageTheme: 'light',
             },
             content: {
                 dictionaryEntries: dictionaryEntries !== null ? dictionaryEntries : void 0,
-                contentOrigin: this.getContentOrigin()
-            }
+                contentOrigin: this.getContentOrigin(),
+            },
         };
         /** @type {TextScanner} */ (this._contentTextScanner).clearSelection();
         this.setContent(details);
@@ -1952,8 +2224,8 @@ export class Display extends EventDispatcher {
         return {
             optionsContext: this.getOptionsContext(),
             detail: {
-                documentTitle: document.title
-            }
+                documentTitle: document.title,
+            },
         };
     }
 
@@ -2000,15 +2272,15 @@ export class Display extends EventDispatcher {
     /** */
     async _closeTab() {
         const tab = await this._getCurrentTab();
-        if (tab === null) {return;}
+        if (tab === null) { return; }
         const tabId = tab.id;
-        if (typeof tabId === 'undefined') {return;}
+        if (typeof tabId === 'undefined') { return; }
         await this._removeTab(tabId);
     }
 
     /** */
     _onHotkeyClose() {
-        if (this._closeSinglePopupMenu()) {return;}
+        if (this._closeSinglePopupMenu()) { return; }
         this.close();
     }
 
@@ -2018,29 +2290,9 @@ export class Display extends EventDispatcher {
      */
     _onHotkeyActionMoveRelative(sign, argument) {
         let count = typeof argument === 'number' ? argument : (typeof argument === 'string' ? Number.parseInt(argument, 10) : 0);
-        if (!Number.isFinite(count)) {count = 1;}
+        if (!Number.isFinite(count)) { count = 1; }
         count = Math.max(0, Math.floor(count));
         this._focusEntry(this._index + count * sign, 0, true);
-    }
-
-    /**
-     * @param {number} direction
-     */
-    async _setProfile(direction) {
-        const optionsFull = await this.application.api.optionsGetFull();
-
-        const profileCount = optionsFull.profiles.length;
-        const newProfile = (optionsFull.profileCurrent + direction + profileCount) % profileCount;
-
-        /** @type {import('settings-modifications').ScopedModificationSet} */
-        const modification = {
-            action: 'set',
-            path: 'profileCurrent',
-            value: newProfile,
-            scope: 'global',
-            optionsContext: null
-        };
-        await this.application.api.modifySettings([modification], 'search');
     }
 
     /** */
@@ -2065,7 +2317,7 @@ export class Display extends EventDispatcher {
      * @param {number} index
      */
     async _logDictionaryEntryData(index) {
-        if (index < 0 || index >= this._dictionaryEntries.length) {return;}
+        if (index < 0 || index >= this._dictionaryEntries.length) { return; }
         const dictionaryEntry = this._dictionaryEntries[index];
         const result = {dictionaryEntry};
 
@@ -2103,5 +2355,14 @@ export class Display extends EventDispatcher {
     /** */
     _triggerContentUpdateComplete() {
         this.trigger('contentUpdateComplete', {type: this._contentType});
+    }
+
+    /**
+     * @param {import('settings').ProfileOptions} options
+     */
+    _setStickyHeader(options) {
+        if (this._searchHeader && options) {
+            this._searchHeader.classList.toggle('sticky-header', options.general.stickySearchHeader);
+        }
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  * Copyright (C) 2020-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -48,7 +48,7 @@ function hasTermReasons(languageTransformer, source, expectedTerm, expectedCondi
             return {
                 has: true,
                 reasons: trace.map((frame) => frame.transform),
-                rules: conditions
+                rules: conditions,
             };
         }
     }
@@ -58,12 +58,14 @@ function hasTermReasons(languageTransformer, source, expectedTerm, expectedCondi
 /**
  * @param {LanguageTransformer} languageTransformer
  * @param {import('test/language-transformer-test').LanguageTransformerTestCategory[]} data
+ * @param {(input: string) => string} [preprocess] An optional function for if the input to the transformer needs to be preprocessed.
  */
-export function testLanguageTransformer(languageTransformer, data) {
+export function testLanguageTransformer(languageTransformer, data, preprocess) {
+    if (typeof preprocess === 'undefined') { preprocess = (input) => input; }
     describe('deinflections', () => {
         describe.each(data)('$category', ({valid, tests}) => {
             for (const {source, term, rule, reasons} of tests) {
-                const {has} = hasTermReasons(languageTransformer, source, term, rule, reasons);
+                const {has} = hasTermReasons(languageTransformer, preprocess(source), preprocess(term), rule, reasons);
                 let message = `${source} ${valid ? 'has' : 'does not have'} term candidate ${JSON.stringify(term)}`;
                 if (rule !== null) {
                     message += ` with rule ${JSON.stringify(rule)}`;

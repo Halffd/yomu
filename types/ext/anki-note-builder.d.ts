@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,15 +24,13 @@ import type * as Extension from './extension';
 import type * as Settings from './settings';
 import type * as TemplateRenderer from './template-renderer';
 import type * as Api from './api';
+import type * as Language from './language';
 
 export type CreateNoteDetails = {
     dictionaryEntry: Dictionary.DictionaryEntry;
-    mode: AnkiTemplatesInternal.CreateMode;
+    cardFormat: Settings.AnkiCardFormat;
     context: AnkiTemplatesInternal.Context;
     template: string;
-    deckName: string;
-    modelName: string;
-    fields: Field[];
     tags: string[];
     requirements: Requirement[];
     duplicateScope: Settings.AnkiDuplicateScope;
@@ -41,11 +39,15 @@ export type CreateNoteDetails = {
     glossaryLayoutMode: Settings.GlossaryLayoutMode;
     compactTags: boolean;
     mediaOptions: MediaOptions | null;
+    dictionaryStylesMap: Map<string, string>;
 };
 
 export type Field = [
     name: string,
-    value: string,
+    {
+        value: string;
+        overwriteMode: Settings.AnkiNoteFieldOverwriteMode;
+    },
 ];
 
 export type CreateNoteResult = {
@@ -56,18 +58,19 @@ export type CreateNoteResult = {
 
 export type GetRenderingDataDetails = {
     dictionaryEntry: Dictionary.DictionaryEntry;
-    mode: AnkiTemplatesInternal.CreateMode;
+    cardFormat: Settings.AnkiCardFormat;
     context: AnkiTemplatesInternal.Context;
     resultOutputMode?: Settings.ResultOutputMode;
     glossaryLayoutMode?: Settings.GlossaryLayoutMode;
     compactTags?: boolean;
     marker: string;
+    dictionaryStylesMap: Map<string, string>;
 };
 
 export type CommonData = AnkiTemplatesInternal.CreateDetails;
 
 export type RequirementGeneric = {
-    type: 'audio' | 'screenshot' | 'clipboardImage' | 'clipboardText' | 'selectionText';
+    type: 'audio' | 'screenshot' | 'clipboardImage' | 'clipboardText' | 'popupSelectionText';
 };
 
 export type RequirementTextFurigana = {
@@ -75,6 +78,8 @@ export type RequirementTextFurigana = {
     text: string;
     readingMode: AnkiTemplates.TextFuriganaReadingMode;
 };
+
+export type TextFuriganaFormats = 'furiganaHtml' | 'furiganaPlain';
 
 export type RequirementDictionaryMedia = {
     type: 'dictionaryMedia';
@@ -88,6 +93,8 @@ export type AudioMediaOptions = {
     sources: Audio.AudioSourceInfo[];
     preferredAudioIndex: number | null;
     idleTimeout: number | null;
+    languageSummary: Language.LanguageSummary;
+    enableDefaultAudioSources: boolean;
 };
 
 export type MediaOptions = {

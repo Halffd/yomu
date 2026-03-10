@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  * Copyright (C) 2020-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -55,11 +55,11 @@ async function createZip(directory, excludeFiles, outputFileName, sevenZipExes, 
                         'a',
                         outputFileName,
                         '.',
-                        ...excludeArguments
+                        ...excludeArguments,
                     ],
                     {
-                        cwd: directory
-                    }
+                        cwd: directory,
+                    },
                 );
                 return;
             } catch (e) {
@@ -85,7 +85,7 @@ async function createJSZip(directory, excludeFiles, outputFileName, onUpdate, dr
         zip.file(
             fileName.replace(/\\/g, '/'),
             fs.readFileSync(path.join(directory, fileName), {encoding: null, flag: 'r'}),
-            {}
+            {},
         );
     }
 
@@ -96,7 +96,7 @@ async function createJSZip(directory, excludeFiles, outputFileName, onUpdate, dr
     const data = await zip.generateAsync({
         type: 'nodebuffer',
         compression: 'DEFLATE',
-        compressionOptions: {level: 9}
+        compressionOptions: {level: 9},
     }, onUpdate);
     process.stdout.write('\n');
 
@@ -191,14 +191,20 @@ async function build(buildDir, extDir, manifestUtil, variantNames, manifestPath,
                 fs.writeFileSync(manifestPath, ManifestUtil.createManifestString(modifiedManifest).replace('$YOMITAN_VERSION', yomitanVersion));
             }
 
-            if (!dryRun || dryRunBuildZip) {
-                await createZip(extDir, excludeFiles, fullFileName, sevenZipExes, onUpdate, dryRun);
-            }
+            if (fileName.endsWith('.zip')) {
+                if (!dryRun || dryRunBuildZip) {
+                    await createZip(extDir, excludeFiles, fullFileName, sevenZipExes, onUpdate, dryRun);
+                }
 
-            if (!dryRun && Array.isArray(fileCopies)) {
-                for (const fileName2 of fileCopies) {
-                    const fileName2Safe = path.basename(fileName2);
-                    fs.copyFileSync(fullFileName, path.join(buildDir, fileName2Safe));
+                if (!dryRun && Array.isArray(fileCopies)) {
+                    for (const fileName2 of fileCopies) {
+                        const fileName2Safe = path.basename(fileName2);
+                        fs.copyFileSync(fullFileName, path.join(buildDir, fileName2Safe));
+                    }
+                }
+            } else {
+                if (!dryRun) {
+                    fs.cpSync(extDir, fullFileName, {recursive: true});
                 }
             }
         }
@@ -223,27 +229,30 @@ export async function main() {
     const parseArgsConfigOptions = {
         all: {
             type: 'boolean',
-            default: false
+            default: false,
         },
         default: {
             type: 'boolean',
-            default: false
+            default: false,
         },
         manifest: {
-            type: 'string'
+            type: 'string',
         },
         dryRun: {
             type: 'boolean',
-            default: false
+            default: false,
         },
         dryRunBuildZip: {
             type: 'boolean',
-            default: false
+            default: false,
         },
         version: {
             type: 'string',
-            default: '0.0.0.0'
-        }
+            default: '0.0.0.0',
+        },
+        target: {
+            type: 'string',
+        },
     };
 
     const argv = process.argv.slice(2);
@@ -263,9 +272,11 @@ export async function main() {
     try {
         await buildLibs();
         const variantNames = /** @type {string[]} */ ((
-            argv.length === 0 || args.all ?
+            args.target ?
+            [args.target] :
+            (argv.length === 0 || args.all ?
             manifestUtil.getVariants().filter(({buildable}) => buildable !== false).map(({name}) => name) :
-            targets
+            targets)
         ));
         await build(buildDir, extDir, manifestUtil, variantNames, manifestPath, dryRun, dryRunBuildZip, yomitanVersion);
     } finally {

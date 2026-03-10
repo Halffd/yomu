@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  * Copyright (C) 2020-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -31,7 +31,7 @@ class JsonSchemaAjv {
         const ajv = new Ajv({
             meta: false,
             strictTuples: false,
-            allowUnionTypes: true
+            allowUnionTypes: true,
         });
         const metaSchemaPath = fileURLToPath(import.meta.resolve('ajv/dist/refs/json-schema-draft-07.json'));
         /** @type {import('ajv').AnySchemaObject} */

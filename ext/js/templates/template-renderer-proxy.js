@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  * Copyright (C) 2020-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -179,7 +179,7 @@ export class TemplateRendererProxy {
                 cancel: () => {
                     cleanup();
                     reject(new Error('Terminated'));
-                }
+                },
             };
 
             const cleanup = () => {

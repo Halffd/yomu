@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024  Yomitan Authors
+ * Copyright (C) 2024-2025  Yomitan Authors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,8 +38,6 @@ export class LanguageTransformer {
     }
 
     /**
-     * Note: this function does not currently combine properly with previous descriptors,
-     * they are treated as completely separate collections. This should eventually be changed.
      * @param {import('language-transformer').LanguageTransformDescriptor} descriptor
      * @throws {Error}
      */
@@ -50,27 +48,28 @@ export class LanguageTransformer {
 
         /** @type {import('language-transformer-internal').Transform[]} */
         const transforms2 = [];
-        for (let i = 0, ii = transforms.length; i < ii; ++i) {
-            const {name, rules} = transforms[i];
+
+        for (const [transformId, transform] of Object.entries(transforms)) {
+            const {name, description, rules} = transform;
             /** @type {import('language-transformer-internal').Rule[]} */
             const rules2 = [];
             for (let j = 0, jj = rules.length; j < jj; ++j) {
                 const {type, isInflected, deinflect, conditionsIn, conditionsOut} = rules[j];
                 const conditionFlagsIn = this._getConditionFlagsStrict(conditionFlagsMap, conditionsIn);
-                if (conditionFlagsIn === null) { throw new Error(`Invalid conditionsIn for transform[${i}].rules[${j}]`); }
+                if (conditionFlagsIn === null) { throw new Error(`Invalid conditionsIn for transform ${transformId}.rules[${j}]`); }
                 const conditionFlagsOut = this._getConditionFlagsStrict(conditionFlagsMap, conditionsOut);
-                if (conditionFlagsOut === null) { throw new Error(`Invalid conditionsOut for transform[${i}].rules[${j}]`); }
+                if (conditionFlagsOut === null) { throw new Error(`Invalid conditionsOut for transform ${transformId}.rules[${j}]`); }
                 rules2.push({
                     type,
                     isInflected,
                     deinflect,
                     conditionsIn: conditionFlagsIn,
-                    conditionsOut: conditionFlagsOut
+                    conditionsOut: conditionFlagsOut,
                 });
             }
             const isInflectedTests = rules.map((rule) => rule.isInflected);
             const heuristic = new RegExp(isInflectedTests.map((regExp) => regExp.source).join('|'));
-            transforms2.push({name, rules: rules2, heuristic});
+            transforms2.push({id: transformId, name, description, rules: rules2, heuristic});
         }
 
         this._nextFlagIndex = nextFlagIndex;
@@ -123,28 +122,41 @@ export class LanguageTransformer {
             for (const transform of this._transforms) {
                 if (!transform.heuristic.test(text)) { continue; }
 
-                const {name, rules} = transform;
+                const {id, rules} = transform;
                 for (let j = 0, jj = rules.length; j < jj; ++j) {
                     const rule = rules[j];
                     if (!LanguageTransformer.conditionsMatch(conditions, rule.conditionsIn)) { continue; }
                     const {isInflected, deinflect} = rule;
                     if (!isInflected.test(text)) { continue; }
 
-                    const isCycle = trace.some((frame) => frame.transform === name && frame.ruleIndex === j && frame.text === text);
+                    const isCycle = trace.some((frame) => frame.transform === id && frame.ruleIndex === j && frame.text === text);
                     if (isCycle) {
-                        log.warn(new Error(`Cycle detected in transform[${name}] rule[${j}] for text: ${text}`));
+                        log.warn(new Error(`Cycle detected in transform[${id}] rule[${j}] for text: ${text}\nTrace: ${JSON.stringify(trace)}`));
                         continue;
                     }
 
                     results.push(LanguageTransformer.createTransformedText(
                         deinflect(text),
                         rule.conditionsOut,
-                        this._extendTrace(trace, {transform: name, ruleIndex: j, text})
+                        this._extendTrace(trace, {transform: id, ruleIndex: j, text}),
                     ));
                 }
             }
         }
         return results;
+    }
+
+    /**
+     * @param {string[]} inflectionRules
+     * @returns {import('dictionary').InflectionRuleChain}
+     */
+    getUserFacingInflectionRules(inflectionRules) {
+        return inflectionRules.map((rule) => {
+            const fullRule = this._transforms.find((transform) => transform.id === rule);
+            if (typeof fullRule === 'undefined') { return {name: rule}; }
+            const {name, description} = fullRule;
+            return description ? {name, description} : {name};
+        });
     }
 
     /**

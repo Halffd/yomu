@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  * Copyright (C) 2017-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,10 +16,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {ThemeController} from '../app/theme-controller.js';
 import {Application} from '../application.js';
 import {getAllPermissions, hasRequiredPermissionsForOptions} from '../data/permissions-util.js';
-import {querySelectorNotNull} from '../dom/query-selector.js';
 import {HotkeyHelpController} from '../input/hotkey-help-controller.js';
+import {HotkeyUtil} from '../input/hotkey-util.js';
 
 class DisplayController {
     /**
@@ -30,11 +31,20 @@ class DisplayController {
         this._api = api;
         /** @type {?import('settings').Options} */
         this._optionsFull = null;
+        /** @type {ThemeController} */
+        this._themeController = new ThemeController(document.documentElement);
+        /** @type {HotkeyUtil} */
+        this._hotkeyUtil = new HotkeyUtil();
     }
 
     /** */
     async prepare() {
+        this._themeController.prepare();
+
         const manifest = chrome.runtime.getManifest();
+
+        const {platform: {os}} = await this._api.getEnvironmentInfo();
+        this._hotkeyUtil.os = os;
 
         this._showExtensionInfo(manifest);
         void this._setupEnvironment();
@@ -54,17 +64,18 @@ class DisplayController {
             ''
         );
         this._setupButtonEvents('.action-open-settings', 'openSettingsPage', chrome.runtime.getURL(optionsPageUrl));
-        this._setupButtonEvents('.action-open-permissions', null, chrome.runtime.getURL('/permissions.html'));
 
         const {profiles, profileCurrent} = optionsFull;
-        const primaryProfile = (profileCurrent >= 0 && profileCurrent < profiles.length) ? profiles[profileCurrent] : null;
-        if (primaryProfile !== null) {
-            this._setupOptions(primaryProfile);
+        const defaultProfile = (profileCurrent >= 0 && profileCurrent < profiles.length) ? profiles[profileCurrent] : null;
+        if (defaultProfile !== null) {
+            this._setupOptions(defaultProfile);
         }
 
-        /** @type {HTMLElement} */
-        const profileSelect = querySelectorNotNull(document, '.action-select-profile');
-        profileSelect.hidden = (profiles.length <= 1);
+        /** @type {NodeListOf<HTMLElement>} */
+        const profileSelect = document.querySelectorAll('.action-select-profile');
+        for (let i = 0; i < profileSelect.length; i++) {
+            profileSelect[i].hidden = (profiles.length <= 1);
+        }
 
         this._updateProfileSelect(profiles, profileCurrent);
 
@@ -74,6 +85,32 @@ class DisplayController {
     }
 
     // Private
+
+    /** */
+    _updateDisplayModifierKey() {
+        const {profiles, profileCurrent} = /** @type {import('settings').Options} */ (this._optionsFull);
+        /** @type {NodeListOf<HTMLElement>} */
+        const modifierKeyHint = document.querySelectorAll('.tooltip');
+
+        const currentModifierKey = profiles[profileCurrent].options.scanning.inputs[0].include;
+
+        /** @type {{ [key: string]: string }} */
+        const modifierKeys = {};
+        for (const value of /** @type {import('input').ModifierKey[]} */ (['alt', 'ctrl', 'shift', 'meta'])) {
+            const name = this._hotkeyUtil.getModifierDisplayValue(value);
+            modifierKeys[value] = name;
+        }
+
+        for (let i = 0; i < modifierKeyHint.length; i++) {
+            modifierKeyHint[i].textContent = currentModifierKey ? 'Hold ' : 'Hover over text to scan';
+            if (currentModifierKey) {
+                const em = document.createElement('em');
+                em.textContent = modifierKeys[currentModifierKey];
+                modifierKeyHint[i].appendChild(em);
+                modifierKeyHint[i].appendChild(document.createTextNode(' to scan'));
+            }
+        }
+    }
 
     /**
      * @param {MouseEvent} e
@@ -196,11 +233,18 @@ class DisplayController {
         const extensionEnabled = options.general.enable;
         const onToggleChanged = () => this._api.commandExec('toggleTextScanning');
         for (const toggle of /** @type {NodeListOf<HTMLInputElement>} */ (document.querySelectorAll('.enable-search,.enable-search2'))) {
-            toggle.checked = extensionEnabled;
+            if (toggle.checked !== extensionEnabled) {
+                toggle.checked = extensionEnabled;
+            }
             toggle.addEventListener('change', onToggleChanged, false);
         }
+        void this._updateDisplayModifierKey();
         void this._updateDictionariesEnabledWarnings(options);
         void this._updatePermissionsWarnings(options);
+
+        this._themeController.theme = options.general.popupTheme;
+        this._themeController.siteOverride = true;
+        this._themeController.updateTheme();
     }
 
     /** */
@@ -209,9 +253,9 @@ class DisplayController {
         await hotkeyHelpController.prepare(this._api);
 
         const {profiles, profileCurrent} = /** @type {import('settings').Options} */ (this._optionsFull);
-        const primaryProfile = (profileCurrent >= 0 && profileCurrent < profiles.length) ? profiles[profileCurrent] : null;
-        if (primaryProfile !== null) {
-            hotkeyHelpController.setOptions(primaryProfile.options);
+        const defaultProfile = (profileCurrent >= 0 && profileCurrent < profiles.length) ? profiles[profileCurrent] : null;
+        if (defaultProfile !== null) {
+            hotkeyHelpController.setOptions(defaultProfile.options);
         }
 
         hotkeyHelpController.setupNode(document.documentElement);
@@ -222,23 +266,24 @@ class DisplayController {
      * @param {number} profileCurrent
      */
     _updateProfileSelect(profiles, profileCurrent) {
-        /** @type {HTMLSelectElement} */
-        const select = querySelectorNotNull(document, '#profile-select');
-        /** @type {HTMLElement} */
-        const optionGroup = querySelectorNotNull(document, '#profile-select-option-group');
-        const fragment = document.createDocumentFragment();
-        for (let i = 0, ii = profiles.length; i < ii; ++i) {
-            const {name} = profiles[i];
-            const option = document.createElement('option');
-            option.textContent = name;
-            option.value = `${i}`;
-            fragment.appendChild(option);
-        }
-        optionGroup.textContent = '';
-        optionGroup.appendChild(fragment);
-        select.value = `${profileCurrent}`;
+        /** @type {NodeListOf<HTMLSelectElement>} */
+        const selects = document.querySelectorAll('.profile-select');
+        /** @type {NodeListOf<HTMLElement>} */
+        for (let i = 0; i < Math.min(selects.length); i++) {
+            const fragment = document.createDocumentFragment();
+            for (let j = 0, jj = profiles.length; j < jj; ++j) {
+                const {name} = profiles[j];
+                const option = document.createElement('option');
+                option.textContent = name;
+                option.value = `${j}`;
+                fragment.appendChild(option);
+            }
+            selects[i].textContent = '';
+            selects[i].appendChild(fragment);
+            selects[i].value = `${profileCurrent}`;
 
-        select.addEventListener('change', this._onProfileSelectChange.bind(this), false);
+            selects[i].addEventListener('change', this._onProfileSelectChange.bind(this), false);
+        }
     }
 
     /**
@@ -247,22 +292,30 @@ class DisplayController {
     _onProfileSelectChange(event) {
         const node = /** @type {HTMLInputElement} */ (event.currentTarget);
         const value = Number.parseInt(node.value, 10);
-        if (typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= /** @type {import('settings').Options} */ (this._optionsFull).profiles.length) {
-            void this._setPrimaryProfileIndex(value);
+        if (typeof value === 'number' && Number.isFinite(value) && value >= 0 && value < /** @type {import('settings').Options} */ (this._optionsFull).profiles.length) {
+            const optionsFull = this._optionsFull;
+            if (optionsFull && value < optionsFull.profiles.length) {
+                void this._setDefaultProfileIndex(value);
+                optionsFull.profileCurrent = value;
+                const defaultProfile = optionsFull.profiles[optionsFull.profileCurrent];
+                if (defaultProfile !== null) {
+                    this._setupOptions(defaultProfile);
+                }
+            }
         }
     }
 
     /**
      * @param {number} value
      */
-    async _setPrimaryProfileIndex(value) {
+    async _setDefaultProfileIndex(value) {
         /** @type {import('settings-modifications').ScopedModificationSet} */
         const modification = {
             action: 'set',
             path: 'profileCurrent',
             value,
             scope: 'global',
-            optionsContext: null
+            optionsContext: null,
         };
         await this._api.modifySettings([modification], 'action-popup');
     }
@@ -271,7 +324,7 @@ class DisplayController {
      * @param {import('settings').ProfileOptions} options
      */
     async _updateDictionariesEnabledWarnings(options) {
-        const noDictionariesEnabledWarnings = /** @type {NodeListOf<HTMLElement>} */ (document.querySelectorAll('.no-dictionaries-enabled-warning'));
+        const tooltip = document.querySelectorAll('.tooltip');
         const dictionaries = await this._api.getDictionaryInfo();
 
         const enabledDictionaries = new Set();
@@ -288,9 +341,11 @@ class DisplayController {
             }
         }
 
-        const hasEnabledDictionary = (enabledCount > 0);
-        for (const node of noDictionariesEnabledWarnings) {
-            node.hidden = hasEnabledDictionary;
+        if (enabledCount === 0) {
+            for (let i = 0; i < tooltip.length; i++) {
+                tooltip[i].innerHTML = 'No dictionary enabled';
+                tooltip[i].classList.add('enable-dictionary-tooltip');
+            }
         }
     }
 
@@ -301,10 +356,11 @@ class DisplayController {
         const permissions = await getAllPermissions();
         if (hasRequiredPermissionsForOptions(permissions, options)) { return; }
 
-        const warnings = /** @type {NodeListOf<HTMLElement>} */ (document.querySelectorAll('.action-open-permissions,.permissions-required-warning'));
-        for (const node of warnings) {
-            node.hidden = false;
+        const tooltip = document.querySelectorAll('.tooltip');
+        for (let i = 0; i < tooltip.length; i++) {
+            tooltip[i].innerHTML = '<a class="action-open-permissions">Please enable permissions</a>';
         }
+        this._setupButtonEvents('.action-open-permissions', null, chrome.runtime.getURL('/permissions.html'));
     }
 
     /** @returns {Promise<boolean>} */

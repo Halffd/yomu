@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  * Copyright (C) 2021-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -81,7 +81,7 @@ export class PermissionsOriginController {
 
         let any = false;
         const excludeOrigins = new Set([
-            '<all_urls>'
+            '<all_urls>',
         ]);
         const fragment = document.createDocumentFragment();
         for (const origin of originsSet) {

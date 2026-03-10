@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024  Yomitan Authors
+ * Copyright (C) 2023-2025  Yomitan Authors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@ import type * as Input from './input';
 import type * as Settings from './settings';
 import type * as TextSource from './text-source';
 import type {EventNames, EventArgument as BaseEventArgument} from './core';
+import {PageType} from 'frontend';
 
 export type SearchResultDetail = {
     documentTitle: string;
@@ -34,13 +35,17 @@ export type Options = {
     normalizeCssZoom?: boolean;
     selectText?: boolean;
     delay?: number;
-    touchInputEnabled?: boolean;
-    pointerEventsEnabled?: boolean;
     scanLength?: number;
     layoutAwareScan?: boolean;
-    preventMiddleMouse?: boolean;
+    preventMiddleMouseOnPage?: boolean;
+    preventMiddleMouseOnTextHover?: boolean;
+    preventBackForwardOnPage?: boolean;
+    preventBackForwardOnTextHover?: boolean;
     matchTypePrefix?: boolean;
     sentenceParsingOptions?: SentenceParsingOptions;
+    scanWithoutMousemove?: boolean;
+    scanResolution?: string;
+    pageType?: PageType;
 };
 
 export type InputOptionsOuter = {
@@ -68,6 +73,7 @@ export type InputOptions = {
     scanOnPenRelease: boolean;
     preventTouchScrolling: boolean;
     preventPenScrolling: boolean;
+    minimumTouchTime: number;
 };
 
 export type SentenceParsingOptions = {
@@ -79,7 +85,7 @@ export type SentenceParsingOptions = {
 export type InputConfig = {
     include: string[];
     exclude: string[];
-    types: Set<PointerType>;
+    types: Set<Input.PointerType>;
     searchTerms: boolean;
     searchKanji: boolean;
     scanOnTouchMove: boolean;
@@ -93,16 +99,17 @@ export type InputConfig = {
     scanOnPenRelease: boolean;
     preventTouchScrolling: boolean;
     preventPenScrolling: boolean;
+    minimumTouchTime: number;
 };
 
 export type InputInfo = {
     input: InputConfig | null;
-    pointerType: PointerType;
-    eventType: PointerEventType;
+    pointerType: Input.PointerType;
+    eventType: Input.PointerEventType;
     passive: boolean;
     modifiers: Input.Modifier[];
     modifierKeys: Input.ModifierKey[];
-    detail: InputInfoDetail | undefined;
+    detail: InputInfoDetail | undefined | null;
 };
 
 export type InputInfoDetail = {
@@ -122,6 +129,7 @@ export type Events = {
         textSource: TextSource.TextSource;
         optionsContext: Settings.OptionsContext;
         detail: SearchResultDetail;
+        pageTheme: 'dark' | 'light';
     };
     searchEmpty: {
         inputInfo: InputInfo;
@@ -183,35 +191,6 @@ export type Sentence = {
     text: string;
     offset: number;
 };
-
-export type PointerType = (
-    'pen' |
-    'mouse' |
-    'touch' |
-    'script'
-);
-
-export type PointerEventType = (
-    'mouseMove' |
-    'pointerOver' |
-    'pointerDown' |
-    'pointerMove' |
-    'pointerUp' |
-    'touchStart' |
-    'touchEnd' |
-    'touchMove' |
-    'click' |
-    'script'
-);
-
-/**
- * An enum representing the pen pointer state.
- * - `0` - Not active.
- * - `1` - Hovering.
- * - `2` - Touching.
- * - `3` - Hovering after touching.
- */
-export type PenPointerState = 0 | 1 | 2 | 3;
 
 export type SentenceTerminatorMap = Map<string, [includeCharacterAtStart: boolean, includeCharacterAtEnd: boolean]>;
 
