@@ -25,10 +25,7 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
   mod
 ));
-var __publicField = (obj, key, value) => {
-  __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
-  return value;
-};
+var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
 
 // node_modules/handlebars/dist/cjs/handlebars/utils.js
 var require_utils = __commonJS({
@@ -810,8 +807,7 @@ var require_runtime = __commonJS({
         var newObj = {};
         if (obj != null) {
           for (var key in obj) {
-            if (Object.prototype.hasOwnProperty.call(obj, key))
-              newObj[key] = obj[key];
+            if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key];
           }
         }
         newObj["default"] = obj;
@@ -1106,8 +1102,7 @@ var require_no_conflict = __commonJS({
     exports.__esModule = true;
     exports["default"] = function(Handlebars3) {
       (function() {
-        if (typeof globalThis === "object")
-          return;
+        if (typeof globalThis === "object") return;
         Object.prototype.__defineGetter__("__magic__", function() {
           return this;
         });
@@ -1141,8 +1136,7 @@ var require_handlebars_runtime = __commonJS({
         var newObj = {};
         if (obj != null) {
           for (var key in obj) {
-            if (Object.prototype.hasOwnProperty.call(obj, key))
-              newObj[key] = obj[key];
+            if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key];
           }
         }
         newObj["default"] = obj;
@@ -1481,13 +1475,11 @@ var require_parser = __commonJS({
           this.lexer.yy = this.yy;
           this.yy.lexer = this.lexer;
           this.yy.parser = this;
-          if (typeof this.lexer.yylloc == "undefined")
-            this.lexer.yylloc = {};
+          if (typeof this.lexer.yylloc == "undefined") this.lexer.yylloc = {};
           var yyloc = this.lexer.yylloc;
           lstack.push(yyloc);
           var ranges = this.lexer.options && this.lexer.options.ranges;
-          if (typeof this.yy.parseError === "function")
-            this.parseError = this.yy.parseError;
+          if (typeof this.yy.parseError === "function") this.parseError = this.yy.parseError;
           function popStack(n) {
             stack.length = stack.length - 2 * n;
             vstack.length = vstack.length - n;
@@ -1516,10 +1508,9 @@ var require_parser = __commonJS({
               var errStr = "";
               if (!recovering) {
                 expected = [];
-                for (p in table[state])
-                  if (this.terminals_[p] && p > 2) {
-                    expected.push("'" + this.terminals_[p] + "'");
-                  }
+                for (p in table[state]) if (this.terminals_[p] && p > 2) {
+                  expected.push("'" + this.terminals_[p] + "'");
+                }
                 if (this.lexer.showPosition) {
                   errStr = "Parse error on line " + (yylineno + 1) + ":\n" + this.lexer.showPosition() + "\nExpecting " + expected.join(", ") + ", got '" + (this.terminals_[symbol] || symbol) + "'";
                 } else {
@@ -1543,8 +1534,7 @@ var require_parser = __commonJS({
                   yytext = this.lexer.yytext;
                   yylineno = this.lexer.yylineno;
                   yyloc = this.lexer.yylloc;
-                  if (recovering > 0)
-                    recovering--;
+                  if (recovering > 0) recovering--;
                 } else {
                   symbol = preErrorSymbol;
                   preErrorSymbol = null;
@@ -1596,8 +1586,7 @@ var require_parser = __commonJS({
             this.yytext = this.matched = this.match = "";
             this.conditionStack = ["INITIAL"];
             this.yylloc = { first_line: 1, first_column: 0, last_line: 1, last_column: 0 };
-            if (this.options.ranges)
-              this.yylloc.range = [0, 0];
+            if (this.options.ranges) this.yylloc.range = [0, 0];
             this.offset = 0;
             return this;
           },
@@ -1615,8 +1604,7 @@ var require_parser = __commonJS({
             } else {
               this.yylloc.last_column++;
             }
-            if (this.options.ranges)
-              this.yylloc.range[1]++;
+            if (this.options.ranges) this.yylloc.range[1]++;
             this._input = this._input.slice(1);
             return ch;
           },
@@ -1629,8 +1617,7 @@ var require_parser = __commonJS({
             var oldLines = this.match.split(/(?:\r\n?|\n)/g);
             this.match = this.match.substr(0, this.match.length - 1);
             this.matched = this.matched.substr(0, this.matched.length - 1);
-            if (lines.length - 1)
-              this.yylineno -= lines.length - 1;
+            if (lines.length - 1) this.yylineno -= lines.length - 1;
             var r = this.yylloc.range;
             this.yylloc = {
               first_line: this.yylloc.first_line,
@@ -1670,8 +1657,7 @@ var require_parser = __commonJS({
             if (this.done) {
               return this.EOF;
             }
-            if (!this._input)
-              this.done = true;
+            if (!this._input) this.done = true;
             var token, match, tempMatch, index, col, lines;
             if (!this._more) {
               this.yytext = "";
@@ -1683,14 +1669,12 @@ var require_parser = __commonJS({
               if (tempMatch && (!match || tempMatch[0].length > match[0].length)) {
                 match = tempMatch;
                 index = i;
-                if (!this.options.flex)
-                  break;
+                if (!this.options.flex) break;
               }
             }
             if (match) {
               lines = match[0].match(/(?:\r\n?|\n).*/g);
-              if (lines)
-                this.yylineno += lines.length;
+              if (lines) this.yylineno += lines.length;
               this.yylloc = {
                 first_line: this.yylloc.last_line,
                 last_line: this.yylineno + 1,
@@ -1708,12 +1692,9 @@ var require_parser = __commonJS({
               this._input = this._input.slice(match[0].length);
               this.matched += match[0];
               token = this.performAction.call(this, this.yy, this, rules[index], this.conditionStack[this.conditionStack.length - 1]);
-              if (this.done && this._input)
-                this.done = false;
-              if (token)
-                return token;
-              else
-                return;
+              if (this.done && this._input) this.done = false;
+              if (token) return token;
+              else return;
             }
             if (this._input === "") {
               return this.EOF;
@@ -1762,8 +1743,7 @@ var require_parser = __commonJS({
               } else {
                 this.begin("mu");
               }
-              if (yy_.yytext)
-                return 15;
+              if (yy_.yytext) return 15;
               break;
             case 1:
               return 15;
@@ -2410,8 +2390,7 @@ var require_base2 = __commonJS({
         var newObj = {};
         if (obj != null) {
           for (var key in obj) {
-            if (Object.prototype.hasOwnProperty.call(obj, key))
-              newObj[key] = obj[key];
+            if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key];
           }
         }
         newObj["default"] = obj;
@@ -2807,8 +2786,7 @@ var require_compiler = __commonJS({
       return new env.JavaScriptCompiler().compile(environment, options);
     }
     function compile(input, options, env) {
-      if (options === void 0)
-        options = {};
+      if (options === void 0) options = {};
       if (input == null || typeof input !== "string" && input.type !== "Program") {
         throw new _exception2["default"]("You must pass a string or Handlebars AST to Handlebars.compile. You passed " + input);
       }
@@ -4362,8 +4340,7 @@ var require_source_node = __commonJS({
       this.source = aSource == null ? null : aSource;
       this.name = aName == null ? null : aName;
       this[isSourceNode] = true;
-      if (aChunks != null)
-        this.add(aChunks);
+      if (aChunks != null) this.add(aChunks);
     }
     SourceNode.fromStringWithSourceMap = function SourceNode_fromStringWithSourceMap(aGeneratedCode, aSourceMapConsumer, aRelativePath) {
       var node = new SourceNode();
@@ -6189,8 +6166,7 @@ ${partial.indent}`));
         helperFn = this.container.strict(helper.context, name, loc);
       } else {
         helperFn = helper.context != null ? this.container.lookupProperty(helper.context, name) : helper.context;
-        if (helperFn == null)
-          helperFn = this.container.hooks.helperMissing;
+        if (helperFn == null) helperFn = this.container.hooks.helperMissing;
       }
     }
     const helperResult = typeof helperFn === "function" ? helperFn.call(helper.context, ...helper.params, helper.options) : helperFn;
@@ -6246,8 +6222,7 @@ ${partial.indent}`));
     return options;
   }
   generateProgramFunction(program) {
-    if (!program)
-      return noop;
+    if (!program) return noop;
     const prog = (nextContext, runtimeOptions = {}) => {
       runtimeOptions = { ...runtimeOptions };
       runtimeOptions.data = runtimeOptions.data || this.runtimeOptions.data;
@@ -6260,13 +6235,11 @@ ${partial.indent}`));
       const tmpRuntimeOptions = this.runtimeOptions;
       this.runtimeOptions = runtimeOptions;
       const shiftContext = nextContext !== this.context;
-      if (shiftContext)
-        this.contexts.unshift(nextContext);
+      if (shiftContext) this.contexts.unshift(nextContext);
       this.blockParamValues.unshift(runtimeOptions.blockParams || []);
       const result = this.resolveNodes(program).join("");
       this.blockParamValues.shift();
-      if (shiftContext)
-        this.contexts.shift();
+      if (shiftContext) this.contexts.shift();
       this.runtimeOptions = tmpRuntimeOptions;
       return result;
     };
@@ -6275,8 +6248,7 @@ ${partial.indent}`));
   }
   getHash(statement) {
     const result = {};
-    if (!statement.hash)
-      return result;
+    if (!statement.hash) return result;
     for (const { key, value } of statement.hash.pairs) {
       result[key] = this.resolveNodes(value)[0];
     }
@@ -6287,8 +6259,7 @@ ${partial.indent}`));
       return this.strictLookup(obj, path);
     }
     for (; index < path.parts.length; index++) {
-      if (obj == null)
-        return;
+      if (obj == null) return;
       obj = this.container.lookupProperty(obj, path.parts[index]);
     }
     return obj;

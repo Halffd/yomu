@@ -164,7 +164,17 @@ class Yomichan extends EventDispatcher {
      */
     sendMessage(...args) {
         try {
-            return chrome.runtime.sendMessage(...args);
+            const promise = chrome.runtime.sendMessage(...args);
+            if (typeof promise !== 'undefined' && typeof promise.catch === 'function') {
+                promise.catch((e) => {
+                    this.triggerExtensionUnloaded();
+                    const err = (e instanceof Error) ? e : new Error(typeof e === 'string' ? e : 'Extension context invalidated.');
+                    if (err.message !== 'Extension context invalidated.') {
+                        // Suppress
+                    }
+                });
+            }
+            return promise;
         } catch (e) {
             this.triggerExtensionUnloaded();
             throw e;

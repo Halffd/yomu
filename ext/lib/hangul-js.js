@@ -321,10 +321,8 @@ var require_hangul = __commonJS({
           } else {
             temp.push(string.charAt(i));
           }
-          if (grouped)
-            result.push(temp);
-          else
-            result = result.concat(temp);
+          if (grouped) result.push(temp);
+          else result = result.concat(temp);
         }
         return result;
       };
@@ -488,23 +486,20 @@ var require_hangul = __commonJS({
       };
       var rangeSearch = function(haystack, needle) {
         var hex = disassemble(haystack).join(""), nex = disassemble(needle).join(""), grouped = disassemble(haystack, true), re = new RegExp(nex, "gi"), indices = [], result;
-        if (!needle.length)
-          return [];
+        if (!needle.length) return [];
         while (result = re.exec(hex)) {
           indices.push(result.index);
         }
         function findStart(index) {
           for (var i = 0, length = 0; i < grouped.length; ++i) {
             length += grouped[i].length;
-            if (index < length)
-              return i;
+            if (index < length) return i;
           }
         }
         function findEnd(index) {
           for (var i = 0, length = 0; i < grouped.length; ++i) {
             length += grouped[i].length;
-            if (index + nex.length <= length)
-              return i;
+            if (index + nex.length <= length) return i;
           }
         }
         return indices.map(function(i) {
@@ -583,56 +578,44 @@ var require_hangul = __commonJS({
           return _isJong(c);
         },
         isHangulAll: function(str) {
-          if (typeof str !== "string")
-            return false;
+          if (typeof str !== "string") return false;
           for (var i = 0; i < str.length; i++) {
-            if (!_isHangul(str.charCodeAt(i)))
-              return false;
+            if (!_isHangul(str.charCodeAt(i))) return false;
           }
           return true;
         },
         isCompleteAll: function(str) {
-          if (typeof str !== "string")
-            return false;
+          if (typeof str !== "string") return false;
           for (var i = 0; i < str.length; i++) {
-            if (!_isHangul(str.charCodeAt(i)))
-              return false;
+            if (!_isHangul(str.charCodeAt(i))) return false;
           }
           return true;
         },
         isConsonantAll: function(str) {
-          if (typeof str !== "string")
-            return false;
+          if (typeof str !== "string") return false;
           for (var i = 0; i < str.length; i++) {
-            if (!_isConsonant(str.charCodeAt(i)))
-              return false;
+            if (!_isConsonant(str.charCodeAt(i))) return false;
           }
           return true;
         },
         isVowelAll: function(str) {
-          if (typeof str !== "string")
-            return false;
+          if (typeof str !== "string") return false;
           for (var i = 0; i < str.length; i++) {
-            if (!_isJung(str.charCodeAt(i)))
-              return false;
+            if (!_isJung(str.charCodeAt(i))) return false;
           }
           return true;
         },
         isChoAll: function(str) {
-          if (typeof str !== "string")
-            return false;
+          if (typeof str !== "string") return false;
           for (var i = 0; i < str.length; i++) {
-            if (!_isCho(str.charCodeAt(i)))
-              return false;
+            if (!_isCho(str.charCodeAt(i))) return false;
           }
           return true;
         },
         isJongAll: function(str) {
-          if (typeof str !== "string")
-            return false;
+          if (typeof str !== "string") return false;
           for (var i = 0; i < str.length; i++) {
-            if (!_isJong(str.charCodeAt(i)))
-              return false;
+            if (!_isJong(str.charCodeAt(i))) return false;
           }
           return true;
         }

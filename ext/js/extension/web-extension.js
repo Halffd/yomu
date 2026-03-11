@@ -68,10 +68,23 @@ export class WebExtension extends EventDispatcher {
      */
     sendMessage(message, responseCallback) {
         try {
-            chrome.runtime.sendMessage(message, responseCallback);
+            const promise = chrome.runtime.sendMessage(message, responseCallback);
+            if (typeof promise !== 'undefined' && typeof promise.catch === 'function') {
+                promise.catch((error) => {
+                    this.triggerUnloaded();
+                    const e = toError(error);
+                    if (!e.message.includes('Extension context invalidated')) {
+                        // Note: we can't easily rethrow this to the original caller
+                        // but we can at least ensure it's not an uncaught rejection.
+                    }
+                });
+            }
         } catch (error) {
             this.triggerUnloaded();
-            throw toError(error);
+            const e = toError(error);
+            if (!e.message.includes('Extension context invalidated')) {
+                throw e;
+            }
         }
     }
 

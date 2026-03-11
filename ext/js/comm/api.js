@@ -403,7 +403,7 @@ export class API {
      * @returns {Promise<import('api').ApiReturn<'heartbeat'>>}
      */
     heartbeat() {
-        return this._invoke('heartbeat', void 0);
+        return this._invoke('heartbeat', void 0).catch(() => {});
     }
 
     /**

@@ -76,6 +76,11 @@ class Logger extends EventDispatcher {
             context = typeof location === 'undefined' ? {url: 'unknown'} : {url: location.href};
         }
 
+        const errorMessage = (error instanceof Error) ? error.message : `${error}`;
+        if (errorMessage.includes('Extension context invalidated')) {
+            return;
+        }
+
         let errorString;
         try {
             if (typeof error === 'string') {
