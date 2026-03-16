@@ -4,7 +4,7 @@ import {gm, oai} from "./t.js";
 export class LLM {
     constructor(container) {
         this.container = container;
-        this.history = this.getHistory
+        this.history = this.getHistory();
         this.selectedLLM = localStorage.getItem('selectedLLM') || 'Gemini';
         this.apiEndpoints = this.initializeEndpoints();
         this.maxContext = 2040
@@ -42,32 +42,102 @@ export class LLM {
             }
         };
     }
-    getHistory(){
+    getHistory() {
         try {
-            return JSON.parse(localStorage.getItem('chatHistory')) || {};
-        } catch(e) {
-            console.error(e)
+            const historyJson = localStorage.getItem('chatHistory');
+            if (!historyJson || historyJson === 'undefined' || historyJson === 'null') {
+                return {};
+            }
+            const history = JSON.parse(historyJson);
+            return (history && typeof history === 'object') ? history : {};
+        } catch (e) {
+            console.error('Failed to parse chat history:', e);
+            return {}; // Return an empty object on error
         }
-        return null
     }
+
     createChatbox() {
         const chatContainer = document.createElement('div');
         chatContainer.className = 'chatbox-container';
 
+        // History Tabs
+        const historyContainer = document.createElement('div');
+        historyContainer.className = 'history-tabs-container';
+        
+        const yearTabs = this.createTabRow('year-tabs');
+        const monthTabs = this.createTabRow('month-tabs');
+        const dayTabs = this.createTabRow('day-tabs');
+        const sessionTabs = this.createTabRow('session-tabs');
+        
+        historyContainer.append(yearTabs, monthTabs, dayTabs, sessionTabs);
+        if (this.history) {
+            this.loadYearTabs(yearTabs);
+        }
+
         const llmSelect = this.createLLMSelect();
+        
+        // Prompt selection
+        const promptContainer = document.createElement('div');
+        promptContainer.className = 'prompt-selection-container';
+        const categorySelect = document.createElement('select');
+        categorySelect.className = 'prompt-category-select';
+        const templateSelect = document.createElement('select');
+        templateSelect.className = 'prompt-template-select';
+        
+        const categories = ['vocabulary', 'explanations', 'code', 'math'];
+        categories.forEach(cat => {
+            const opt = document.createElement('option');
+            opt.value = cat;
+            opt.textContent = cat.charAt(0).toUpperCase() + cat.slice(1);
+            categorySelect.appendChild(opt);
+        });
+        
+        const updateTemplates = () => {
+            templateSelect.innerHTML = '';
+            const category = categorySelect.value;
+            const prompts = this.promptsFormatter(category, -1); // I'll modify promptsFormatter to return the list if index is -1
+            if (Array.isArray(prompts)) {
+                prompts.forEach((p, i) => {
+                    const opt = document.createElement('option');
+                    opt.value = i;
+                    opt.textContent = p.substring(0, 50) + (p.length > 50 ? '...' : '');
+                    templateSelect.appendChild(opt);
+                });
+            }
+        };
+        
+        categorySelect.addEventListener('change', updateTemplates);
+        promptContainer.append(categorySelect, templateSelect);
+
         const chatDisplay = this.createChatDisplay();
         const chatInput = this.createChatInput();
+        
+        const usePromptBtn = document.createElement('button');
+        usePromptBtn.textContent = 'Use Template';
+        usePromptBtn.addEventListener('click', () => {
+            const category = categorySelect.value;
+            const index = parseInt(templateSelect.value);
+            chatInput.value = this.promptsFormatter(category, index);
+            chatInput.focus();
+        });
+
         const sendButton = this.createSendButton(chatInput);
         const toggleContextButton = this.createToggleContextButton();
 
         chatContainer.append(
+            historyContainer,
             llmSelect,
+            promptContainer,
+            usePromptBtn,
             chatDisplay,
             chatInput,
-            toggleContextButton, // Add toggle button
+            toggleContextButton,
             sendButton
         );
         this.container.appendChild(chatContainer);
+        
+        updateTemplates();
+
         let clearBtn = document.createElement('button');
         clearBtn.textContent = 'Clear';
         clearBtn.addEventListener('click', () => this.clear());
@@ -396,7 +466,6 @@ export class LLM {
         return toggleContextButton;
     }
     formatRequest(request, text, index = null, order = 'request:text') {
-        request = this.promptsFormatter('code')
         const formats = {
             'request:text': `${request}: ${text}`,
             'text:request': `${text}: ${request}`,
@@ -420,12 +489,19 @@ export class LLM {
         // If an index is provided, return the format at that index
         if (index !== null) {
             const keys = Object.keys(formats);
-            return formats[keys[index]] || `${request}: ${text}`; // Default to 'request:text' format if index is out of bounds
+            const formatKey = typeof index === 'number' ? keys[index] : index;
+            return formats[formatKey] || `${request}: ${text}`;
         }
 
         return formats[order] || `${request}: ${text}`; // Return by specified order or default format
     }
-    promptsFormatter(promptKey, ...values) {
+
+    prompts(text, type = 'vocabulary', ...values) {
+        const request = this.promptsFormatter(type, 0, ...values);
+        return this.formatRequest(request, text);
+    }
+
+    promptsFormatter(category, index = 0, ...values) {
         const prompts = {
             code: [
                 `Make the code faster, less lines of code`,
@@ -434,7 +510,7 @@ export class LLM {
                 `Make the code more safe with type checking and use more try {}`,
                 `Make the code faster, safer`,
                 `Make the code faster, less redundant, safer`,
-                `Convert the code to ${values[0]} programming language`, // Using values[0] for language
+                `Convert the code to ${values[0] || 'another'} programming language`,
                 `Convert the code to C++`,
                 `Convert the code to Assembly`,
                 `Explain line by line of the code showing the state of the program each line`,
@@ -442,9 +518,9 @@ export class LLM {
             explanations: [
                 `Explain grammar and etymology of the sentence`,
                 `Make it easier to understand`,
-                `Explain it like I'm a ${values[0]} year-old ${values[1]}`, // Using values[0] for age and values[1] for type
-                `Explain it like I'm a ${values[0]} year-old ${values[1]} enthusiast`,
-                `Explain it like I'm a ${values[1]}`,
+                `Explain it like I'm a ${values[0] || '10'} year-old ${values[1] || 'student'}`,
+                `Explain it like I'm a ${values[0] || '10'} year-old ${values[1] || 'student'} enthusiast`,
+                `Explain it like I'm a ${values[1] || 'expert'}`,
                 `Explain it like I'm a 3 year-old baby`,
                 `Explain it like I'm a 10 year-old kid`,
                 `Explain it like I'm a 15 year-old teen`,
@@ -458,48 +534,49 @@ export class LLM {
                 `Calculate it, show calculations in format`,
             ],
             vocabulary: [
-                `Break down each word in the following format: { "term": "word", "meaning": "definition" }`,
-                `Break down each word in the following format: { "term": "word", "meaning": "definition", "pronunciation": "phonetic" }`,
-                `Break down each word in the following format: { "term": "word", "meaning": "definition", "pronunciation": "phonetic", "etymology": "origin" }`,
-                `Break down each word in the following format: { "term": "word", "meaning": "definition", "pronunciation": "phonetic", "etymology": "origin", "ideographs": ["ideograph1", "ideograph2"] }`,
+                `Break down each word in the following format: { "words": [{ "term": "word", "meaning": "definition", "pronunciation": "phonetic", "etymology": "origin", "ideographs": [] }] }`,
+                `Break down each word in the following format: { "words": [{ "term": "word", "meaning": "definition" }] }`,
+                `Break down each word in the following format: { "words": [{ "term": "word", "meaning": "definition", "pronunciation": "phonetic" }] }`,
+                `Break down each word in the following format: { "words": [{ "term": "word", "meaning": "definition", "pronunciation": "phonetic", "etymology": "origin" }] }`,
             ]
         };
 
-        // Flatten the prompt arrays and sort them alphabetically
-        const allPrompts = Object.values(prompts).flat().sort();
+        const categoryPrompts = prompts[category] || prompts.vocabulary;
+        
+        if (index === -1) {
+            return categoryPrompts;
+        }
 
-        // Retrieve the prompt by key
-        const prompt = allPrompts[promptKey];
+        const promptTemplate = categoryPrompts[index] || categoryPrompts[0];
 
         // Replace placeholders using the provided values
-        return prompt.replace(/\${(.*?)}/g, (match, key) => {
+        return promptTemplate.replace(/\${(.*?)}/g, (match, key) => {
             const trimmedKey = key.trim();
-            const index = parseInt(trimmedKey);
-            return !isNaN(index) && index < values.length ? values[index] : ''; // Return the corresponding value
+            const valIndex = parseInt(trimmedKey);
+            return !isNaN(valIndex) && valIndex < values.length ? values[valIndex] : '';
         });
     }
-    async fetchResponse(text, type) {
-        const formattedPrompt = this.prompts(text, type);
-        // Assume 'llmFetch' is a function that interacts with your LLM
-        const response = await this.sendToLLM(text)
 
-        const jsonRegex = /(\[.*?\]|\{.*?\})/g;
-        const matches = text.match(jsonRegex);
+    async fetchResponse(text, type = 'vocabulary') {
+        const formattedPrompt = this.prompts(text, type);
+        const response = await this.sendToLLM(formattedPrompt);
+
+        const jsonRegex = /\{[\s\S]*?\}/g;
+        const matches = response.match(jsonRegex);
 
         if (matches) {
-            matches.forEach(match => {
+            for (const match of matches) {
                 try {
                     const jsonData = JSON.parse(match);
-                    console.log(jsonData);
-                    return jsonData
+                    if (jsonData.words) {
+                        return jsonData;
+                    }
                 } catch (error) {
-                    console.error("Invalid JSON:", match);
+                    // Ignore invalid JSON snippets
                 }
-            });
-        } else {
-            console.log("No JSON found.");
-            return null
+            }
         }
+        return null;
     }
 
     createFlexbox(response) {
