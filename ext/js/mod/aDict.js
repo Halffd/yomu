@@ -452,7 +452,7 @@ this.txtImg(false)
                 return String.fromCharCode(parseInt(m1, 16))
               })
             }
-            st = st.replaceAll(/\\n/g, '')
+            st = st.replaceAll(/\n/g, '')
             st = st.replaceAll('>Indonesian<', '>Bahasa Indonesia(ID)<')
             //if (l >= 0) {st = st}
             const x = document.createElement('div')
@@ -460,7 +460,7 @@ this.txtImg(false)
             x.className = 'wikty'
             // x.appendChild(x)
             document.querySelector('.save').insertAdjacentElement('afterend', x)
-            st = st.replaceAll(/\\n/g, '')
+            st = st.replaceAll(/\n/g, '')
             // h.innerHTML += '</br><div class="wkt">' + ue(st) + '</div>'
             const lu = x// h.querySelectorAll('.wkt')
             // lu = lu[lu.length - 1]
