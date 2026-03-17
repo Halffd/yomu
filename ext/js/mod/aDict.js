@@ -3178,6 +3178,9 @@ this.txtImg(false)
         }
         this.pos = 0;
         this.posr = [0, null, []];
+        if (typeof history !== 'undefined' && history.replaceState) {
+          history.replaceState(null, '', window.location.pathname);
+        }
       }
       if (kn == "\\" || kn == "|") {
         let is = this.note.keep(e.ctrlKey, e.shiftKey, b[this.pos])
