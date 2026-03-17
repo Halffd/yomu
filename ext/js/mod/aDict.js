@@ -3170,6 +3170,8 @@ this.txtImg(false)
       }
       if (ki == 28) {
         document.querySelectorAll('.mns').forEach(e => e.remove());
+        if (this.modK) this.modK.innerHTML = '';
+        if (this.modP) this.modP.innerHTML = '';
         if (this.txts) {
           this.txts.value = '';
           this.txts.textContent = '';
