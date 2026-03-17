@@ -3169,8 +3169,13 @@ this.txtImg(false)
         this.toast("F")
       }
       if (ki == 28) {
-        const baseUrl = chrome.runtime.getURL('/search.html');
-        window.open(baseUrl, '_self')
+        document.querySelectorAll('.mns').forEach(e => e.remove());
+        if (this.txts) {
+          this.txts.value = '';
+          this.txts.textContent = '';
+        }
+        this.pos = 0;
+        this.posr = [0, null, []];
       }
       if (kn == "\\" || kn == "|") {
         let is = this.note.keep(e.ctrlKey, e.shiftKey, b[this.pos])
