@@ -6467,7 +6467,7 @@ this.txtImg(false)
     }
     parent.prepend(textarea)
     textarea.select()
-    document.execCommand('paste')
+    // document.execCommand('paste')
     const v = textarea.value
     parent.removeChild(textarea)
     if (av('log')) console.dir(v)
