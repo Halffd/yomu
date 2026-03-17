@@ -452,6 +452,13 @@ export class Display extends EventDispatcher {
         await this.updateOptions();
     }
 
+    /**
+     * @param {import('../mod/aDict').aDict} dict
+     */
+    setDict(dict) {
+        this.dict = dict;
+    }
+
     /** */
     async updateOptions() {
         const options = await this._application.api.optionsGet(this.getOptionsContext());
@@ -1049,6 +1056,7 @@ export class Display extends EventDispatcher {
      * @param {WheelEvent} e
      */
     _onWheel(e) {
+        if (this._options === null) { return; }
         const scanningOptions = /** @type {import('settings').ProfileOptions} */ (this._options).scanning;
         if (e.altKey) {
             if (e.deltaY !== 0) {

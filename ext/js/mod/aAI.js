@@ -19,8 +19,18 @@ export class AI {
         this.curDelay = this.initDelay
         this.processingCount = 0
         this.selectedEndpoint = this.getSelectedEndpoint() || this.endpoints[0];
+        this.promptTemplates = this.getPromptTemplates();
         this.main = this.createMainDiv();
         container.appendChild(this.main);
+    }
+    getPromptTemplates() {
+        return [
+            { name: "None", prompt: "", negative: "" },
+            { name: "Anime Style", prompt: "anime style, high quality, vibrant colors", negative: "realistic, photorealistic, 3d, bloated, ugly" },
+            { name: "Photorealistic", prompt: "photorealistic, highly detailed, 8k, masterpiece", negative: "anime, cartoon, drawing, sketch, blurry" },
+            { name: "Digital Art", prompt: "digital art, concept art, sharp focus, artstation", negative: "low quality, bad anatomy, text, watermark" },
+            { name: "Oil Painting", prompt: "oil painting, thick brushstrokes, textured, classical style", negative: "modern, clean, digital, smooth" }
+        ];
     }
     getEndpoints(){
         return [
@@ -208,11 +218,22 @@ export class AI {
         this.endpoints.forEach((endpoint, i) => {
             const option = document.createElement('option');
             option.value = endpoint.name;
-            option.textContent = i + ':  ' + endpoint.name + ' - ' + endpoint.url;
+            option.textContent = i + ':  ' + endpoint.name;
             this.endpointSelect.appendChild(option);
         });
 
         mainDiv.appendChild(this.endpointSelect);
+
+        // Prompt Template Selection
+        const templateSelect = document.createElement('select');
+        templateSelect.id = 'prompt-template-select';
+        this.promptTemplates.forEach(template => {
+            const option = document.createElement('option');
+            option.value = template.name;
+            option.textContent = 'Style: ' + template.name;
+            templateSelect.appendChild(option);
+        });
+        mainDiv.appendChild(templateSelect);
 
         const promptInput = document.createElement('textarea'); // Changed to textarea
         promptInput.id = 'prompt';
@@ -256,6 +277,23 @@ export class AI {
                     this.setSelectedEndpoint(selected);
                 }
             }.bind(this);
+
+            const tSelect = document.getElementById("prompt-template-select");
+            tSelect.onchange = () => {
+                const template = this.promptTemplates.find(t => t.name === tSelect.value);
+                if (template) {
+                    let pInput = document.getElementById("prompt");
+                    let nInput = document.getElementById("negative-prompt");
+                    if (template.name === "None") {
+                        pInput.value = "";
+                        nInput.value = "";
+                    } else {
+                        pInput.value = (pInput.value ? pInput.value + ", " : "") + template.prompt;
+                        nInput.value = (nInput.value ? nInput.value + ", " : "") + template.negative;
+                    }
+                }
+            };
+
             let promptInput = document.getElementById("prompt")
             promptInput.style.cursor = 'text';
 

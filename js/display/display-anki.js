@@ -640,7 +640,8 @@ class DisplayAnki {
                 }
                 infos = this._getAnkiNoteInfoForceValue(notes, forceCanAddValue);
             } else {
-                infos = await yomichan.api.getAnkiNoteInfo(notes, fetchAdditionalInfo);
+                const strippedNotes = this._stripNotesArray(notes);
+                infos = await yomichan.api.getAnkiNoteInfo(strippedNotes, fetchAdditionalInfo);
             }
         } catch (e) {
             infos = this._getAnkiNoteInfoForceValue(notes, false);
@@ -868,5 +869,19 @@ class DisplayAnki {
         let v = textarea.value
         parent.removeChild(textarea);
         return v
+    }
+
+    _stripNotesArray(notes) {
+        const newNotes = [];
+        for (const note of notes) {
+            const fields = {};
+            const keys = Object.keys(note.fields);
+            if (keys.length > 0) {
+                const firstField = keys[0];
+                fields[firstField] = note.fields[firstField];
+            }
+            newNotes.push({...note, fields});
+        }
+        return newNotes;
     }
 }

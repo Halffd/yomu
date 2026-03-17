@@ -182,7 +182,6 @@ export class CrossFrameAPIPort extends EventDispatcher {
     _onAck(id) {
         const invocation = this._activeInvocations.get(id);
         if (typeof invocation === 'undefined') {
-            log.warn(new Error(`Request ${id} not found for acknowledgement`));
             return;
         }
 
@@ -215,7 +214,6 @@ export class CrossFrameAPIPort extends EventDispatcher {
     _onResult(id, data) {
         const invocation = this._activeInvocations.get(id);
         if (typeof invocation === 'undefined') {
-            log.warn(new Error(`Request ${id} not found`));
             return;
         }
 

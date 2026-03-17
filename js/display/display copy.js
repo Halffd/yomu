@@ -344,6 +344,10 @@ class Display extends EventDispatcher {
         await this.updateOptions();
     }
 
+    setDict(dict) {
+        this.dict = dict;
+    }
+
     async updateOptions() {
         const options = await yomichan.api.optionsGet(this.getOptionsContext());
         const {scanning: scanningOptions, sentenceParsing: sentenceParsingOptions} = options;
@@ -1098,6 +1102,7 @@ class Display extends EventDispatcher {
         this._queryOffset = queryOffset;
         this._updateQueryParser();
         this._setTitleText(query);
+        this.dict?.update(query);
     }
 
     _updateQueryParser() {

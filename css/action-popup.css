@@ -86,6 +86,7 @@ label {
 .icon[data-icon=magnifying-glass]        { --icon-image: url(/images/magnifying-glass.svg); }
 .icon[data-icon=exclamation-point-short] { --icon-image: url(/images/exclamation-point-short.svg); }
 .icon[data-icon=question-mark-circle]    { --icon-image: url(/images/question-mark-circle.svg); }
+.icon[data-icon=sentence-parsing]       { --icon-image: url(/images/sentence-parsing.svg); }
 
 
 /* Page-specific styles */

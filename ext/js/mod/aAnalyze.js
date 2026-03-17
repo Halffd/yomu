@@ -2,7 +2,7 @@
 including analyzing the text itself, generating furigana, converting to romaji, analyzing grammar,
 and analyzing word frequency. */
 /* globals aDict lg wn token */
-import {wn} from './aDict.js';
+import {wn} from './aUtil.js';
 const lg = console.log;
 
 const API_URL = 'http://localhost:5000'; // Replace with your API URL

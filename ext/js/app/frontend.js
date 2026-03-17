@@ -117,6 +117,7 @@ export class Frontend {
             ['frontendRequestReadyBroadcast',   this._onMessageRequestFrontendReadyBroadcast.bind(this)],
             ['frontendSetAllVisibleOverride',   this._onApiSetAllVisibleOverride.bind(this)],
             ['frontendClearAllVisibleOverride', this._onApiClearAllVisibleOverride.bind(this)],
+            ['analyzePage',                      this._onApiAnalyzePage.bind(this)],
             ['frontendScanSelectedText',        this._onApiScanSelectedText.bind(this)],
         ]);
 
@@ -263,6 +264,109 @@ export class Frontend {
      */
     _onActionScanSelectedText() {
         void this._scanSelectedText(false, true);
+    }
+
+    /**
+     * @returns {void}
+     */
+    async _onApiAnalyzePage() {
+        try {
+            const {isStringPartiallyJapanese} = await import(chrome.runtime.getURL('/js/language/ja/japanese.js'));
+            const {aDict} = await import(chrome.runtime.getURL('/js/mod/aDict.js'));
+            const {Note} = await import(chrome.runtime.getURL('/js/mod/aNote.js'));
+
+            if (!document.getElementById('moe-css')) {
+                const link = document.createElement('link');
+                link.id = 'moe-css';
+                link.rel = 'stylesheet';
+                link.href = chrome.runtime.getURL('/css/moe.css');
+                document.head.appendChild(link);
+            }
+
+            const displayMock = {
+                _pageType: 'web',
+                fullQuery: '',
+                getOptionsContext: () => ({}),
+                _findDictionaryEntries: async () => [],
+                _displayGenerator: {
+                    createTermEntry: () => document.createElement('div'),
+                    createKanjiEntry: () => document.createElement('div')
+                }
+            };
+
+            const note = new Note(null, null, null);
+            const dict = new aDict(displayMock, null, null, null, null, true, note);
+            dict.var = (v) => true;
+
+            if (!document.getElementById('modP')) {
+                const modP = document.createElement('div');
+                modP.id = 'modP';
+                modP.style.position = 'relative';
+                modP.style.zIndex = '1000000';
+                document.body.appendChild(modP);
+                dict.modP = modP;
+            } else {
+                dict.modP = document.getElementById('modP');
+            }
+
+            // Optimization: Use a more efficient way to collect and group text
+            const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+                acceptNode: (node) => {
+                    const parent = node.parentElement;
+                    if (!parent) return NodeFilter.FILTER_REJECT;
+                    const tag = parent.tagName;
+                    if (tag === 'SCRIPT' || tag === 'STYLE' || tag === 'NOSCRIPT' || tag === 'TEXTAREA') {
+                        return NodeFilter.FILTER_REJECT;
+                    }
+                    if (node.textContent.trim().length === 0) return NodeFilter.FILTER_SKIP;
+                    return NodeFilter.FILTER_ACCEPT;
+                }
+            }, false);
+
+            const chunks = [];
+            let currentChunk = '';
+            let node;
+            while (node = walker.nextNode()) {
+                const text = node.textContent.trim();
+                if (isStringPartiallyJapanese(text)) {
+                    // Group nearby small text nodes into chunks to reduce network requests
+                    if (currentChunk.length + text.length > 200) {
+                        chunks.push(currentChunk);
+                        currentChunk = text;
+                    } else {
+                        currentChunk += (currentChunk ? ' ' : '') + text;
+                    }
+                }
+            }
+            if (currentChunk) chunks.push(currentChunk);
+
+            if (chunks.length > 0) {
+                console.log(`Lang: Analyzing ${chunks.length} optimized text chunks...`);
+                
+                const batchSize = 5;
+                const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+                for (let i = 0; i < chunks.length; i += batchSize) {
+                    const batch = chunks.slice(i, i + batchSize);
+                    
+                    // Process batch with controlled concurrency
+                    await Promise.all(batch.map(async (text) => {
+                        try {
+                            if (!dict.modK) { dict.setup(); }
+                            await dict.moe([text], 0, 1);
+                        } catch (err) {
+                            // Silently handle individual chunk errors
+                        }
+                    }));
+
+                    // Yield to main thread to keep UI responsive
+                    await delay(50); 
+                }
+                console.log('Lang: Page analysis complete.');
+            }
+        } catch (e) {
+            log.error(e);
+        }
     }
 
     /**

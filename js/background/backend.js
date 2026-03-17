@@ -148,6 +148,7 @@ class Backend {
             ['openInfoPage',       this._onCommandOpenInfoPage.bind(this)],
             ['openSettingsPage',   this._onCommandOpenSettingsPage.bind(this)],
             ['openSearchPage',     this._onCommandOpenSearchPage.bind(this)],
+            ['analyzePage',        this._onCommandAnalyzePage.bind(this)],
             ['openPopupWindow',    this._onCommandOpenPopupWindow.bind(this)]
         ]);
     }
@@ -860,6 +861,11 @@ class Backend {
             scope: 'profile',
             optionsContext: {current: true}
         }], 'backend');
+    }
+
+    _onCommandAnalyzePage() {
+        console.log('Command analyzePage triggered');
+        this._sendMessageAllTabsIgnoreResponse('analyzePage', {});
     }
 
     async _onCommandOpenPopupWindow() {

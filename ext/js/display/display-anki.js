@@ -1009,7 +1009,8 @@ export class DisplayAnki {
         let ankiError = null;
         try {
             if (this._checkForDuplicates) {
-                infos = await this._display.application.api.getAnkiNoteInfo(validNotes, this._isAdditionalInfoEnabled());
+                const strippedValidNotes = this._stripNotesArray(validNotes);
+                infos = await this._display.application.api.getAnkiNoteInfo(strippedValidNotes, this._isAdditionalInfoEnabled());
             } else {
                 const isAnkiConnected = await this._display.application.api.isAnkiConnected();
                 infos = this._getAnkiNoteInfoForceValueIfValid(validNotes, isAnkiConnected);
@@ -1445,6 +1446,24 @@ export class DisplayAnki {
             return 'learning';
         }
         return 'new';
+    }
+
+    /**
+     * @param {import('anki').Note[]} notes
+     * @returns {import('anki').Note[]}
+     */
+    _stripNotesArray(notes) {
+        const newNotes = [];
+        for (const note of notes) {
+            const fields = {};
+            const keys = Object.keys(note.fields);
+            if (keys.length > 0) {
+                const firstField = keys[0];
+                fields[firstField] = note.fields[firstField];
+            }
+            newNotes.push({...note, fields});
+        }
+        return newNotes;
     }
 }
 

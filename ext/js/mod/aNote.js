@@ -3,10 +3,8 @@
 import {mobile} from '../ctx.js';
 import {convertToKana} from '../language/ja/japanese-wanakana.js';
 import {isStringEntirelyKana} from '../language/ja/japanese.js';
-import {aDict} from '../mod/aDict.js';
-import {av} from './aDict.js';
 import {Db} from './aSql.js';
-import {merge} from './aUtil.js';
+import {merge, av, wn, int} from './aUtil.js';
 
 var nv = (/** @type {string} */ v) => {
     return localStorage.getItem(v) == 'true'
@@ -485,7 +483,7 @@ export class Note {
             const note = window.aNote
             const noteMod = Object.create(Note.prototype, {dict: this})
             const storedDay = parseInt(await this.getter('day'))
-            const day = aDict.prototype.int('day') ?? -1 //isNaN(storedDay) ? 0 : storedDay
+            const day = int('day') ?? -1 //isNaN(storedDay) ? 0 : storedDay
             const unixSeconds = Math.floor(Date.now() / 1000); // Current Unix timestamp
             //const date = new Date(unixSeconds * 1000).getDate();
             await this.setter('unix', unixSeconds)
@@ -759,10 +757,22 @@ export class Note {
         }
         cache.innerHTML = `${await this.getter('navsave')}: ${await this.getter('navsentence')}`
         if (saveDiv) {
-            let wordsOnly = sz // .replace(/(\d{1,2}-\d{1,2}-\d{4}-\d{1,2}:\d{1,2}: )|(\w{3} \w{3} \d{2} \d{4} \d{2}:\d{2}:\d{2} \w{3}-\d{4} \(\w{3}\))/g, '');
-            wordsOnly = wordsOnly.split(' ')
-            wordsOnly = wordsOnly.slice(wordsOnly.length - 32).join(' ')
-            s3.innerHTML = wordsOnly
+            let wordsOnly = sz
+            let wordsArr = wordsOnly.split(' ')
+            s3.innerHTML = ''
+            for (let word of wordsArr) {
+                if (!word.trim()) continue
+                let span = document.createElement('span')
+                span.className = 'flex-word mns'
+                span.textContent = word
+                span.style.cursor = 'pointer'
+                span.style.marginRight = '0.5em'
+                span.onclick = (e) => {
+                    e.stopPropagation()
+                    this.aDict?.yomi([word], 0, 1, true)
+                }
+                s3.appendChild(span)
+            }
         } else {
             console.error("Could not find element with class 'save'.")
         }
@@ -772,7 +782,7 @@ export class Note {
     /**
      * @param {{ innerHTML: any; querySelector: (arg0: string) => string; getAttribute: (arg0: string) => string; classList: { add: (arg0: string) => void; }; parentElement: { getAttribute: (arg0: string) => any; }; querySelectorAll: (arg0: string) => any; }} elem
      */
-    async svClk(elem, cx = 0, tw = '', mode = 0, _yc = null, clip = '', img = [], snd = [], keys = [false, false]) {
+    async svClk(elem, cx = 0, tw = '', mode = 0, _yc = null, clip = '', img = [], snd = [], keys = [false, false], isFav = true) {
         if (this.aDict) {
             this.aDict.new = false
         }
@@ -815,16 +825,13 @@ export class Note {
             rd = elem.querySelector('.rd').innerText
             rd = convertToKana(rd)
         }
-        /*let fv = document.querySelectorAll('.fav')
-        if (nv('warn')) console.warn(fv, rd)
-        if (fv.length > 0) {
-            for (let f of fv) {
-                f.style.height = this.aDict.width
-                f.style.flex = this.aDict.height
-                f.style.setProperty('--cc', 'blue')
-            }
-        }*/
-        elem.classList.add('fav')
+        
+        if (isFav) {
+            elem.classList.add('fav')
+        } else {
+            elem.classList.add('saved')
+        }
+
         const note = this //new Note(this.dic) // Create an instance of the Note class
         if (isNaN(cx)) {
             cx = 0
@@ -1287,7 +1294,7 @@ export class Note {
      * @param {boolean} k2
      * @param {Element} elem
      */
-    keep(k1, k2, elem) {
+    keep(k1, k2, elem, isFav = true) {
         let t = elem.getAttribute('w') ?? ''
         let is = this.bin.includes(t)
         if (!is && !this.mined[2].includes(t)) {
@@ -1296,7 +1303,7 @@ export class Note {
         }
         let v = 1
         let opt = k1 && k2 ? v + 2 : ((k1 || k2) ? v + 1 : v)
-        this.svClk(elem, opt, undefined, 1, undefined, undefined, undefined, undefined, [k2, k1])
+        this.svClk(elem, opt, undefined, 1, undefined, undefined, undefined, undefined, [k2, k1], isFav)
         return is
     }
     /**

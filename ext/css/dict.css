@@ -103,6 +103,9 @@
 .fav {
     border: 2px solid orange;
 }
+.saved {
+    border: 2px solid purple;
+}
 .fav::after:hover {
     font-size: 2.1em;
     text-rendering: auto;

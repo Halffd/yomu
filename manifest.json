@@ -114,6 +114,12 @@
             },
             "description": "Open the search page"
         },
+        "analyzePage": {
+            "suggested_key": {
+                "default": "Alt+Shift+L"
+            },
+            "description": "Analyze page for Japanese words"
+        },
         "openPopupWindow": {
             "description": "Open the popup window"
         }

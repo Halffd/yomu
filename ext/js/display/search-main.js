@@ -25,6 +25,9 @@ import {SettingsDisplayController} from '../pages/settings/settings-display-cont
 import {aDict} from '../mod/aDict.js';
 import {Note} from '../mod/aNote.js';
 import {AnkiController} from '../pages/settings/anki-controller.js';
+import {Mecab} from '../comm/mecab.js';
+import {convertToRomaji} from '../language/ja/japanese-wanakana.js';
+import {convertKatakanaToHiragana, convertHiraganaToKatakana} from '../language/ja/japanese.js';
 import {DisplayAnki} from './display-anki.js';
 import {DisplayAudio} from './display-audio.js';
 import {Display} from './display.js';

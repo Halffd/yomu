@@ -204,6 +204,7 @@ export class Backend {
             ['openInfoPage', this._onCommandOpenInfoPage.bind(this)],
             ['openSettingsPage', this._onCommandOpenSettingsPage.bind(this)],
             ['openSearchPage', this._onCommandOpenSearchPage.bind(this)],
+            ['analyzePage', this._onCommandAnalyzePage.bind(this)],
             ['openPopupWindow', this._onCommandOpenPopupWindow.bind(this)],
         ]));
 
@@ -1266,6 +1267,13 @@ export class Backend {
             optionsContext: {current: true},
         };
         await this._modifySettings([modification], 'backend');
+    }
+
+    /**
+     * @returns {void}
+     */
+    _onCommandAnalyzePage() {
+        this._sendMessageAllTabsIgnoreResponse({action: 'analyzePage', params: {}});
     }
 
     /**

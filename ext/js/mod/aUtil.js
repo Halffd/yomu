@@ -1,10 +1,19 @@
-/* globals av aDict aNote wn */
+/* globals aDict aNote */
 /**
  *
  * @param node
  * @param index
  */
-import {av, wn} from './aDict.js';
+
+export function av(/** @type {string} */ v) {
+  return localStorage.getItem(v) == 'true'
+}
+export var wn = console.warn
+
+export function int(/** @type {string} */ id) {
+  let a = localStorage.getItem(id)
+  return a ? parseInt(a) : 0
+}
 
 /**
  * Determines whether the application can run based on the provided arguments.

@@ -684,7 +684,13 @@ class Logger extends EventDispatcher {
         }
 
         const errorMessage = (error instanceof Error) ? error.message : `${error}`;
-        if (errorMessage.includes('Extension context invalidated')) {
+        if (
+            errorMessage.includes('Extension context invalidated') ||
+            errorMessage.includes('The message port closed before a response was received') ||
+            errorMessage.includes('Acknowledgement timeout') ||
+            errorMessage.includes('Response timeout') ||
+            errorMessage === 'Timeout'
+        ) {
             return;
         }
 
