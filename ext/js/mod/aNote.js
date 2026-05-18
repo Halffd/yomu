@@ -127,7 +127,7 @@ export class Note {
         this.vars = {}
         this.svClk = this.svClk.bind(this);
         this.saveAdd = this.saveAdd.bind(this);
-        this.url = "https://yomu-d9ca6-default-rtdb.firebaseio.com/save"
+        this.url = ""
         this.db = new Db()
     }
 

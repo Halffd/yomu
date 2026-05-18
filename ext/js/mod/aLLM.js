@@ -1,5 +1,5 @@
-/* globals marked */
-import {gm, oai} from "./t.js";
+  /* globals marked */
+let gm = ''; let oai = ''
 
 export class LLM {
     constructor(container) {

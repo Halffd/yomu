@@ -1,4 +1,4 @@
-import {hf, pr, rs} from "./t.js";
+let [hf, pr, rs] = ["","",""]
 export function blobToBase64(blob) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -175,7 +175,7 @@ export class AI {
             },
             {
                 name: "Prodia",
-                url: "https://api.prodia.com/v1/sd/generate",
+                url: "  /v1/sd/generate",
                 header: ['X-Prodia-Key', pr],
                 params: (prompt, negative) => ({
                     "model": "v1-5-pruned-emaonly.safetensors [d7049739]",
