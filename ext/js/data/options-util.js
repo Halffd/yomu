@@ -450,8 +450,8 @@ export class OptionsUtil {
     async _applyAnkiFieldTemplatesPatch(options, modificationsUrl) {
         let patch = null;
         for (const {options: profileOptions} of options.profiles) {
-            const fieldTemplates = profileOptions.anki.fieldTemplates;
-            if (fieldTemplates === null) { continue; }
+            const fieldTemplates = profileOptions.anki?.fieldTemplates;
+            if (fieldTemplates === null || typeof fieldTemplates === 'undefined') { continue; }
 
             if (patch === null) {
                 const content = await fetchText(modificationsUrl);
@@ -1440,13 +1440,17 @@ export class OptionsUtil {
         const oldMarkerRegex = new RegExp('{selection-text}', 'g');
         const newMarker = '{popup-selection-text}';
         for (const profile of options.profiles) {
-            const termsFields = profile.options.anki.terms.fields;
-            for (const key of Object.keys(termsFields)) {
-                termsFields[key] = termsFields[key].replace(oldMarkerRegex, newMarker);
+            const termsFields = profile.options.anki?.terms?.fields;
+            if (termsFields) {
+                for (const key of Object.keys(termsFields)) {
+                    termsFields[key] = termsFields[key].replace(oldMarkerRegex, newMarker);
+                }
             }
-            const kanjiFields = profile.options.anki.kanji.fields;
-            for (const key of Object.keys(kanjiFields)) {
-                kanjiFields[key] = kanjiFields[key].replace(oldMarkerRegex, newMarker);
+            const kanjiFields = profile.options.anki?.kanji?.fields;
+            if (kanjiFields) {
+                for (const key of Object.keys(kanjiFields)) {
+                    kanjiFields[key] = kanjiFields[key].replace(oldMarkerRegex, newMarker);
+                }
             }
         }
     }
@@ -1612,7 +1616,8 @@ export class OptionsUtil {
     async _updateVersion59(options) {
         for (const profile of options.profiles) {
             for (const type of ['terms', 'kanji']) {
-                const fields = profile.options.anki[type].fields;
+                const fields = profile.options.anki?.[type]?.fields;
+                if (!fields) { continue; }
                 for (const [field, value] of Object.entries(fields)) {
                     fields[field] = {value, overwriteMode: 'coalesce'};
                 }
@@ -1667,7 +1672,8 @@ export class OptionsUtil {
         await this._applyAnkiFieldTemplatesPatch(options, '/data/templates/anki-field-templates-upgrade-v64.handlebars');
 
         for (const profile of options.profiles) {
-            const oldTerms = profile.options.anki.terms;
+            const oldTerms = profile.options.anki?.terms;
+            if (!oldTerms) { continue; }
 
             const updatedCardFormats = [{
                 name: 'Expression',
@@ -1678,7 +1684,7 @@ export class OptionsUtil {
                 type: 'term',
             }];
 
-            if (Object.values(oldTerms.fields).some((field) => field.value.includes('{expression}'))) {
+            if (oldTerms.fields && Object.values(oldTerms.fields).some((field) => field.value.includes('{expression}'))) {
                 updatedCardFormats.push({
                     name: 'Reading',
                     icon: 'small-circle',
@@ -1694,25 +1700,28 @@ export class OptionsUtil {
                 });
             }
 
-            const language = profile.options.general.language;
+            const language = profile.options.general?.language;
             const logographLanguages = ['ja', 'zh', 'yue'];
-            if (logographLanguages.includes(language)) {
-                const oldKanji = profile.options.anki.kanji;
-                const kanjiNote = {
-                    name: language === 'ja' ? 'Kanji' : 'Hanzi',
-                    icon: 'big-circle',
-                    deck: oldKanji.deck,
-                    model: oldKanji.model,
-                    fields: oldKanji.fields,
-                    type: 'kanji',
-                };
-                updatedCardFormats.push(kanjiNote);
+            if (language && logographLanguages.includes(language)) {
+                const oldKanji = profile.options.anki?.kanji;
+                if (oldKanji) {
+                    const kanjiNote = {
+                        name: language === 'ja' ? 'Kanji' : 'Hanzi',
+                        icon: 'big-circle',
+                        deck: oldKanji.deck,
+                        model: oldKanji.model,
+                        fields: oldKanji.fields,
+                        type: 'kanji',
+                    };
+                    updatedCardFormats.push(kanjiNote);
+                }
             }
 
-            profile.options.anki.cardFormats = [...updatedCardFormats];
-
-            delete profile.options.anki.terms;
-            delete profile.options.anki.kanji;
+            if (profile.options.anki) {
+                profile.options.anki.cardFormats = [...updatedCardFormats];
+                delete profile.options.anki.terms;
+                delete profile.options.anki.kanji;
+            }
 
             if (!profile.options.inputs || !profile.options.inputs.hotkeys) {
                 continue;
