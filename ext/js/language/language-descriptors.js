@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025  Yomitan Authors
+ * Copyright (C) 2024-2026  Yomitan Authors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,9 +30,11 @@ import {normalizeRadicalCharacters} from './CJK-util.js';
 import {eszettPreprocessor} from './de/german-text-preprocessors.js';
 import {germanTransforms} from './de/german-transforms.js';
 import {removeDoubleAcuteAccents} from './el/modern-greek-processors.js';
+import {modernGreekTransforms} from './el/modern-greek-transforms.js';
 import {englishTransforms} from './en/english-transforms.js';
 import {esperantoTransforms} from './eo/esperanto-transforms.js';
 import {spanishTransforms} from './es/spanish-transforms.js';
+import {basqueTransforms} from './eu/basque-transforms.js';
 import {apostropheVariants} from './fr/french-text-preprocessors.js';
 import {frenchTransforms} from './fr/french-transforms.js';
 import {irishTransforms} from './ga/irish-transforms.js';
@@ -75,6 +77,12 @@ const capitalizationPreprocessors = {
 
 /** @type {import('language-descriptors').LanguageDescriptorAny[]} */
 const languageDescriptors = [
+    {
+        iso: 'xxx',
+        iso639_3: 'xxx',
+        name: 'Any / Unknown',
+        exampleText: '???',
+    },
     {
         iso: 'aii',
         iso639_3: 'aii',
@@ -130,6 +138,13 @@ const languageDescriptors = [
         textPreprocessors: capitalizationPreprocessors,
     },
     {
+        iso: 'br',
+        iso639_3: 'bre',
+        name: 'Breton',
+        exampleText: 'lenn',
+        textPreprocessors: capitalizationPreprocessors,
+    },
+    {
         iso: 'cs',
         iso639_3: 'ces',
         name: 'Czech',
@@ -165,6 +180,7 @@ const languageDescriptors = [
             ...capitalizationPreprocessors,
             removeDoubleAcuteAccents,
         },
+        languageTransforms: modernGreekTransforms,
     },
     {
         iso: 'en',
@@ -195,6 +211,14 @@ const languageDescriptors = [
         iso639_3: 'est',
         name: 'Estonian',
         exampleText: 'lugema',
+        textPreprocessors: capitalizationPreprocessors,
+    },
+    {
+        iso: 'eu',
+        iso639_3: 'eus',
+        name: 'Basque',
+        exampleText: 'irakurri',
+        languageTransforms: basqueTransforms,
         textPreprocessors: capitalizationPreprocessors,
     },
     {
@@ -233,6 +257,13 @@ const languageDescriptors = [
         languageTransforms: irishTransforms,
     },
     {
+        iso: 'gd',
+        iso639_3: 'gla',
+        name: 'Scottish Gaelic',
+        exampleText: 'leugh',
+        textPreprocessors: capitalizationPreprocessors,
+    },
+    {
         iso: 'grc',
         iso639_3: 'grc',
         name: 'Ancient Greek',
@@ -243,6 +274,13 @@ const languageDescriptors = [
             convertLatinToGreek,
         },
         languageTransforms: ancientGreekTransforms,
+    },
+    {
+        iso: 'gv',
+        iso639_3: 'glv',
+        name: 'Manx',
+        exampleText: 'lhaih',
+        textPreprocessors: capitalizationPreprocessors,
     },
     {
         // no 2 letter iso for hawaiian
@@ -367,6 +405,13 @@ const languageDescriptors = [
             reassembleHangul,
         },
         languageTransforms: koreanTransforms,
+    },
+    {
+        iso: 'kw',
+        iso639_3: 'cor',
+        name: 'Cornish',
+        exampleText: 'lenna',
+        textPreprocessors: capitalizationPreprocessors,
     },
     {
         iso: 'mn',

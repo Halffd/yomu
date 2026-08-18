@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025  Yomitan Authors
+ * Copyright (C) 2023-2026  Yomitan Authors
  * Copyright (C) 2021-2022  Yomichan Authors
  *
  * This program is free software: you can redistribute it and/or modify
@@ -101,7 +101,7 @@ export function getAllPermissions() {
 
 /**
  * @param {string} fieldValue
- * @returns {string[]}
+ * @returns {chrome.runtime.ManifestPermission[]}
  */
 export function getRequiredPermissionsForAnkiFieldValue(fieldValue) {
     const markers = getFieldMarkers(fieldValue);
