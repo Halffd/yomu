@@ -21,47 +21,68 @@ export class Db {
   constructor() {
     this.baseUrl = 'http://localhost:5300/yomu';
     this.bin = 'http://localhost:5300/bin';
+    this.enabled = false; // Set to true when local server is available
   }
 
   async add(data, url = this.baseUrl) {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    });
-    const result = await response.json();
-    return result.id;
+    if (!this.enabled) return;
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+      const result = await response.json();
+      return result.id;
+    } catch (error) {
+      console.warn('Db.add failed:', error.message);
+    }
   }
 
   async delete(id) {
-    const response = await fetch(`${this.baseUrl}/${id}`, {
-      method: 'DELETE',
-    });
-    const result = await response.json();
-    return result.message;
+    if (!this.enabled) return;
+    try {
+      const response = await fetch(`${this.baseUrl}/${id}`, {
+        method: 'DELETE',
+      });
+      const result = await response.json();
+      return result.message;
+    } catch (error) {
+      console.warn('Db.delete failed:', error.message);
+    }
   }
 
   async set(id, data, url = this.baseUrl) {
+    if (!this.enabled) return;
+    try {
       if(url == 1){
-      url = this.bin
+        url = this.bin
+      }
+      await setTimeout(() => {}, parseInt(Math.random() * 10000));
+      const response = await fetch(`${url}/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+      const result = await response.json();
+      return result.id;
+    } catch (error) {
+      console.warn('Db.set failed:', error.message);
     }
-    await setTimeout(() => {}, parseInt(Math.random() * 10000));
-    const response = await fetch(`${url}/${id}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    });
-    const result = await response.json();
-    return result.id;
   }
 
   async find(id) {
-    const response = await fetch(`${this.baseUrl}/${id}`);
-    const result = await response.json();
-    return result;
+    if (!this.enabled) return;
+    try {
+      const response = await fetch(`${this.baseUrl}/${id}`);
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      console.warn('Db.find failed:', error.message);
+    }
   }
 }

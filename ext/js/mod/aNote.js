@@ -622,14 +622,16 @@ export class Note {
                         img: aImg ? 2 : 0
                     }
                     this.aDict._adictsn?.push(t)
-                    note.addAnki(results, t, read, so, results.length).then((res) => {
-                        if(res){
-                            elem.style.setProperty('--mc', '#00ffad')
-                            elem.classList.add('mined')
-                            this.aDict._jpws += ' ' + t
-                            localStorage.setItem('jpws', this.aDict._jpws)
-                        }
-                    })
+                    if (results && results.length > 0) {
+                        note.addAnki(results, t, read, so, results.length).then((res) => {
+                            if(res){
+                                elem.style.setProperty('--mc', '#00ffad')
+                                elem.classList.add('mined')
+                                this.aDict._jpws += ' ' + t
+                                localStorage.setItem('jpws', this.aDict._jpws)
+                            }
+                        })
+                    }
                     //})
                 }
             }
@@ -677,7 +679,7 @@ export class Note {
                     console.error(error);
                 }
                 // if (nv('warn')) console.warn(options, yc, read, results, fq, fq.length)
-                if (fq.length == 0) {
+                if (fq.length == 0 && results && results.length > 0) {
                     let sum = 0;
                     const frequencies = results[0].frequencies;
                     frequencies.forEach((/** @type {{ frequency: any; }} */ item) => {
@@ -1225,6 +1227,9 @@ export class Note {
      * @returns {Promise<object>} A promise that resolves to the parsed response data.
      */
     async request(data, method, url = '') {
+        if (!this.url) {
+            return;
+        }
         try {
             url = this.url + url + '.json';
 

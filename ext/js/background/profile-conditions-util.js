@@ -110,6 +110,9 @@ export function createSchema(conditionGroups) {
  * @returns {import('profile-conditions-util').NormalizedOptionsContext} A normalized context object.
  */
 export function normalizeContext(context) {
+    if (!context) {
+        return /** @type {import('profile-conditions-util').NormalizedOptionsContext} */ ({});
+    }
     const normalizedContext = /** @type {import('profile-conditions-util').NormalizedOptionsContext} */ (Object.assign({}, context));
     const {url} = normalizedContext;
     if (typeof url === 'string') {

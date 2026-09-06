@@ -1639,7 +1639,7 @@ export class Backend {
   _getProfile(optionsContext, useSchema) {
     const options = this._getOptionsFull(useSchema);
     const profiles = options.profiles;
-    if (!optionsContext.current) {
+    if (optionsContext && !optionsContext.current) {
       // Specific index
       const { index } = optionsContext;
       if (typeof index === 'number') {

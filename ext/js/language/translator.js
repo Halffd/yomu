@@ -16,6 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {CacheMap} from '../general/cache-map.js';
 import {safePerformance} from '../core/safe-performance.js';
 import {applyTextReplacement} from '../general/regex-util.js';
 import {isCodePointJapanese} from './ja/japanese.js';
@@ -40,6 +41,10 @@ export class Translator {
         this._multiLanguageTransformer = new MultiLanguageTransformer();
         /** @type {import('translator').DictionaryTagCache} */
         this._tagCache = new Map();
+        /** @type {CacheMap<string, {dictionaryEntries: import('dictionary').TermDictionaryEntry[], originalTextLength: number}>} */
+        this._termCache = new CacheMap(2000, 300000);
+        /** @type {CacheMap<string, import('dictionary').KanjiDictionaryEntry[]>} */
+        this._kanjiCache = new CacheMap(1000, 300000);
         /** @type {Intl.Collator} */
         this._stringComparer = new Intl.Collator('en-US'); // Invariant locale
         /** @type {RegExp} */
@@ -72,6 +77,8 @@ export class Translator {
      */
     clearDatabaseCaches() {
         this._tagCache.clear();
+        this._termCache.clear();
+        this._kanjiCache.clear();
         this._dictionaryFrequencyModeMap = null;
         this._dictionaryFrequencyModeMapPromise = null;
     }
@@ -84,8 +91,14 @@ export class Translator {
      * @returns {Promise<{dictionaryEntries: import('dictionary').TermDictionaryEntry[], originalTextLength: number}>} An object containing dictionary entries and the length of the original source text.
      */
     async findTerms(mode, text, options) {
-        safePerformance.mark('translator:findTerms:start');
         const {enabledDictionaryMap, excludeDictionaryDefinitions, sortFrequencyDictionary, sortFrequencyDictionaryOrder, language, primaryReading, useAllFrequencyDictionaries} = options;
+        const cacheKey = JSON.stringify([mode, text, language, primaryReading, useAllFrequencyDictionaries, excludeDictionaryDefinitions, sortFrequencyDictionary, sortFrequencyDictionaryOrder, [...enabledDictionaryMap.keys()]]);
+        const cached = this._termCache.get(cacheKey);
+        if (typeof cached !== 'undefined') {
+            return cached;
+        }
+
+        safePerformance.mark('translator:findTerms:start');
         const tagAggregator = new TranslatorTagAggregator();
         let {dictionaryEntries, originalTextLength} = await this._findTermsInternal(text, options, tagAggregator, primaryReading);
 
@@ -136,7 +149,9 @@ export class Translator {
         safePerformance.mark('translator:findTerms:end');
         safePerformance.measure('translator:findTerms', 'translator:findTerms:start', 'translator:findTerms:end');
 
-        return {dictionaryEntries: withUserFacingInflections, originalTextLength};
+        const result = {dictionaryEntries: withUserFacingInflections, originalTextLength};
+        this._termCache.set(cacheKey, result);
+        return result;
     }
 
     /**
@@ -152,6 +167,12 @@ export class Translator {
             text = this._getJapaneseChineseKoreanOnlyText(text);
         }
         const {enabledDictionaryMap} = options;
+        const cacheKey = JSON.stringify([text, options.removeNonJapaneseCharacters, [...enabledDictionaryMap.keys()]]);
+        const cached = this._kanjiCache.get(cacheKey);
+        if (typeof cached !== 'undefined') {
+            return cached;
+        }
+
         /** @type {Set<string>} */
         const kanjiUnique = new Set();
         for (const c of text) {
@@ -183,6 +204,7 @@ export class Translator {
 
         this._sortKanjiDictionaryEntryData(dictionaryEntries);
 
+        this._kanjiCache.set(cacheKey, dictionaryEntries);
         return dictionaryEntries;
     }
 

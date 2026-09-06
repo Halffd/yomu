@@ -342,7 +342,7 @@ export class OptionsUtil {
                 selectText: true,
                 alphanumeric: true,
                 autoHideResults: false,
-                delay: 20,
+                delay: 0,
                 length: 10,
                 modifier: 'shift',
                 deepDomScan: false,
