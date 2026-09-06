@@ -132,6 +132,9 @@ class ProfileConditionsUtil {
      * @returns {object} A normalized context object.
      */
     normalizeContext(context) {
+        if (!context) {
+            return {};
+        }
         const normalizedContext = Object.assign({}, context);
         const {url} = normalizedContext;
         if (typeof url === 'string') {
