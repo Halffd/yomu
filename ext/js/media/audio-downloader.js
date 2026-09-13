@@ -124,7 +124,11 @@ export class AudioDownloader {
      * @returns {string}
      */
     _normalizeUrl(url, base) {
-        return new URL(url, base).href;
+        try {
+            return new URL(url, base).href;
+        } catch (e) {
+            return url;
+        }
     }
 
     /** @type {import('audio-downloader').GetInfoHandler} */

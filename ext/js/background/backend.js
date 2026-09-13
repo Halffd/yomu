@@ -1755,7 +1755,7 @@ export class Backend {
       const character = String.fromCodePoint(codePoint);
       const substring = text.substring(i, i + scanLength);
       const metadataMode = useAllFrequencyDictionaries === true ? 1 : 0;
-      const cacheKey = `${optionsContext.index}:${metadataMode}:${substring}`;
+      const cacheKey = `${optionsContext?.index ?? 'default'}:${metadataMode}:${substring}`;
       let cached = this._textParseCache.get(cacheKey);
       if (typeof cached === 'undefined') {
         const { dictionaryEntries, originalTextLength } = await this._translator.findTerms(
@@ -1803,7 +1803,7 @@ export class Backend {
           }
         }
         cached = { originalTextLength, textSegments };
-        if (typeof optionsContext.index !== 'undefined') { this._textParseCache.set(cacheKey, cached); }
+        if (optionsContext && typeof optionsContext.index !== 'undefined') { this._textParseCache.set(cacheKey, cached); }
       }
       const { originalTextLength, textSegments } = cached;
       if (textSegments.length > 0) {

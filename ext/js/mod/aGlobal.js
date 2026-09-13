@@ -109,6 +109,7 @@ function vars(aD, displayAnki, aN, someValue, funcs) {
     aDict = aD;
     anki = displayAnki;
     aNote = aN;
+    window.aNote = aN;
     sv = someValue;
     convertToRomaji = funcs.roma
     convertHiraganaToKatakana = funcs.hira //kata

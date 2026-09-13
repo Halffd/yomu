@@ -136,7 +136,11 @@ export class Note {
      */
     async addAnki(dic, kanji = '', kana = '', o = {}, q = 1, i = 0) {
         try {
-            const det = await this.aDict?.anki._getDictionaryEntryDetails(dic)
+            if (!this.aDict?.anki) {
+                console.warn('Anki not available');
+                return;
+            }
+            const det = await this.aDict.anki._getDictionaryEntryDetails(dic)
 
             const mode = 'term-kanji'
 
@@ -170,8 +174,10 @@ export class Note {
                 }
             ];
             console.warn(det, req, mode);
-            if (det) req = det[0].modeMap.get(mode);
-            if (req.note.PrimaryDefinitionPicture === '') {
+            if (det && det[0] && det[0].noteMap && det[0].noteMap.has(mode)) {
+                req = det[0].noteMap.get(mode);
+            }
+            if (req?.note?.PrimaryDefinitionPicture === '') {
                 let img = await this.aDict.txtImg(true)
                 req.note.fields.PrimaryDefinitionPicture = img
             }
