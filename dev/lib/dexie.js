@@ -15,6 +15,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export {default as Dexie} from 'dexie';
+export {default as Dexie} from 'dexie/dist/dexie.mjs';
 
 import 'dexie-export-import';
